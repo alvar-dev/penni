@@ -10,7 +10,7 @@ type Row = { label: string; value: number; basket: Basket };
 const BASKET_LABELS: Record<Basket, string> = {
   regular: 'Pakolliset, säännölliset',
   irregular: 'Pakolliset, yllättävät',
-  everyday: 'Sormien läpi',
+  everyday: 'Vapaavalintaiset',
 };
 
 /** Spending by category, largest first, each bar in its basket's colour. */

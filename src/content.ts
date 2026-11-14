@@ -156,7 +156,7 @@ const placeholders: Record<string, { text: string; viz: Viz }> = {
       parts: [
         { basket: 'regular', name: 'Pakolliset, säännölliset', value: 1008 },
         { basket: 'irregular', name: 'Pakolliset, yllättävät', value: 1 },
-        { basket: 'everyday', name: 'Sormien läpi', value: 521 },
+        { basket: 'everyday', name: 'Vapaavalintaiset', value: 521 },
       ],
       share: 0.34,
       peerShare: 0.24,

@@ -230,7 +230,7 @@ function mode(values: number[]): number | null {
 const BASKET_NAMES: Record<Basket, string> = {
   regular: 'Pakolliset, säännölliset',
   irregular: 'Pakolliset, yllättävät',
-  everyday: 'Sormien läpi',
+  everyday: 'Vapaavalintaiset',
 };
 
 export type ToolResult = { facts: Record<string, unknown>; viz?: Viz };
@@ -831,7 +831,7 @@ export function summary(p: Persona): Summary {
     },
     {
       id: 'everyday',
-      label: 'Sormien läpi',
+      label: 'Vapaavalintaiset',
       value: profile.everyday_share_of_spending_pct,
       unit: '%',
       sub: `Suomessa ikäisilläsi ${profile.finland_everyday_share_pct} %`,
@@ -882,7 +882,7 @@ export function summary(p: Persona): Summary {
       const cardMonthly = sumBy(others.flatMap((o) => o.tx), (t) => months.includes(t.month)) / months.length;
       const alone = spendingProfile({ ...p, others: undefined, spendTx: undefined }).facts as { everyday_share_of_spending_pct: number };
       insight = {
-        text: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} menee noin ${formatThousands(Math.round(cardMonthly / 10) * 10)} euroa kuussa, joten sormien läpi menee ${profile.everyday_share_of_spending_pct}\u00A0% kulutuksestasi eikä ${alone.everyday_share_of_spending_pct}\u00A0%.`,
+        text: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} menee noin ${formatThousands(Math.round(cardMonthly / 10) * 10)} euroa kuussa, joten vapaavalintaisiin menoihin menee ${profile.everyday_share_of_spending_pct}\u00A0% kulutuksestasi eikä ${alone.everyday_share_of_spending_pct}\u00A0%.`,
         question: 'Millainen kuluttaja olen?',
         action: 'Katso koko kuva',
       };

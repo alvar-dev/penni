@@ -44,7 +44,7 @@ export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = 'm
           </Canvas>
           <View style={styles.center} pointerEvents="none">
             <Text style={styles.centerValue}>{pct(share)}</Text>
-            <Text style={styles.centerLabel}>sormien läpi</Text>
+            <Text style={styles.centerLabel}>vapaa-{'\n'}valintaiset</Text>
           </View>
         </View>
 
@@ -63,7 +63,7 @@ export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = 'm
         </View>
       </View>
 
-      <Text style={styles.compareTitle}>Sormien läpi menevä osuus</Text>
+      <Text style={styles.compareTitle}>Vapaavalintaisten menojen osuus</Text>
       <CompareBar label="Sinä" value={share} max={Math.max(share, peerShare, 0.01)} color={colors.green700} reveal={reveal} />
       <CompareBar label={peerLabel} value={peerShare} max={Math.max(share, peerShare, 0.01)} color="#C7C7C7" reveal={reveal} note={peerNote} />
     </View>
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   ring: { width: SIZE, height: SIZE },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   centerValue: { fontSize: 24, lineHeight: 28, fontWeight: '600', color: colors.text },
-  centerLabel: { fontSize: 11, lineHeight: 14, color: colors.textSecondary },
+  centerLabel: { fontSize: 11, lineHeight: 14, color: colors.textSecondary, textAlign: 'center' },
   legend: { flex: 1, marginLeft: 18, gap: 12 },
   legendRow: { flexDirection: 'row', alignItems: 'flex-start' },
   swatch: { width: 10, height: 10, borderRadius: 3, marginTop: 5, marginRight: 8 },

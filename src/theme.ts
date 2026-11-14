@@ -27,7 +27,7 @@ export const colors = {
 
 /**
  * The three spending baskets, in S-Pankki's own greens from dark to light: fixed
- * costs are the heaviest, money that slips through the fingers the lightest.
+ * costs are the heaviest, discretionary spending the lightest.
  * An ordered ramp (lightness rises step by step), so the steps stay apart for
  * colour-blind readers too. The mint is faint on white, so every mark that uses
  * it carries its name and amount next to it.
