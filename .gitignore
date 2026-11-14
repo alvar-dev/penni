@@ -49,3 +49,9 @@ yarn-error.*
 
 # demo recordings
 /demo/
+
+# Demo video project: dependencies and renders
+/video/**/node_modules/
+/video/**/renders/
+/video/**/*.mp4
+/video/**/.hyperframes/
