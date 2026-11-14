@@ -67,6 +67,8 @@ const SLOT = 40;
 const FIELD_PAD_RIGHT = 4;
 const FIELD_HEIGHT = 48;
 /** The field grows to five lines of text (about 20 pt each), then scrolls. */
+/** Shortest time the coach looks like it is thinking before an answer appears. */
+const MIN_THINK_MS = 1400;
 const INPUT_MAX = SLOT + 4 * 20.5;
 const FADE = 36;
 const HEADER = 52;
@@ -412,9 +414,13 @@ function Screen() {
       inFlight.current = controller;
       const timeout = setTimeout(() => controller.abort(), 90_000);
       let waitingForVoice = false;
+      // The coach always thinks for a moment, even when the answer is ready at
+      // once (start-screen tiles are answered from the cache): an instant reply
+      // feels canned. Slightly different each time, so it does not feel timed.
+      const thinkFor = new Promise((resolve) => setTimeout(resolve, MIN_THINK_MS + Math.random() * 600));
 
-      ask({ personaId, question, history, banks: options.banks ?? bankIds }, controller.signal)
-        .then((answer) => {
+      Promise.all([ask({ personaId, question, history, banks: options.banks ?? bankIds }, controller.signal), thinkFor])
+        .then(([answer]) => {
           if (seq !== requestSeq.current) return;
           const id = newId();
           const message: Message = { id, role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources };
