@@ -1,6 +1,6 @@
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -250,18 +250,23 @@ function Screen() {
     };
   }, []);
 
-  // Charts measure themselves after they mount, so the conversation keeps
-  // scrolling to the end for a moment after each new message.
-  const followEnd = useRef(false);
-  useEffect(() => {
-    followEnd.current = true;
-    const scroll = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-    const release = setTimeout(() => (followEnd.current = false), 1500);
-    return () => {
-      clearTimeout(scroll);
-      clearTimeout(release);
-    };
-  }, [messages.length, phase]);
+  // The latest turn starts at the last question (or bank event). It is pinned
+  // to the top when it starts: the question stays in view with the chart and
+  // answer below it, and the list does not jump to the end as they arrive.
+  const turnStart = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === 'user' || m.event) return i;
+    }
+    return messages.length ? 0 : -1;
+  }, [messages]);
+  const turnId = turnStart >= 0 ? messages[turnStart].id : null;
+  const pinTurn = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    pinTurn.current = turnId;
+  }, [turnId]);
+  // Height of the conversation area, so the latest turn can always fill it (and be scrolled to the top).
+  const [listHeight, setListHeight] = useState(0);
 
   const cancelRequest = useCallback(() => {
     requestSeq.current += 1;
@@ -743,6 +748,65 @@ function Screen() {
   const captionStyle = useAnimatedStyle(() => ({ marginTop: 12 + 55 * scale.value }));
   const fadeStyle = useAnimatedStyle(() => ({ opacity: 1 - expand.value }));
 
+
+  // The conversation scrolls under the header; these keep its content clear of the header and the input.
+  const listTop = insets.top + HEADER + 8;
+  const listBottom = DOCK_SHEET + 32 + inputExtra;
+  const renderMessage = (message: Message) =>
+    message.role === 'user' ? (
+      <Animated.View key={message.id} entering={FadeInDown.duration(260)} style={styles.userBubble}>
+        <Text style={styles.userText}>{message.text}</Text>
+      </Animated.View>
+    ) : message.event ? (
+      <Animated.View key={message.id} entering={FadeIn.duration(300)} style={styles.event}>
+        <Text style={styles.eventText}>✓ {message.text}</Text>
+      </Animated.View>
+    ) : (
+      <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
+        {message.viz ? <Viz viz={message.viz} onConnect={canConnectMore ? () => setConnectOpen(true) : undefined} /> : null}
+        <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>
+          {speaker.speakingId === message.id
+            ? // While the coach reads, the sentence being read is highlighted.
+              sentences(message.text).map((s, i, all) => (
+                <Text key={i} style={i === speaker.sentence ? styles.reading : undefined}>
+                  {s}
+                  {i < all.length - 1 ? ' ' : ''}
+                </Text>
+              ))
+            : message.text}
+        </Text>
+        {/* Listen to this answer (also when the voice is muted). */}
+        <Pressable
+          onPress={() => (speaker.speakingId === message.id ? speaker.stop() : speaker.speak(message.id, message.text))}
+          accessibilityRole="button"
+          hitSlop={8}
+          style={({ pressed }) => [styles.listen, pressed && styles.headerPressed]}>
+          <SpeakerIcon size={16} color={colors.green700} />
+          <Text style={styles.listenText}>{speaker.speakingId === message.id ? strings.listenStop : strings.listen}</Text>
+        </Pressable>
+        {message.sources?.length ? (
+          <Text style={styles.answerSource}>
+            {strings.source} {message.sources.map((s) => s.replace(/^(Tilastokeskus|Statistics Finland), /, '')).join(' · ')}
+          </Text>
+        ) : null}
+        {message.viz?.kind === 'replay' ? (
+          <PlanButton
+            monthly={plan?.monthly ?? message.viz.value}
+            date={message.viz.paydayLabel}
+            active={!!plan}
+            onStart={() => setPlan(message.viz?.value ?? 0)}
+            onStop={() => setPlan(null)}
+          />
+        ) : null}
+      </Animated.View>
+    );
+  const thinkingLine =
+    phase === 'thinking' ? (
+    <Animated.Text entering={FadeIn.duration(200)} style={styles.thinking}>
+      {strings.thinkingSteps[thinkingStep] ?? strings.thinking}
+    </Animated.Text>
+  ) : null;
+
   return (
     <View style={styles.root}>
       <StatusBar style="dark" />
@@ -753,72 +817,35 @@ function Screen() {
             style={styles.flex}
             onLayout={(event) => {
               areaHeight.set(event.nativeEvent.layout.height);
+              setListHeight(event.nativeEvent.layout.height);
             }}>
             <ScrollView
               ref={listRef}
               style={[StyleSheet.absoluteFill, { top: -(insets.top + HEADER) }]}
-              contentContainerStyle={[styles.list, { paddingTop: insets.top + HEADER + 8, paddingBottom: DOCK_SHEET + 32 + inputExtra }]}
+              contentContainerStyle={[styles.list, { paddingTop: listTop, paddingBottom: listBottom }]}
               scrollIndicatorInsets={{ top: insets.top + HEADER }}
               // It reaches under the status bar on purpose; iOS must not add its own inset on top.
               contentInsetAdjustmentBehavior="never"
               automaticallyAdjustContentInsets={false}
-              onContentSizeChange={() => followEnd.current && listRef.current?.scrollToEnd({ animated: true })}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
-              {messages.map((message) =>
-                message.role === 'user' ? (
-                  <Animated.View key={message.id} entering={FadeInDown.duration(260)} style={styles.userBubble}>
-                    <Text style={styles.userText}>{message.text}</Text>
-                  </Animated.View>
-                ) : message.event ? (
-                  <Animated.View key={message.id} entering={FadeIn.duration(300)} style={styles.event}>
-                    <Text style={styles.eventText}>✓ {message.text}</Text>
-                  </Animated.View>
-                ) : (
-                  <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
-                    {message.viz ? <Viz viz={message.viz} onConnect={canConnectMore ? () => setConnectOpen(true) : undefined} /> : null}
-                    <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>
-                      {speaker.speakingId === message.id
-                        ? // While the coach reads, the sentence being read is highlighted.
-                          sentences(message.text).map((s, i, all) => (
-                            <Text key={i} style={i === speaker.sentence ? styles.reading : undefined}>
-                              {s}
-                              {i < all.length - 1 ? ' ' : ''}
-                            </Text>
-                          ))
-                        : message.text}
-                    </Text>
-                    {/* Listen to this answer (also when the voice is muted). */}
-                    <Pressable
-                      onPress={() => (speaker.speakingId === message.id ? speaker.stop() : speaker.speak(message.id, message.text))}
-                      accessibilityRole="button"
-                      hitSlop={8}
-                      style={({ pressed }) => [styles.listen, pressed && styles.headerPressed]}>
-                      <SpeakerIcon size={16} color={colors.green700} />
-                      <Text style={styles.listenText}>{speaker.speakingId === message.id ? strings.listenStop : strings.listen}</Text>
-                    </Pressable>
-                    {message.sources?.length ? (
-                      <Text style={styles.answerSource}>
-                        {strings.source} {message.sources.map((s) => s.replace(/^(Tilastokeskus|Statistics Finland), /, '')).join(' · ')}
-                      </Text>
-                    ) : null}
-                    {message.viz?.kind === 'replay' ? (
-                      <PlanButton
-                        monthly={plan?.monthly ?? message.viz.value}
-                        date={message.viz.paydayLabel}
-                        active={!!plan}
-                        onStart={() => setPlan(message.viz?.value ?? 0)}
-                        onStop={() => setPlan(null)}
-                      />
-                    ) : null}
-                  </Animated.View>
-                ),
+              {messages.slice(0, Math.max(0, turnStart)).map(renderMessage)}
+              {turnStart >= 0 ? (
+                <View
+                  key={turnId}
+                  style={{ minHeight: Math.max(0, listHeight - 8 - listBottom) }}
+                  onLayout={(event) => {
+                    // Once, when the turn starts: its question goes to the top, just under the header.
+                    if (pinTurn.current !== turnId) return;
+                    pinTurn.current = null;
+                    listRef.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y - listTop), animated: true });
+                  }}>
+                  {messages.slice(turnStart).map(renderMessage)}
+                  {thinkingLine}
+                </View>
+              ) : (
+                thinkingLine
               )}
-              {phase === 'thinking' ? (
-                <Animated.Text entering={FadeIn.duration(200)} style={styles.thinking}>
-                  {strings.thinkingSteps[thinkingStep] ?? strings.thinking}
-                </Animated.Text>
-              ) : null}
             </ScrollView>
 
             <Animated.View style={[styles.sheet, sheetStyle]}>
