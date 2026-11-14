@@ -53,8 +53,8 @@ export async function transcribe(audio: string, sampleRate: number, signal: Abor
 }
 
 /** The start screen's overview (computed on the server, no model involved). */
-export async function getSummary(personaId: string, signal: AbortSignal): Promise<Summary> {
-  const response = await fetch(`${baseUrl()}/summary?personaId=${encodeURIComponent(personaId)}`, {
+export async function getSummary(personaId: string, connected: boolean, signal: AbortSignal): Promise<Summary> {
+  const response = await fetch(`${baseUrl()}/summary?personaId=${encodeURIComponent(personaId)}${connected ? '&connected=1' : ''}`, {
     headers: { 'X-App-Token': process.env.EXPO_PUBLIC_API_TOKEN ?? '' },
     signal,
   });

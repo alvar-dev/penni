@@ -27,6 +27,10 @@ type Props = {
   onDelete: (id: string) => void;
   onNewChat: () => void;
   onSettle: (open: boolean) => void;
+  /** Another bank is connected (PSD2). */
+  bankConnected: boolean;
+  onConnectBank: () => void;
+  onDisconnectBank: () => void;
 };
 
 /** What a saved conversation's row shows under its title: the latest answer's key figure. */
@@ -51,7 +55,7 @@ export function Avatar({ name, size }: { name: string; size: number }) {
   );
 }
 
-export function Drawer({ open, progress, width, persona, conversations, currentId, onOpen, onDelete, onNewChat, onSettle }: Props) {
+export function Drawer({ open, progress, width, persona, conversations, currentId, onOpen, onDelete, onNewChat, onSettle, bankConnected, onConnectBank, onDisconnectBank }: Props) {
   const insets = useSafeAreaInsets();
   const groups = useMemo(() => groupByDay(conversations), [conversations]);
 
@@ -156,7 +160,25 @@ export function Drawer({ open, progress, width, persona, conversations, currentI
           ))}
         </ScrollView>
 
-        {/* The signed-in customer, out of the way at the bottom. */}
+        {/* The banks the coach can see, then the signed-in customer, out of the way at the bottom. */}
+        <View style={styles.banks}>
+          <Text style={styles.banksTitle}>{strings.banksTitle}</Text>
+          <View style={styles.bankRow}>
+            <Text style={styles.bankName}>S-Pankki</Text>
+          </View>
+          {bankConnected ? (
+            <View style={styles.bankRow}>
+              <Text style={styles.bankName}>{strings.connectBank}</Text>
+              <Pressable onPress={onDisconnectBank} hitSlop={8} accessibilityRole="button">
+                <Text style={styles.bankAction}>{strings.banksDisconnect}</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable onPress={onConnectBank} hitSlop={6} accessibilityRole="button" style={styles.bankRow}>
+              <Text style={styles.bankConnect}>+ {strings.accountsConnect}</Text>
+            </Pressable>
+          )}
+        </View>
         <View style={[styles.profile, { paddingBottom: insets.bottom + 10 }]}>
           <Avatar name={persona.name} size={32} />
           <Text style={styles.name}>{persona.name}</Text>
@@ -211,6 +233,12 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   name: { fontSize: 16, lineHeight: 21, fontWeight: '500', color: colors.text, marginLeft: 10 },
+  banks: { paddingTop: 12, paddingBottom: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  banksTitle: { fontSize: 13, lineHeight: 18, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 },
+  bankRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  bankName: { fontSize: 15, lineHeight: 20, color: colors.text },
+  bankAction: { fontSize: 14, lineHeight: 19, color: colors.textSecondary },
+  bankConnect: { fontSize: 15, lineHeight: 20, fontWeight: '600', color: colors.green700 },
 
   row: {
     flexDirection: 'row',

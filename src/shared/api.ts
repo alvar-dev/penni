@@ -83,6 +83,16 @@ export type Viz =
       paydayLabel: string;
     }
   | {
+      /** Accounts in every connected bank; S-Pankki only until another bank is connected. */
+      kind: 'accounts';
+      label: string;
+      value: number;
+      banks: { name: string; example?: boolean; accounts: { name: string; balance: number; note?: string }[] }[];
+      /** No other bank connected yet: the card offers to connect one. */
+      connectable: boolean;
+      footnote?: string;
+    }
+  | {
       /** Spending by category, largest first, coloured by basket. */
       kind: 'ranking';
       label: string;
@@ -125,6 +135,8 @@ export type AskRequest = {
   question: string;
   /** The last few turns, oldest first, so follow-up questions make sense. */
   history: HistoryItem[];
+  /** Another bank is connected (PSD2), so the coach sees its accounts too. */
+  connected?: boolean;
 };
 
 export type AskResponse = { text: string; viz?: Viz; call?: ToolCall; sources?: string[] } | { error: string };

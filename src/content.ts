@@ -4,7 +4,7 @@ export type { Viz };
 
 export type Message =
   | { id: string; role: 'user'; text: string }
-  | { id: string; role: 'assistant'; text: string; viz?: Viz; call?: ToolCall; sources?: string[]; example?: boolean };
+  | { id: string; role: 'assistant'; text: string; viz?: Viz; call?: ToolCall; sources?: string[]; example?: boolean; event?: boolean };
 
 export type Persona = { id: string; name: string; age: number; postalCode: string; tagline: string };
 
@@ -61,6 +61,28 @@ export const strings = {
   errorBusy: 'Kysymyksiä tuli juuri nyt liian monta. Odota hetki ja kysy uudelleen.',
   errorModel: 'Valmentaja ei ehtinyt vastata. Yritä uudelleen.',
   thinkingSteps: ['Katson tilitapahtumiasi…', 'Lasketaan…', 'Kirjoitan vastausta…'],
+  // Another bank (PSD2). The other bank is example data in the demo.
+  connectTitle: 'Yhdistä toinen pankki',
+  connectLead: 'Kun annat luvan, S-Pankki hakee tilitietosi toisesta pankista. Valmentaja näkee silloin koko taloutesi ja neuvoo sen perusteella.',
+  connectBank: 'Toinen pankki',
+  connectBankNote: 'Esimerkkipankki tässä demossa',
+  connectScopeTitle: 'Luvalla saa',
+  connectScope: [
+    ['Saldot ja tapahtumat', 'Tilit, kortit ja ostot'],
+    ['Ei maksuoikeutta', 'Rahaa ei voi siirtää eikä maksaa'],
+    ['Voimassa 180 päivää', 'Voit perua luvan milloin tahansa'],
+  ] as [string, string][],
+  connectLegal: 'Tilitietopalvelu perustuu maksupalveludirektiiviin (PSD2). Tunnistaudut toisen pankin omilla tunnuksilla.',
+  connectContinue: 'Jatka tunnistautumiseen',
+  connectAuthenticating: 'Tunnistaudutaan toisessa pankissa…',
+  connectDone: 'Yhdistetty',
+  connectClose: 'Sulje',
+  connectedEvent: 'Toinen pankki yhdistetty',
+  accountsConnect: 'Yhdistä toinen pankki',
+  accountsConnectNote: 'PSD2 · vain lukuoikeus',
+  accountsExample: 'esimerkkidata',
+  banksTitle: 'Pankit',
+  banksDisconnect: 'Poista yhteys',
   planStart: 'Aloita: {amount} € joka palkkapäivä',
   planOn: 'Yllätysrahasto päällä · alkaen {date}',
   planHome: 'Yllätysrahasto päällä · {amount} € joka palkkapäivä',

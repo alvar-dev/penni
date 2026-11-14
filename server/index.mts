@@ -22,7 +22,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { createInterface } from 'node:readline';
 
 import type { AskRequest, HistoryItem } from '../src/shared/api.ts';
-import { personas, summary, TODAY } from './engine.mts';
+import { personas, summary, TODAY, withOtherBank, type Persona } from './engine.mts';
 import type { ToolCall, Viz } from '../src/shared/api.ts';
 import { askModel, MODEL, tidy } from './llm.mts';
 
@@ -110,7 +110,8 @@ try {
 } catch {
   // No cache yet.
 }
-const cacheKey = (personaId: string, question: string) => `${MODEL}|${TODAY}|${personaId}|${question.toLowerCase().replace(/[^a-z0-9€%]+/g, ' ').trim()}`;
+const cacheKey = (personaId: string, question: string, connected = false) =>
+  `${MODEL}|${TODAY}|${personaId}${connected ? '+bank' : ''}|${question.toLowerCase().replace(/[^a-z0-9€%]+/g, ' ').trim()}`;
 function remember(key: string, value: Cached) {
   cache.set(key, value);
   try {
@@ -122,13 +123,31 @@ function remember(key: string, value: Cached) {
 }
 
 /** With DEMO_PREWARM=1, answers the start screen's questions for the demo customer in the background. */
+/** The customer as the app sees them: with or without a second bank connected (PSD2). */
+function customer(personaId: string, connected: boolean): Persona | undefined {
+  const base = personas.get(personaId);
+  return base && connected ? withOtherBank(base) : base;
+}
+
 async function prewarm(personaId: string) {
-  const persona = personas.get(personaId);
+  for (const connected of [false, true]) await prewarmFor(personaId, connected);
+}
+
+async function prewarmFor(personaId: string, connected: boolean) {
+  const persona = customer(personaId, connected);
   if (!persona) return;
   const s = summary(persona);
-  const questions = [...s.tiles.map((t) => t.question), ...s.suggestions, ...(s.insight ? [s.insight.question] : [])];
+  const questions = [
+    ...new Set([
+      ...s.tiles.map((t) => t.question),
+      ...s.suggestions,
+      ...(s.insight ? [s.insight.question] : []),
+      // The question that leads to (and, once connected, shows) the multi-bank view.
+      'Paljonko minulla on rahaa yhteensä?',
+    ]),
+  ];
   for (const question of questions) {
-    const key = cacheKey(personaId, question);
+    const key = cacheKey(personaId, question, connected);
     if (cache.has(key)) continue;
     try {
       const answer = await askModel(persona, question, []);
@@ -139,7 +158,7 @@ async function prewarm(personaId: string) {
       console.error(`[prewarm] failed: ${question}:`, (error as Error).message);
     }
   }
-  console.log(`[prewarm] ready: ${questions.length} questions cached for ${personaId}`);
+  console.log(`[prewarm] ready: ${questions.length} questions cached for ${personaId}${connected ? ' (two banks)' : ''}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -205,7 +224,7 @@ function parseAsk(body: unknown): AskRequest | string {
       }
     }
   }
-  return { personaId: b.personaId, question: b.question.trim(), history };
+  return { personaId: b.personaId, question: b.question.trim(), history, connected: b.connected === true };
 }
 
 const server = createServer(async (req, res) => {
@@ -215,8 +234,8 @@ const server = createServer(async (req, res) => {
   }
   if (req.method === 'GET' && req.url?.startsWith('/summary')) {
     if (req.headers['x-app-token'] !== TOKEN) return send(res, 401, { error: 'Unauthorized' });
-    const id = new URL(req.url, 'http://localhost').searchParams.get('personaId') ?? '';
-    const persona = personas.get(id);
+    const params = new URL(req.url, 'http://localhost').searchParams;
+    const persona = customer(params.get('personaId') ?? '', params.get('connected') === '1');
     return persona ? send(res, 200, summary(persona)) : send(res, 404, { error: 'Unknown personaId' });
   }
   if (req.method !== 'POST' || (req.url !== '/ask' && req.url !== '/transcribe')) return send(res, 404, { error: 'Not found' });
@@ -240,7 +259,7 @@ const server = createServer(async (req, res) => {
     return send(res, 400, { error: 'Invalid JSON' });
   }
   if (typeof parsed === 'string') return send(res, 400, { error: parsed });
-  const key = parsed.history.length === 0 ? cacheKey(parsed.personaId, parsed.question) : null;
+  const key = parsed.history.length === 0 ? cacheKey(parsed.personaId, parsed.question, parsed.connected) : null;
   const hit = key ? cache.get(key) : undefined;
   if (hit) {
     console.log(`[ask] ${parsed.personaId} cached | ${parsed.question.slice(0, 80)}`);
@@ -251,7 +270,7 @@ const server = createServer(async (req, res) => {
 
   const started = Date.now();
   try {
-    const answer = await askModel(personas.get(parsed.personaId)!, parsed.question, parsed.history);
+    const answer = await askModel(customer(parsed.personaId, parsed.connected === true)!, parsed.question, parsed.history);
     spentUsd += answer.usage.usd ?? 0;
     console.log(
       `[ask] ${parsed.personaId} tool=${answer.tool ?? '-'} ${((Date.now() - started) / 1000).toFixed(1)}s ` +

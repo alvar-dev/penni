@@ -43,6 +43,8 @@ import { ListeningTime, Waveform } from './src/components/Waveform';
 import { newId, personas, placeholderAnswer, strings, suggestions, type Message } from './src/content';
 import { loadConversations, saveConversations, titleFrom, type Conversation } from './src/conversations';
 import { loadPlans, savePlans, type Plan } from './src/plan';
+import { loadConnected, saveConnected } from './src/banks';
+import { ConnectSheet } from './src/components/ConnectSheet';
 import type { Summary } from './src/shared/api';
 import { useVoiceInput } from './src/hooks/useVoiceInput';
 import { colors, type } from './src/theme';
@@ -135,6 +137,11 @@ function Screen() {
   const historyLoaded = useRef(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [plans, setPlans] = useState<Record<string, Plan>>({});
+  // Customers who connected another bank (PSD2); the coach then sees every account.
+  const [banks, setBanks] = useState<Record<string, number>>({});
+  const banksLoaded = useRef(false);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const connected = !!banks[personaId];
   const plansLoaded = useRef(false);
   const [thinkingStep, setThinkingStep] = useState(0);
 
@@ -249,11 +256,31 @@ function Screen() {
   // The start screen's overview of this customer's money.
   useEffect(() => {
     const controller = new AbortController();
-    getSummary(personaId, controller.signal)
+    getSummary(personaId, connected, controller.signal)
       .then(setSummary)
       .catch(() => setSummary(null));
     return () => controller.abort();
-  }, [personaId]);
+  }, [personaId, connected]);
+
+  useEffect(() => {
+    void loadConnected().then((saved) => {
+      banksLoaded.current = true;
+      setBanks((prev) => ({ ...saved, ...prev }));
+    });
+  }, []);
+  useEffect(() => {
+    if (banksLoaded.current) void saveConnected(banks);
+  }, [banks]);
+  const setBankConnected = useCallback(
+    (on: boolean) =>
+      setBanks((prev) => {
+        const next = { ...prev };
+        if (on) next[personaId] = Date.now();
+        else delete next[personaId];
+        return next;
+      }),
+    [personaId],
+  );
 
   // Surprise-fund plans the customer switched on, per customer, on the device only.
   useEffect(() => {
@@ -319,13 +346,22 @@ function Screen() {
     return () => clearTimeout(timer);
   }, [notice]);
 
-  /** Asks the coach. Callers make sure nothing else is in progress. */
+  /**
+   * Asks the coach. Callers make sure nothing else is in progress. `silent`
+   * asks again without a new question bubble (after connecting a bank), with
+   * no history so the answer stands on its own.
+   */
   const submit = useCallback(
-    (question: string) => {
+    (question: string, options: { connected?: boolean; silent?: boolean } = {}) => {
       Keyboard.dismiss();
       setDraft('');
       // Earlier answers carry the calculation behind their chart, so "another chart" can redraw it.
-      const history = messages.slice(-6).map((m) => ({ role: m.role, text: m.text, call: m.role === 'assistant' ? m.call : undefined }));
+      const history = options.silent
+        ? []
+        : messages
+            .filter((m) => !(m.role === 'assistant' && m.event))
+            .slice(-6)
+            .map((m) => ({ role: m.role, text: m.text, call: m.role === 'assistant' ? m.call : undefined }));
       let conversationId = currentId;
       if (!conversationId) {
         conversationId = `c${Date.now().toString(36)}`;
@@ -334,7 +370,7 @@ function Screen() {
         setCurrentId(conversationId);
       }
       const target = conversationId;
-      pushMessage(target, { id: newId(), role: 'user', text: question });
+      if (!options.silent) pushMessage(target, { id: newId(), role: 'user', text: question });
       setPhase('thinking');
 
       cancelRequest();
@@ -343,7 +379,7 @@ function Screen() {
       inFlight.current = controller;
       const timeout = setTimeout(() => controller.abort(), 90_000);
 
-      ask({ personaId, question, history }, controller.signal)
+      ask({ personaId, question, history, connected: options.connected ?? connected }, controller.signal)
         .then((answer) => {
           if (seq !== requestSeq.current) return;
           pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
@@ -362,8 +398,24 @@ function Screen() {
           setPhase('idle');
         });
     },
-    [messages, personaId, currentId, cancelRequest, pushMessage],
+    [messages, personaId, currentId, cancelRequest, pushMessage, connected],
   );
+
+  /**
+   * Another bank is connected. If the conversation just showed the gap (the
+   * accounts card with only S-Pankki), the coach carries on by itself and
+   * answers the same question again with every account.
+   */
+  const onBankConnected = useCallback(() => {
+    setConnectOpen(false);
+    setBankConnected(true);
+    const at = messages.findLastIndex((m) => m.role === 'assistant' && m.viz?.kind === 'accounts');
+    const asked = at > 0 ? messages.slice(0, at).findLast((m) => m.role === 'user') : undefined;
+    if (currentId && asked && phase === 'idle') {
+      pushMessage(currentId, { id: newId(), role: 'assistant', text: strings.connectedEvent, event: true });
+      submit(asked.text, { connected: true, silent: true });
+    }
+  }, [messages, currentId, phase, pushMessage, submit, setBankConnected]);
 
   const send = useCallback(
     (raw: string) => {
@@ -494,10 +546,10 @@ function Screen() {
   }, [visibleConversations, openConversation]);
 
   const planMonthly = summary?.plan?.monthly;
-  const actions = useRef({ send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly });
+  const actions = useRef({ send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, setBankConnected, onBankConnected });
   useEffect(() => {
-    actions.current = { send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly };
-  }, [send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly]);
+    actions.current = { send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, setBankConnected, onBankConnected };
+  }, [send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, setBankConnected, onBankConnected]);
 
   // Development only: jump straight to a state, e.g. exp://127.0.0.1:8081/--/?preview=chat
   useEffect(() => {
@@ -570,10 +622,18 @@ function Screen() {
           }
         }
         inputRef.current?.focus();
+      } else if (name === 'connect') {
+        setConnectOpen(true);
+      } else if (name === 'connected') {
+        // As if the consent and the sign-in at the other bank had just finished.
+        actions.current.onBankConnected();
+      } else if (name === 'bankson' || name === 'banksoff') {
+        actions.current.setBankConnected(name === 'bankson');
       } else if (name === 'reset') {
-        // A clean start for a demo: no saved conversations, no plan.
+        // A clean start for a demo: no saved conversations, no plan, only S-Pankki.
         setConversations([]);
         actions.current.setPlan(null);
+        actions.current.setBankConnected(false);
         actions.current.cancelRequest();
         setMessages([]);
         setCurrentId(null);
@@ -636,9 +696,13 @@ function Screen() {
                   <Animated.View key={message.id} entering={FadeInDown.duration(260)} style={styles.userBubble}>
                     <Text style={styles.userText}>{message.text}</Text>
                   </Animated.View>
+                ) : message.event ? (
+                  <Animated.View key={message.id} entering={FadeIn.duration(300)} style={styles.event}>
+                    <Text style={styles.eventText}>✓ {message.text}</Text>
+                  </Animated.View>
                 ) : (
                   <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
-                    {message.viz ? <Viz viz={message.viz} example={message.example} /> : null}
+                    {message.viz ? <Viz viz={message.viz} example={message.example} onConnect={connected ? undefined : () => setConnectOpen(true)} /> : null}
                     <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
                     {message.sources?.length ? (
                       <Text style={styles.answerSource}>
@@ -846,7 +910,14 @@ function Screen() {
         onDelete={deleteConversation}
         onNewChat={newChat}
         onSettle={settleDrawer}
+        bankConnected={connected}
+        onConnectBank={() => {
+          settleDrawer(false);
+          setConnectOpen(true);
+        }}
+        onDisconnectBank={() => setBankConnected(false)}
       />
+      <ConnectSheet visible={connectOpen} onClose={() => setConnectOpen(false)} onConnected={onBankConnected} />
     </View>
   );
 }
@@ -883,6 +954,8 @@ const styles = StyleSheet.create({
   answer: { marginBottom: 28 },
   answerText: { ...type.body, color: colors.text, marginTop: 14, paddingHorizontal: 2 },
   answerTextAlone: { marginTop: 0 },
+  event: { alignSelf: 'center', backgroundColor: colors.greenTint, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 18 },
+  eventText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700 },
   answerSource: { ...type.caption, color: colors.textTertiary, marginTop: 8, paddingHorizontal: 2 },
   planButton: { alignSelf: 'flex-start', marginTop: 14, backgroundColor: colors.green700, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 11 },
   planButtonPressed: { backgroundColor: colors.green900 },

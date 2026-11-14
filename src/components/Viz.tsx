@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { strings, type Viz as VizData } from '../content';
 import { colors, type } from '../theme';
+import { AccountsChart } from './charts/AccountsChart';
 import { BasketsChart } from './charts/BasketsChart';
 import { ColumnsChart } from './charts/ColumnsChart';
 import { DonutChart } from './charts/DonutChart';
@@ -13,7 +14,7 @@ import { RunwayChart } from './charts/RunwayChart';
 import { TrendChart } from './charts/TrendChart';
 
 /** The visual half of an answer: a label, the headline number and its chart. */
-export function Viz({ viz, example }: { viz: VizData; example?: boolean }) {
+export function Viz({ viz, example, onConnect }: { viz: VizData; example?: boolean; onConnect?: () => void }) {
   return (
     <View style={styles.card}>
       <Text style={styles.label}>{viz.label}</Text>
@@ -31,6 +32,9 @@ export function Viz({ viz, example }: { viz: VizData; example?: boolean }) {
         <ProjectionChart nowMonthly={viz.nowMonthly} afterMonthly={viz.afterMonthly} changeLabel={viz.changeLabel} yearly={viz.value} />
       ) : null}
       {viz.kind === 'ranking' ? <RankingChart rows={viz.rows} /> : null}
+      {viz.kind === 'accounts' ? (
+        <AccountsChart banks={viz.banks} connectable={viz.connectable && !!onConnect} footnote={viz.footnote} onConnect={onConnect} />
+      ) : null}
       {viz.kind === 'replay' ? <ReplayChart points={viz.points} event={viz.event} overdrawnDays={viz.overdrawnDays} /> : null}
       {example ? <Text style={styles.example}>{strings.exampleTag}</Text> : null}
     </View>
