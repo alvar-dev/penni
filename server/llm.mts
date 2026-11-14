@@ -68,6 +68,7 @@ How to work:
 - "Last month" is ${TODAY.slice(0, 4)}-${String(m - 1).padStart(2, '0')}. "This year" is ${y}-01 to ${TODAY.slice(0, 7)}. If no period is given for a total, use the last full month.
 - The data has categories and merchant types but no merchant names, so it cannot show single subscriptions (such as Netflix), single shops or accounts in other banks. If asked about those, use the closest tool if it helps and say plainly what the data cannot show.
 - If the question is not about the customer's money, answer briefly without a tool and steer back to their spending.
+- For anything about the three baskets (what they are, "explain my baskets", which costs are fixed and which can be changed), use spending_profile, so the explanation is about their own money, never only the general idea.
 - For unexpected costs, emergencies, a buffer, saving for surprises or "why was I overdrawn", use surprise_fund.
 - For money in total, savings, debts, credit cards or other banks, use all_accounts. When its result suggests paying the card from savings, say why in plain words: the card costs much more interest than savings earn, so paying it first saves the amount shown; keep it friendly.
 
@@ -77,6 +78,7 @@ How to answer, once you have a tool result:
 - Use only numbers that appear in the tool result. Round to whole euros unless the amount is under 10 €. ${tr('Write amounts the Finnish way: 84 €, 1 234 €, 84,20 €.', 'Write amounts like €84, €1,234, €84.20.')}
 - A chart above your text already shows the numbers, so pick the one or two that matter instead of repeating them all.
 - You are a coach, not only a calculator. When the numbers show a pattern (surprises causing overdrafts, everyday spending well above people their age, a month far from usual), name it in plain words and end with one concrete, friendly next step that uses their own numbers. Never shame or lecture.
+- When the customer asks about the baskets themselves, teach with their own numbers: one short sentence per basket with its monthly amount and one of their own biggest items, then say which basket they can steer most easily (the discretionary one) and that the irregular one is handled with a buffer set aside every payday. For this you may use up to 75 words.
 - After a surprise_fund result, explain that big irregular costs feel random one by one but add up to a predictable amount, and suggest setting aside the suggested amount every payday, paid for by spending that much less on everyday extras. The app shows a button under your answer to start that plan, so you can invite them to start it.
 - The tool result may contain official_comparisons: figures from Statistics Finland (Tilastokeskus), already written in ${tr('Finnish', 'English')}. If one of them makes the answer clearly more useful (a fair "how do I compare", a price rise that explains a change, how common something is), add exactly one comparison sentence and say it comes from ${tr('Tilastokeskus', 'Statistics Finland')}, keeping its numbers and year. Use at most one, and none if none fits; their numbers count as numbers from the tool result. They describe Finnish households in general, so say ${tr('"suomalaiset" or the age group, never "S-Pankin asiakkaat"', '"people in Finland" or the age group, never "S-Pankki customers"')}.
 ${noticed ? `- You have noticed this in their money: "${noticed.title}. ${noticed.text}" When an answer touches on it (balance, overdrafts, buffers, savings, debt, cards, everyday spending), end with it as the next step, in one sentence with its numbers. Mention it at most once in a conversation, and leave it out where it does not fit or where your answer already says the same thing (for example after surprise_fund).
@@ -165,7 +167,9 @@ export async function askModel(p: Persona, question: string, history: HistoryIte
   // If the model skipped the tool, ask again and insist; never pass on numbers
   // it made up.
   const wantsChart = /kaavio|kuvaaja|graafi|piirr|näytä|chart|graph|plot|draw|show/i.test(question);
-  if (!call && (/\d/.test(clean(choice.message.content)) || wantsChart)) {
+  // The three baskets are the heart of the coaching: always explained with the customer's own split.
+  const aboutBaskets = /\bbaskets?\b|kori/i.test(question);
+  if (!call && (/\d/.test(clean(choice.message.content)) || wantsChart || aboutBaskets)) {
     const insist: Message = {
       role: 'system',
       content:
@@ -179,6 +183,10 @@ export async function askModel(p: Persona, question: string, history: HistoryIte
     const other = lastCall && wantsChart ? otherChart(lastCall) : null;
     if (!call && other) {
       call = { id: 'switch-chart', type: 'function', function: { name: other.name, arguments: JSON.stringify(other.args) } };
+      choice = { ...choice, message: { ...choice.message, content: '', tool_calls: [call] } };
+    }
+    if (!call && aboutBaskets) {
+      call = { id: 'baskets', type: 'function', function: { name: 'spending_profile', arguments: '{}' } };
       choice = { ...choice, message: { ...choice.message, content: '', tool_calls: [call] } };
     }
     if (!call) return finish(NO_TOOL_ANSWER);

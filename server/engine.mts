@@ -403,16 +403,18 @@ function spendingProfile(p: Persona): ToolResult {
   const perMonth = (v: number) => v / months.length;
 
   const baskets: Record<Basket, number> = { regular: 0, irregular: 0, everyday: 0 };
-  const byCategory = new Map<string, number>();
+  // Each basket's spending by item, so the coach can explain the baskets with the customer's own examples.
+  const items: Record<Basket, Map<string, number>> = { regular: new Map(), irregular: new Map(), everyday: new Map() };
   for (const t of spending(p)) {
     if (!inWindow(t) || !SPEND_CATEGORIES.has(t.category)) continue;
     const b = basketOf(t);
-    if (b) baskets[b] += spendOf(t);
-    if (b === 'everyday') {
-      const key = t.mcc === '4121' ? GROUPS.taxi.label : LABEL_OF_CATEGORY[t.category];
-      byCategory.set(key, (byCategory.get(key) ?? 0) + spendOf(t));
-    }
+    if (!b) continue;
+    baskets[b] += spendOf(t);
+    const key = t.mcc === '4121' ? GROUPS.taxi.label : LABEL_OF_CATEGORY[t.category];
+    items[b].set(key, (items[b].get(key) ?? 0) + spendOf(t));
   }
+  const biggest = (b: Basket, n: number) =>
+    Object.fromEntries([...items[b].entries()].sort((x, y) => y[1] - x[1]).slice(0, n).map(([k, v]) => [k, round(perMonth(v))]));
   const spend = baskets.regular + baskets.irregular + baskets.everyday;
   const income = p.tx.filter((t) => inWindow(t) && (t.category === 'Salary' || t.category === 'Other Income')).reduce((s, t) => s + t.amount, 0);
   const year = monthsBetween(addMonths(LAST_FULL_MONTH, -11), LAST_FULL_MONTH);
@@ -432,9 +434,11 @@ function spendingProfile(p: Persona): ToolResult {
         everyday_slips_through: round(perMonth(baskets.everyday)),
       },
       everyday_share_of_spending_pct: spend ? round((baskets.everyday / spend) * 100) : 0,
-      biggest_everyday_items_monthly_eur: Object.fromEntries(
-        [...byCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => [k, round(perMonth(v))]),
-      ),
+      biggest_items_by_basket_monthly_eur: {
+        mandatory_regular: biggest('regular', 2),
+        mandatory_irregular: biggest('irregular', 2),
+        everyday_slips_through: biggest('everyday', 3),
+      },
       monthly_income_eur: round(perMonth(income)),
       months_with_negative_balance_last_12: negativeMonths,
       finland_everyday_share_pct: round(finland.share * 100),
@@ -1048,7 +1052,7 @@ export const TOOLS = [
     type: 'function',
     function: {
       name: 'spending_profile',
-      description: 'The customer\'s spending split into the three baskets over the last three full months, compared with people of the same age. Use for "what kind of spender am I", "where does my money go", "am I doing well".',
+      description: 'The customer\'s spending split into the three baskets over the last three full months, with the biggest items in each basket, compared with people of the same age. Use for "what kind of spender am I", "where does my money go", "am I doing well", and for anything about the three baskets: what they are, explaining them, which costs are fixed and which can be changed.',
       parameters: { type: 'object', properties: {} },
     },
   },
