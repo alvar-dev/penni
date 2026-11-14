@@ -19,6 +19,7 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeOut,
+  FadeOutDown,
   cancelAnimation,
   interpolate,
   useAnimatedStyle,
@@ -811,8 +812,8 @@ function Screen() {
                           style={[styles.input, { height: inputHeight }]}
                           value={draft}
                           onChangeText={setDraft}
-                          placeholder={notice && !empty ? notice.text : strings.inputPlaceholder}
-                          placeholderTextColor={notice && !empty ? colors.textSecondary : colors.textTertiary}
+                          placeholder={strings.inputPlaceholder}
+                          placeholderTextColor={colors.textTertiary}
                           multiline
                           submitBehavior="blurAndSubmit"
                           returnKeyType="send"
@@ -859,24 +860,6 @@ function Screen() {
                     </Text>
                     {phase === 'transcribing' || listening ? (
                       <Text style={styles.hint}>{phase === 'transcribing' ? strings.transcribingHint : (micNote ?? strings.listeningHint)}</Text>
-                    ) : notice ? (
-                      // A short message (e.g. no speech heard) stands in for the hint for a moment.
-                      <Text style={styles.hint} accessibilityLiveRegion="polite">
-                        {notice.text}
-                        {notice.retry ? '.' : ''}
-                        {notice.retry ? (
-                          <Text
-                            style={styles.hintAction}
-                            onPress={() => {
-                              setNotice(null);
-                              void onOrbPress();
-                            }}
-                            accessibilityRole="button">
-                            {'  '}
-                            {strings.retry}
-                          </Text>
-                        ) : null}
-                      </Text>
                     ) : plan && summary?.plan ? (
                       <View style={styles.planPill}>
                         <Text style={styles.planPillText}>
@@ -896,6 +879,30 @@ function Screen() {
                 </Animated.View>
               ) : null}
 
+
+              {/* A toast: a dark bar right above the input, as wide as the field. */}
+              {notice ? (
+                <Animated.View
+                  entering={FadeInDown.duration(220)}
+                  exiting={FadeOutDown.duration(180)}
+                  style={[styles.toast, { bottom: INPUT_ROW + inputExtra }]}
+                  accessibilityLiveRegion="polite">
+                  <Text style={styles.toastText} numberOfLines={2}>
+                    {notice.text}
+                  </Text>
+                  {notice.retry ? (
+                    <Pressable
+                      onPress={() => {
+                        setNotice(null);
+                        void onOrbPress();
+                      }}
+                      accessibilityRole="button"
+                      hitSlop={12}>
+                      <Text style={styles.toastAction}>{strings.retry}</Text>
+                    </Pressable>
+                  ) : null}
+                </Animated.View>
+              ) : null}
 
               {/* The input row itself is drawn earlier (pinned to the bottom) so the orb can sit on top of it. */}
               <View style={{ height: INPUT_ROW + inputExtra }} />
@@ -1027,7 +1034,20 @@ const styles = StyleSheet.create({
   },
   caption: { alignItems: 'center', paddingHorizontal: 32 },
   title: { ...type.title, color: colors.text, textAlign: 'center' },
-  hintAction: { fontWeight: '600', color: colors.green700 },
+  toast: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 48,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: '#1F1F1F',
+  },
+  toastText: { flex: 1, fontSize: 15, lineHeight: 20, color: '#FFFFFF' },
+  toastAction: { fontSize: 15, lineHeight: 20, fontWeight: '600', color: colors.green200, marginLeft: 16 },
   hint: { ...type.label, fontWeight: '400', color: colors.textSecondary, textAlign: 'center', marginTop: 6 },
 
   overview: { paddingBottom: 16 },
