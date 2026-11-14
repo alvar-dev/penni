@@ -18,7 +18,9 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
+  FadeInUp,
   FadeOut,
+  FadeOutUp,
   cancelAnimation,
   interpolate,
   useAnimatedStyle,
@@ -878,31 +880,6 @@ function Screen() {
                 </Animated.View>
               ) : null}
 
-              {notice ? (
-                <Animated.View
-                  entering={FadeInDown.springify().damping(18).stiffness(220)}
-                  exiting={FadeOut.duration(160)}
-                  style={[styles.notice, { bottom: INPUT_ROW + 10 + inputExtra }]}
-                  pointerEvents="box-none"
-                  accessibilityLiveRegion="polite">
-                  <View style={styles.noticePill}>
-                    <Text style={styles.noticeText} numberOfLines={2}>
-                      {notice.text}
-                    </Text>
-                    {notice.retry ? (
-                      <Pressable
-                        onPress={() => {
-                          setNotice(null);
-                          void onOrbPress();
-                        }}
-                        accessibilityRole="button"
-                        hitSlop={10}>
-                        <Text style={styles.noticeAction}>{strings.retry}</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                </Animated.View>
-              ) : null}
 
               {/* The input row itself is drawn earlier (pinned to the bottom) so the orb can sit on top of it. */}
               <View style={{ height: INPUT_ROW + inputExtra }} />
@@ -945,6 +922,32 @@ function Screen() {
               </Animated.View>
             )}
           </View>
+          {/* Notices slide in at the top, under the header, clear of the tiles, questions and input. */}
+          {notice ? (
+            <Animated.View
+              entering={FadeInUp.springify().damping(18).stiffness(220)}
+              exiting={FadeOutUp.duration(180)}
+              style={[styles.notice, { top: insets.top + HEADER + 4 }]}
+              pointerEvents="box-none"
+              accessibilityLiveRegion="polite">
+              <View style={styles.noticePill}>
+                <Text style={styles.noticeText} numberOfLines={2}>
+                  {notice.text}
+                </Text>
+                {notice.retry ? (
+                  <Pressable
+                    onPress={() => {
+                      setNotice(null);
+                      void onOrbPress();
+                    }}
+                    accessibilityRole="button"
+                    hitSlop={10}>
+                    <Text style={styles.noticeAction}>{strings.retry}</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            </Animated.View>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
 
