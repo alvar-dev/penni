@@ -11,6 +11,9 @@
         --ink-2: #5f6661;
         --ink-3: #6d736f;
         --green: #1d7a4a;
+        --g900: #004628;
+        --g500: #00aa46;
+        --g200: #91fa9b;
         --font: -apple-system, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
       }
       * {
@@ -44,8 +47,6 @@
         inset: 0;
         transform-origin: 50% 48%;
       }
-
-      /* A slow, soft colour field behind everything. */
       .mesh {
         position: absolute;
         left: 0;
@@ -76,14 +77,12 @@
         position: absolute;
         inset: -64px;
         z-index: 60;
-        opacity: 0.55;
+        opacity: 0.5;
         pointer-events: none;
       }
       .layer {
         z-index: 10;
       }
-
-      /* Type: lines rise from behind a mask. */
       .h {
         font-weight: 600;
         letter-spacing: -0.045em;
@@ -92,8 +91,8 @@
       .ln {
         display: block;
         overflow: hidden;
-        padding: 0.04em 0 0.1em;
-        margin-bottom: -0.1em;
+        padding: 0.04em 0 0.12em;
+        margin-bottom: -0.12em;
       }
       .ln > span {
         display: inline-block;
@@ -103,7 +102,6 @@
         line-height: 1.38;
         letter-spacing: -0.012em;
         color: var(--ink-2);
-        font-weight: 400;
       }
       .tag {
         font-size: 28px;
@@ -118,7 +116,60 @@
         text-align: center;
       }
 
+      /* Purchases along the trail */
+      .chip {
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 24px 10px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow:
+          0 20px 44px rgba(12, 58, 34, 0.12),
+          0 3px 8px rgba(12, 40, 26, 0.06),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.05);
+        white-space: nowrap;
+        transform-origin: 50% 50%;
+      }
+      .chip .ic {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: #e6f5e9;
+        color: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chip .ic svg {
+        width: 26px;
+        height: 26px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .chip .nm {
+        font-size: 28px;
+        color: var(--ink-2);
+        letter-spacing: -0.01em;
+      }
+      .chip .am {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+
       /* Baskets */
+      #rings {
+        position: absolute;
+        inset: 0;
+      }
       .blabel {
         position: absolute;
         width: 420px;
@@ -134,13 +185,50 @@
         font-size: 58px;
         font-weight: 600;
         letter-spacing: -0.04em;
-        margin-top: 6px;
+        margin-top: 4px;
         font-variant-numeric: tabular-nums;
       }
       .blabel .per {
         font-size: 28px;
         color: var(--ink-3);
         margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Benchmarks */
+      .bench {
+        position: absolute;
+        left: 164px;
+        width: 980px;
+      }
+      .bench .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 34px;
+        letter-spacing: -0.015em;
+      }
+      .bench .row b {
+        font-size: 46px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+      }
+      .bench .row span.src {
+        color: var(--ink-3);
+        font-size: 28px;
+      }
+      .bench .track {
+        height: 26px;
+        border-radius: 13px;
+        background: rgba(16, 60, 36, 0.07);
+        margin-top: 14px;
+        overflow: hidden;
+      }
+      .bench .fill {
+        height: 100%;
+        border-radius: 13px;
+        transform-origin: left center;
       }
 
       /* Phone */
@@ -179,17 +267,6 @@
         height: 100%;
         object-fit: cover;
       }
-      #phone .island {
-        position: absolute;
-        top: 14px;
-        left: 50%;
-        width: 124px;
-        height: 36px;
-        margin-left: -62px;
-        border-radius: 18px;
-        background: #000;
-        z-index: 3;
-      }
       #phone .glare {
         position: absolute;
         inset: 0;
@@ -203,7 +280,7 @@
         top: 180px;
         padding: 24px 32px;
         border-radius: 34px 34px 10px 34px;
-        background: rgba(255, 255, 255, 0.86);
+        background: rgba(255, 255, 255, 0.9);
         box-shadow:
           0 24px 60px rgba(12, 58, 34, 0.12),
           inset 0 0 0 1px rgba(16, 60, 36, 0.06);
@@ -223,29 +300,63 @@
         background: var(--green);
         border-radius: 2px;
       }
+      .pill {
+        position: absolute;
+        left: 164px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 16px 30px 16px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow:
+          0 20px 44px rgba(12, 58, 34, 0.1),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.05);
+        font-size: 32px;
+        letter-spacing: -0.015em;
+        white-space: nowrap;
+      }
+      .pill .ck {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .pill .ck svg {
+        width: 26px;
+        height: 26px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
 
       /* Banks */
       .bank {
         position: absolute;
         left: 0;
         top: 0;
-        width: 150px;
-        height: 150px;
-        margin: -75px 0 0 -75px;
-        border-radius: 40px;
-        background: rgba(255, 255, 255, 0.92);
+        width: 128px;
+        height: 128px;
+        margin: -64px 0 0 -64px;
+        border-radius: 34px;
+        background: #fff;
         box-shadow:
-          0 30px 60px rgba(12, 58, 34, 0.14),
-          0 6px 14px rgba(12, 40, 26, 0.08),
+          0 26px 52px rgba(12, 58, 34, 0.14),
+          0 5px 12px rgba(12, 40, 26, 0.08),
           inset 0 0 0 1px rgba(16, 60, 36, 0.06);
         overflow: hidden;
-        padding: 22px;
+        padding: 18px;
       }
       .bank img {
         width: 100%;
         height: 100%;
         display: block;
-        border-radius: 24px;
+        border-radius: 22px;
       }
       #banksBack {
         position: absolute;
@@ -257,8 +368,6 @@
         inset: 0;
         z-index: 11;
       }
-
-      /* End card */
       .word {
         font-size: 168px;
         font-weight: 700;
@@ -274,8 +383,8 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="50" data-width="1920" data-height="1080">
-      <div id="cam" class="clip" data-start="0" data-duration="50" data-track-index="0">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="57" data-width="1920" data-height="1080">
+      <div id="cam" class="clip" data-start="0" data-duration="57" data-track-index="0">
         <div class="mesh" id="mesh1"></div>
         <div class="mesh" id="mesh2"></div>
         <div class="mesh" id="mesh3"></div>
@@ -284,87 +393,101 @@
         <div id="banksFront"></div>
 
         <!-- 1. Open -->
-        <div id="s1" class="clip layer" data-start="0" data-duration="7" data-track-index="1">
+        <div id="s1" class="clip layer" data-start="0" data-duration="6.6" data-track-index="1">
           <div class="center tag" id="s1-tag" style="top: 726px">Introducing Penni</div>
           <div class="center h" id="s1-h" style="top: 772px; font-size: 128px"><span class="ln"><span>Ask your money.</span></span></div>
         </div>
 
         <!-- 2. The trail -->
-        <div id="s2" class="clip layer" data-start="7" data-duration="7.5" data-track-index="1">
-          <div class="h" id="s2-h" style="position: absolute; left: 160px; top: 130px; font-size: 96px">
-            <span class="ln"><span>Every day, money</span></span><span class="ln"><span>leaves a trail.</span></span>
+        <div id="s2" class="clip layer" data-start="6.5" data-duration="8" data-track-index="1">
+          <div class="h" id="s2-h" style="position: absolute; left: 160px; top: 110px; font-size: 92px">
+            <span class="ln"><span>Every day, money leaves a trail.</span></span>
           </div>
-          <div class="lede" id="s2-l" style="position: absolute; left: 164px; top: 380px">Most of us never see where it leads.</div>
         </div>
+        <div id="chips" class="clip layer" data-start="7" data-duration="10" data-track-index="2"></div>
 
         <!-- 3. Three baskets -->
-        <div id="s3" class="clip layer" data-start="14.5" data-duration="14.3" data-track-index="1">
-          <div class="h" id="s3-h" style="position: absolute; left: 160px; top: 120px; font-size: 88px"><span class="ln"><span>Three baskets.</span></span></div>
-          <div class="lede" id="s3-l" style="position: absolute; left: 164px; top: 240px">Everything you spend falls into one of them.</div>
-          <div class="h" id="s3-h2" style="position: absolute; left: 160px; top: 120px; font-size: 88px">
+        <div id="s3" class="clip layer" data-start="14.5" data-duration="14.5" data-track-index="1">
+          <svg id="rings" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+          <div class="h" id="s3-h" style="position: absolute; left: 160px; top: 110px; font-size: 88px"><span class="ln"><span>Three baskets.</span></span></div>
+          <div class="lede" id="s3-l" style="position: absolute; left: 164px; top: 230px">Everything you spend falls into one of them.</div>
+          <div class="h" id="s3-h2" style="position: absolute; left: 160px; top: 110px; font-size: 88px">
             <span class="ln"><span>Extras are the part</span></span><span class="ln"><span>you can steer.</span></span>
           </div>
-          <div class="blabel" id="lab1" style="left: 600px; top: 800px">
+          <div class="blabel" id="lab1" style="left: 600px; top: 822px">
             <div class="name">Essentials</div>
             <div class="val" id="v1">€0</div>
-            <div class="per">a month</div>
+            <div class="per"><span id="p1">0</span>% · a month</div>
           </div>
-          <div class="blabel" id="lab2" style="left: 1120px; top: 800px">
+          <div class="blabel" id="lab2" style="left: 1120px; top: 822px">
             <div class="name">Surprises</div>
             <div class="val" id="v2">€0</div>
-            <div class="per">a month</div>
+            <div class="per"><span id="p2">0</span>% · a month</div>
           </div>
-          <div class="blabel" id="lab3" style="left: 1430px; top: 800px">
+          <div class="blabel" id="lab3" style="left: 1430px; top: 822px">
             <div class="name">Extras</div>
             <div class="val" id="v3">€0</div>
-            <div class="per">a month</div>
+            <div class="per"><span id="p3">0</span>% · a month</div>
           </div>
         </div>
 
-        <!-- 4. Just ask -->
-        <div id="s4" class="clip layer" data-start="28.8" data-duration="10.6" data-track-index="1">
+        <!-- 4. Benchmarks -->
+        <div id="s4" class="clip layer" data-start="28.9" data-duration="5.9" data-track-index="1">
+          <div class="h" id="s4-h" style="position: absolute; left: 160px; top: 230px; font-size: 92px"><span class="ln"><span>How do you compare?</span></span></div>
+          <div class="lede" id="s4-l" style="position: absolute; left: 164px; top: 352px">Statistics Finland benchmarks, built in.</div>
+          <div class="bench" id="bench1" style="top: 500px">
+            <div class="row"><span>Your extras</span><b id="bp1">0%</b></div>
+            <div class="track"><div class="fill" id="bf1" style="width: 65%; background: var(--green)"></div></div>
+          </div>
+          <div class="bench" id="bench2" style="top: 640px">
+            <div class="row"><span>People aged 35–44 in Finland</span><b id="bp2">0%</b></div>
+            <div class="track"><div class="fill" id="bf2" style="width: 90%; background: #a9d8b8"></div></div>
+          </div>
+          <div class="bench" id="bench3" style="top: 790px">
+            <div class="row"><span class="src">Source: Statistics Finland, Household Budget Survey 2022</span></div>
+          </div>
+        </div>
+
+        <!-- 5. Just ask -->
+        <div id="s5" class="clip layer" data-start="34.6" data-duration="11" data-track-index="1">
           <div id="stage">
             <div id="phone">
               <div class="screen">
-                <div class="island"></div>
                 <img id="scr-home" src="assets/screen-home.png" alt="" />
                 <img id="scr-answer" src="assets/screen-answer.png" alt="" style="opacity: 0" />
                 <div class="glare"></div>
               </div>
             </div>
           </div>
-          <div class="h" id="s4-h" style="position: absolute; left: 200px; top: 690px; font-size: 104px"><span class="ln"><span>Just ask.</span></span></div>
-          <div class="lede" id="s4-l" style="position: absolute; left: 204px; top: 826px">By voice or text. Clear answers, in seconds.</div>
+          <div class="h" id="s5-h" style="position: absolute; left: 200px; top: 690px; font-size: 104px"><span class="ln"><span>Just ask.</span></span></div>
+          <div class="lede" id="s5-l" style="position: absolute; left: 204px; top: 826px">By voice or text. Clear answers, in seconds.</div>
           <div id="bubble"><span id="typed"></span><span class="caret" id="caret"></span></div>
+          <div class="pill" id="pl1" style="top: 700px"><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Computed from your own transactions</div>
+          <div class="pill" id="pl2" style="top: 800px"><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>A chart and a plain answer, in seconds</div>
+          <div class="pill" id="pl3" style="top: 900px"><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Read aloud, if you like</div>
         </div>
 
-        <!-- 5. Every bank -->
-        <div id="s5" class="clip layer" data-start="39.2" data-duration="5.4" data-track-index="1">
-          <div class="center h" id="s5-h" style="top: 742px; font-size: 96px"><span class="ln"><span>Every bank. One coach.</span></span></div>
-          <div class="center lede" id="s5-l" style="top: 872px">Connect your other banks, read-only.</div>
+        <!-- 6. Every bank -->
+        <div id="s6" class="clip layer" data-start="45" data-duration="6" data-track-index="1">
+          <div class="center h" id="s6-h" style="top: 742px; font-size: 96px"><span class="ln"><span>Every bank. One coach.</span></span></div>
+          <div class="center lede" id="s6-l" style="top: 872px">Connect your other banks, read-only.</div>
         </div>
 
-        <!-- 6. End -->
-        <div id="s6" class="clip layer" data-start="44.6" data-duration="5.4" data-track-index="1">
-          <div class="center" id="s6-w" style="top: 600px"><span class="ln"><span class="word" id="word">Penni</span></span></div>
-          <div class="center lede" id="s6-l" style="top: 806px; font-size: 40px">Ask your money.</div>
-          <div class="center" id="s6-f" style="top: 980px; font-size: 26px; color: var(--ink-3)">A money coach for S-mobiili</div>
+        <!-- 7. End -->
+        <div id="s7" class="clip layer" data-start="51" data-duration="6" data-track-index="1">
+          <div class="center" id="s7-w" style="top: 600px"><span class="ln"><span class="word" id="word">Penni</span></span></div>
+          <div class="center lede" id="s7-l" style="top: 806px; font-size: 40px">Ask your money.</div>
+          <div class="center" id="s7-f" style="top: 980px; font-size: 28px; color: var(--ink-3)">A money coach for S-mobiili</div>
         </div>
       </div>
       <div id="grain"></div>
     </div>
-
-    <!-- Bank tiles wait here; while they orbit they move to the layer in front of or behind the orb. -->
-    <div id="tiles" style="display: none">
-      <div class="bank" id="k1"><img src="assets/op.png" alt="" /></div>
-      <div class="bank" id="k2"><img src="assets/nordea.png" alt="" /></div>
-      <div class="bank" id="k3"><img src="assets/revolut.png" alt="" /></div>
-    </div>
+    <div id="park" style="display: none"></div>
 
     <script>
       // =====================================================================
-      // Shapes: drawn once, turned into signed distance fields (R: distance in
-      // texels; G: which print of the footprint trail).
+      // Shapes: drawn once, turned into smoothed signed distance fields
+      // (R: distance in texels; G: which print of the trail).
       // =====================================================================
       const INF = 1e20;
       function edt1d(f, n, d, v, z) {
@@ -403,7 +526,29 @@
           for (let x = 0; x < w; x++) grid[y * w + x] = d[x];
         }
       }
-      function sdfFrom(canvas, centers) {
+      // Box blur, a few passes: rounds the creases a distance field has along its middle.
+      function blur(a, w, h, r, passes) {
+        const tmp = new Float32Array(w * h);
+        for (let p = 0; p < passes; p++) {
+          for (let y = 0; y < h; y++) {
+            let acc = 0;
+            for (let x = -r; x <= r; x++) acc += a[y * w + Math.min(w - 1, Math.max(0, x))];
+            for (let x = 0; x < w; x++) {
+              tmp[y * w + x] = acc / (2 * r + 1);
+              acc += a[y * w + Math.min(w - 1, x + r + 1)] - a[y * w + Math.max(0, x - r)];
+            }
+          }
+          for (let x = 0; x < w; x++) {
+            let acc = 0;
+            for (let y = -r; y <= r; y++) acc += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+            for (let y = 0; y < h; y++) {
+              a[y * w + x] = acc / (2 * r + 1);
+              acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x];
+            }
+          }
+        }
+      }
+      function sdfFrom(canvas, centers, smooth) {
         const w = canvas.width, h = canvas.height;
         const px = canvas.getContext("2d").getImageData(0, 0, w, h).data;
         const out = new Float64Array(w * h), inn = new Float64Array(w * h);
@@ -414,11 +559,14 @@
         }
         edt2d(out, w, h);
         edt2d(inn, w, h);
+        const dist = new Float32Array(w * h);
+        for (let i = 0; i < w * h; i++) dist[i] = Math.sqrt(out[i]) - Math.sqrt(inn[i]);
+        blur(dist, w, h, smooth, 3);
         const data = new Float32Array(w * h * 2);
         for (let y = 0; y < h; y++)
           for (let x = 0; x < w; x++) {
             const i = y * w + x;
-            data[i * 2] = Math.sqrt(out[i]) - Math.sqrt(inn[i]);
+            data[i * 2] = dist[i];
             let best = 0, bd = INF;
             if (centers)
               centers.forEach(([cx, cy], k) => {
@@ -442,38 +590,38 @@
       const ell = (g, x, y, rx, ry, rot = 0) => { g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); g.fill(); };
       const rr = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); };
 
-      // A soft, rounded bare foot, toes up, about s tall, centred on (0, 0).
-      function foot(g, s, mirror) {
+      // A shoe print, toe up, about s long, centred on (0, 0): the sole and the heel.
+      function shoe(g, s, mirror) {
         g.save();
         if (mirror) g.scale(-1, 1);
-        const E = (x, y, rx, ry, rot) => ell(g, x * s, y * s, rx * s, ry * s, rot || 0);
-        E(0.02, -0.08, 0.16, 0.19, 0.1);
-        E(0.06, 0.12, 0.115, 0.17, 0.04);
-        E(0.04, 0.31, 0.125, 0.125);
-        E(-0.09, -0.36, 0.068, 0.078);
-        E(0.02, -0.395, 0.047, 0.052);
-        E(0.1, -0.37, 0.042, 0.046);
-        E(0.165, -0.325, 0.037, 0.041);
-        E(0.215, -0.26, 0.032, 0.036);
+        g.beginPath();
+        g.moveTo(0.02 * s, -0.5 * s);
+        g.bezierCurveTo(0.2 * s, -0.5 * s, 0.22 * s, -0.22 * s, 0.17 * s, -0.04 * s);
+        g.bezierCurveTo(0.14 * s, 0.07 * s, 0.11 * s, 0.12 * s, 0.1 * s, 0.15 * s);
+        g.lineTo(-0.1 * s, 0.15 * s);
+        g.bezierCurveTo(-0.13 * s, 0.06 * s, -0.19 * s, -0.08 * s, -0.17 * s, -0.25 * s);
+        g.bezierCurveTo(-0.15 * s, -0.42 * s, -0.08 * s, -0.5 * s, 0.02 * s, -0.5 * s);
+        g.fill();
+        rr(g, -0.11 * s, 0.22 * s, 0.22 * s, 0.27 * s, [0.06 * s, 0.06 * s, 0.11 * s, 0.11 * s]);
         g.restore();
       }
 
       const TW = 1536, TH = 384, PRINTS = 7, trailCenters = [];
       const shapeDefs = {
-        trail: { w: TW, h: TH, trail: 1, draw: (g, w, h) => {
+        trail: { w: TW, h: TH, trail: 1, smooth: 3, draw: (g, w, h) => {
           for (let i = 0; i < PRINTS; i++) {
             const x = w * (0.07 + (0.86 * i) / (PRINTS - 1)), y = h * (i % 2 ? 0.66 : 0.34);
             trailCenters.push([x, y]);
             g.save();
             g.translate(x, y);
-            g.rotate(Math.PI / 2 + (i % 2 ? 0.07 : -0.07));
-            foot(g, h * 0.6, i % 2 === 1);
+            g.rotate(Math.PI / 2 + (i % 2 ? 0.06 : -0.06));
+            shoe(g, h * 0.62, i % 2 === 1);
             g.restore();
           }
         } },
-        house: { w: 512, h: 512, draw: (g, s) => {
+        house: { w: 512, h: 512, smooth: 4, draw: (g, s) => {
           g.lineJoin = "round";
-          g.lineWidth = s * 0.08;
+          g.lineWidth = s * 0.09;
           g.beginPath();
           g.moveTo(s * 0.5, s * 0.17);
           g.lineTo(s * 0.15, s * 0.47);
@@ -481,21 +629,21 @@
           g.closePath();
           g.fill();
           g.stroke();
-          rr(g, s * 0.22, s * 0.42, s * 0.56, s * 0.43, s * 0.07);
+          rr(g, s * 0.22, s * 0.42, s * 0.56, s * 0.43, s * 0.08);
           cut(g, () => rr(g, s * 0.43, s * 0.6, s * 0.14, s * 0.26, [s * 0.07, s * 0.07, 0, 0]));
         } },
-        machine: { w: 512, h: 512, draw: (g, s) => {
-          rr(g, s * 0.18, s * 0.12, s * 0.64, s * 0.76, s * 0.12);
+        machine: { w: 512, h: 512, smooth: 4, draw: (g, s) => {
+          rr(g, s * 0.18, s * 0.12, s * 0.64, s * 0.76, s * 0.13);
           cut(g, () => {
             ell(g, s * 0.5, s * 0.55, s * 0.22, s * 0.22);
-            ell(g, s * 0.31, s * 0.215, s * 0.028, s * 0.028);
-            ell(g, s * 0.41, s * 0.215, s * 0.028, s * 0.028);
+            ell(g, s * 0.31, s * 0.215, s * 0.03, s * 0.03);
+            ell(g, s * 0.41, s * 0.215, s * 0.03, s * 0.03);
           });
           ell(g, s * 0.5, s * 0.55, s * 0.15, s * 0.15);
         } },
-        coffee: { w: 512, h: 512, draw: (g, s) => {
-          ell(g, s * 0.69, s * 0.55, s * 0.12, s * 0.12);
-          cut(g, () => ell(g, s * 0.69, s * 0.55, s * 0.062, s * 0.062));
+        coffee: { w: 512, h: 512, smooth: 4, draw: (g, s) => {
+          ell(g, s * 0.69, s * 0.55, s * 0.125, s * 0.125);
+          cut(g, () => ell(g, s * 0.69, s * 0.55, s * 0.06, s * 0.06));
           g.beginPath();
           g.moveTo(s * 0.2, s * 0.38);
           g.lineTo(s * 0.72, s * 0.38);
@@ -505,7 +653,7 @@
           g.quadraticCurveTo(s * 0.27, s * 0.8, s * 0.25, s * 0.72);
           g.closePath();
           g.fill();
-          g.lineWidth = s * 0.05;
+          g.lineWidth = s * 0.055;
           g.lineCap = "round";
           [0.37, 0.52].forEach((x) => {
             g.beginPath();
@@ -517,9 +665,9 @@
       };
 
       // =====================================================================
-      // The orb, as soft clay: up to three bodies that melt into each other
-      // (smooth union), each a circle or a shape, lit as an inflated surface
-      // with a slow living marble, a soft cast shadow and a faint aura.
+      // The orb: the app's own shader (same noise, same greens, same light,
+      // halo and floor shadow), with up to three bodies that melt into each
+      // other and can each take a shape.
       // =====================================================================
       const VERT = `#version 300 es
         in vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }`;
@@ -527,8 +675,8 @@
         precision highp float;
         uniform vec2 uRes; uniform float uTime;
         uniform vec2 uC[3]; uniform float uRad[3]; uniform vec2 uSC[3]; uniform float uM[3];
-        uniform vec2 uBox[3]; uniform vec2 uSize[3]; uniform float uTrail[3]; uniform float uVis[3];
-        uniform vec3 uDark[3]; uniform vec3 uLight[3];
+        uniform vec2 uBox[3]; uniform vec2 uSize[3]; uniform float uTrail[3]; uniform float uVis[3]; uniform float uBev[3];
+        uniform vec3 uRamp[12];
         uniform sampler2D uT0; uniform sampler2D uT1; uniform sampler2D uT2;
         uniform float uSmooth, uStep, uEnergy, uLevel, uShadow, uFloor, uHalo, uAlpha;
         out vec4 o;
@@ -546,19 +694,19 @@
           float old = 1.0 - clamp((uStep - idx - 2.6) / 1.6, 0.0, 1.0);
           return appear * old;
         }
-        float bobOf(int i){ return min(uRad[i], 220.0) * 0.035 * sin(uTime * 1.1 + float(i) * 1.7); }
+        float bobOf(int i){ return min(uRad[i], 220.0) * 0.048 * sin(uTime * 1.15 + float(i) * 1.7); }
 
-        float blob(int i, vec2 fp, out float vis, out float bev){
+        float blobD(int i, vec2 fp, out float vis){
           vis = uVis[i];
-          bev = mix(uRad[i], uBox[i].x * 0.12, uM[i]);
           if (uRad[i] < 0.5) return 1e5;
           float bob = bobOf(i);
           vec2 p = fp - uC[i] - vec2(0.0, bob);
           float r = length(p), ang = atan(p.y, p.x);
-          float t = uTime * (0.45 + 0.8 * uEnergy);
-          float wob = uRad[i] * (0.004 + 0.004 * uEnergy + 0.012 * uLevel) *
-            (sin(ang * 3.0 + t * 1.6 + float(i) * 2.1) + 0.6 * sin(ang * 5.0 - t * 2.2) + 0.4 * sin(ang * 2.0 + t));
-          float dC = r - uRad[i] * (1.0 + 0.04 * uLevel) - wob;
+          float t = uTime * (0.5 + 0.8 * uEnergy);
+          float amp = 0.008 + 0.004 * uEnergy + 0.0112 * uLevel;
+          float wob = uRad[i] * amp * (sin(ang * 3.0 + t * 1.7 + float(i) * 2.1) + 0.7 * sin(ang * 5.0 - t * 2.3) + 0.5 * sin(ang * 2.0 + t * 0.9));
+          wob += uRad[i] * 0.012 * uLevel * sin(ang * 9.0 - t * 4.0);
+          float dC = r - uRad[i] * (1.0 + 0.14 * uLevel) - wob;
           if (uM[i] <= 0.0) return dC;
           vec2 local = fp - uSC[i] - vec2(0.0, bob);
           vec2 uv = local / uBox[i] + 0.5;
@@ -568,64 +716,76 @@
           if (uTrail[i] > 0.5) vis *= mix(1.0, trailVis(s.g * 16.0), uM[i]);
           return mix(dC, dS, uM[i]);
         }
-
-        float scene(vec2 fp, out vec3 dk, out vec3 lt, out float vis, out float bev){
-          float v0, v1, v2, b0, b1, b2;
-          float d0 = blob(0, fp, v0, b0), d1 = blob(1, fp, v1, b1), d2 = blob(2, fp, v2, b2);
+        // Smooth union of the three; w = how much each body owns this point.
+        float scene(vec2 fp, out float vis, out vec3 w){
+          float v0, v1, v2;
+          float d0 = blobD(0, fp, v0), d1 = blobD(1, fp, v1), d2 = blobD(2, fp, v2);
           float k = max(uSmooth, 0.001);
           float h = clamp(0.5 + 0.5 * (d1 - d0) / k, 0.0, 1.0);
           float d = mix(d1, d0, h) - k * h * (1.0 - h);
-          dk = mix(uDark[1], uDark[0], h); lt = mix(uLight[1], uLight[0], h); vis = mix(v1, v0, h); bev = mix(b1, b0, h);
-          h = clamp(0.5 + 0.5 * (d2 - d) / k, 0.0, 1.0);
-          d = mix(d2, d, h) - k * h * (1.0 - h);
-          dk = mix(uDark[2], dk, h); lt = mix(uLight[2], lt, h); vis = mix(v2, vis, h); bev = mix(b2, bev, h);
+          float h2 = clamp(0.5 + 0.5 * (d2 - d) / k, 0.0, 1.0);
+          d = mix(d2, d, h2) - k * h2 * (1.0 - h2);
+          vis = mix(v2, mix(v1, v0, h), h2);
+          w = vec3(h * h2, (1.0 - h) * h2, 1.0 - h2);
           return d;
         }
+        vec3 ramp(int k, vec3 w){ return w.x * uRamp[k] + w.y * uRamp[4 + k] + w.z * uRamp[8 + k]; }
 
         void main(){
           vec2 fp = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
-          vec3 dk, lt, x1, x2; float vis, bev, vx, bx;
-          float d = scene(fp, dk, lt, vis, bev);
+          float vis, vt; vec3 w, wt;
+          float d = scene(fp, vis, w);
 
-          // Soft cast shadow (light from the upper left) and the floor shadow under a floating orb.
-          float ds = scene(fp - vec2(16.0, 38.0), x1, x2, vx, bx);
-          float sh = (1.0 - smoothstep(-40.0, 90.0, ds)) * 0.11 * uShadow * vx;
-          vec2 fc = uC[0] + vec2(0.0, uRad[0] * 1.5);
-          vec2 fq = (fp - fc) / vec2(uRad[0] * 0.66, uRad[0] * 0.09);
-          float lift = 0.5 + 0.5 * sin(uTime * 1.1);
-          sh += exp(-dot(fq, fq) * 1.4) * (0.13 + 0.05 * lift) * uFloor;
-          if (d > 90.0 && sh < 0.003) { o = vec4(0.0); return; }
+          // Each body's own frame: where its centre is, how big it is, how round its edge.
+          vec3 qx, qy, qr, bv;
+          for (int i = 0; i < 3; i++){
+            vec2 c = mix(uC[i], uSC[i], uM[i]) + vec2(0.0, bobOf(i));
+            qx[i] = c.x; qy[i] = c.y;
+            qr[i] = max(mix(uRad[i], uBox[i].x * 0.42, uM[i]), 1.0);
+            bv[i] = mix(uRad[i], uBev[i], uM[i]);
+          }
+          vec2 qc = vec2(dot(w, qx), dot(w, qy));
+          float rq = dot(w, qr), bev = max(dot(w, bv), 1.0);
+          float unitPx = 4.0 * min(rq, 260.0);
 
-          float dx = scene(fp + vec2(1.0, 0.0), x1, x2, vx, bx) - d;
-          float dy = scene(fp + vec2(0.0, 1.0), x1, x2, vx, bx) - d;
-          vec2 g = normalize(vec2(dx, dy) + 1e-7);
-          float e = clamp(1.0 + d / max(bev, 1.0), 0.0, 1.0);
-          vec3 n = normalize(vec3(g * e, sqrt(max(1.0 - e * e, 0.0))));
-          vec3 L = normalize(vec3(-0.45, -0.65, 0.85));
-          float dif = clamp((dot(n, L) + 0.45) / 1.45, 0.0, 1.0);
-          vec3 col = mix(dk, lt, smoothstep(0.0, 1.0, dif));
+          // The app's floor shadow under the orb, and a soft cast shadow for shapes.
+          float bob = 0.012 * sin(uTime * 1.15);
+          vec2 sp = (fp - uC[0] - vec2(0.0, uRad[0] * 1.7)) / vec2(uRad[0] * (0.60 + 0.08 * uLevel), uRad[0] * 0.08);
+          float shA = exp(-dot(sp, sp) * 1.3) * (0.15 + 2.5 * bob) * uFloor;
+          float ds = scene(fp - vec2(12.0, 26.0), vt, wt);
+          shA += (1.0 - smoothstep(-24.0, 60.0, ds)) * 0.08 * uShadow * vt;
+          if ((d > 0.3 * unitPx || vis <= 0.0) && shA < 0.002) { o = vec4(0.0); return; }
 
-          // A slow marble inside, scaled with the main body so it zooms with it.
-          float t = uTime * (0.3 + 0.6 * uEnergy);
-          vec2 q = (fp - uC[0]) / max(uRad[0], 40.0) * 1.15;
-          vec2 flow = vec2(fbm(q * 1.3 + vec2(0.0, t * 0.3)), fbm(q * 1.3 + vec2(5.2, -t * 0.25)));
-          float nn = fbm(q * 1.8 + 1.7 * flow + vec2(t * 0.1, 0.0));
-          col = mix(col, min(lt * 1.08 + 0.04, 1.0), smoothstep(0.52, 0.82, nn) * 0.42);
-          col = mix(col, dk * 0.92, smoothstep(0.42, 0.12, nn) * 0.28);
+          vec2 g = normalize(vec2(scene(fp + vec2(1.0, 0.0), vt, wt) - d, scene(fp + vec2(0.0, 1.0), vt, wt) - d) + 1e-7);
+          float e = clamp(1.0 + d / bev, 0.0, 1.0);
+          vec3 nrm = vec3(g * e, sqrt(max(1.0 - e * e, 0.0)));
+          float depth = nrm.z;
 
-          vec3 R = reflect(-L, n);
-          float rv = max(R.z, 0.0);
-          col += vec3(pow(rv, 14.0) * 0.14 + pow(rv, 70.0) * 0.16 * clamp(220.0 / max(uRad[0], 1.0), 0.25, 1.0));
-          col = mix(col, vec3(0.88, 0.98, 0.91), pow(1.0 - n.z, 2.6) * 0.38);
+          float t = uTime * (0.5 + 0.8 * uEnergy);
+          vec2 q = (fp - qc) / min(rq, 640.0);
+          vec2 flow = vec2(fbm(q * 1.6 + vec2(0.0, t * 0.35)), fbm(q * 1.6 + vec2(5.2, -t * 0.3)));
+          float n = fbm(q * 2.2 + 2.0 * flow + vec2(t * 0.15, 0.0));
+          vec3 deep = ramp(0, w), mid = ramp(1, w), bright = ramp(2, w), mint = ramp(3, w);
+          vec3 col = mix(deep, mid, smoothstep(0.20, 0.50, n));
+          col = mix(col, bright, smoothstep(0.42, 0.70, n));
+          col = mix(col, mint, smoothstep(0.60, 0.88, n) * 0.9);
+          float light = clamp(dot(normalize(nrm + vec3(0.0, 0.0, 0.0001)), normalize(vec3(-0.45, -0.60, 0.66))), 0.0, 1.0);
+          col = mix(col, mint, pow(light, 3.0) * 0.55);
+          col += vec3(1.0) * pow(light, 14.0) * 0.35;
+          col = mix(col, bright, pow(1.0 - depth, 2.5) * 0.5);
+          col += mint * (0.08 + 0.25 * uLevel) * (1.0 - smoothstep(0.0, 0.9, e));
           col = clamp(col, 0.0, 1.0);
 
           float inside = 1.0 - smoothstep(-1.0, 1.0, d);
-          float aura = exp(-max(d, 0.0) / 30.0) * 0.12 * uHalo * (1.0 - inside);
-          float A = clamp(inside + aura, 0.0, 1.0) * vis;
-          vec3 rgb = mix(lt, col, inside);
-          vec3 shCol = vec3(0.05, 0.22, 0.13);
-          float shA = sh * (1.0 - A);
-          o = vec4(rgb * A + shCol * shA, A + shA) * uAlpha;
+          float du = max(d, 0.0) / unitPx;
+          float glow = exp(-du * (17.0 - 7.0 * uLevel)) * (0.34 + 0.34 * uLevel + 0.10 * uEnergy) * uHalo;
+          glow *= 1.0 - smoothstep(0.13, 0.22, du);
+          vec3 glowCol = mix(bright, mint, 0.6);
+          float orbA = clamp(inside + (1.0 - inside) * glow, 0.0, 1.0) * vis;
+          vec3 orbRGB = mix(glowCol, col, inside);
+          vec3 shRGB = vec3(0.000, 0.275, 0.157);
+          float a = orbA + shA * (1.0 - orbA);
+          o = vec4(orbRGB * orbA + shRGB * shA * (1.0 - orbA), a) * uAlpha;
         }`;
 
       const canvas = document.getElementById("orb");
@@ -649,12 +809,12 @@
       gl.enableVertexAttribArray(aLoc);
       gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
       const U = {};
-      ["uRes", "uTime", "uC", "uRad", "uSC", "uM", "uBox", "uSize", "uTrail", "uVis", "uDark", "uLight", "uT0", "uT1", "uT2",
+      ["uRes", "uTime", "uC", "uRad", "uSC", "uM", "uBox", "uSize", "uTrail", "uVis", "uBev", "uRamp", "uT0", "uT1", "uT2",
         "uSmooth", "uStep", "uEnergy", "uLevel", "uShadow", "uFloor", "uHalo", "uAlpha"].forEach((n) => (U[n] = gl.getUniformLocation(prog, n)));
 
       const shapes = {};
       for (const [name, def] of Object.entries(shapeDefs)) {
-        const data = sdfFrom(canvasOf(def.w, def.h, def.draw), def.trail ? trailCenters : null);
+        const data = sdfFrom(canvasOf(def.w, def.h, def.draw), def.trail ? trailCenters : null, def.smooth);
         const t = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, t);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, def.w, def.h, 0, gl.RG, gl.FLOAT, data);
@@ -665,33 +825,33 @@
         shapes[name] = { tex: t, size: [def.w, def.h], trail: def.trail ? 1 : 0 };
       }
 
-      // Soft clay palettes, dark and light: the orb, then the three baskets.
-      const PAL = [
-        [[0.05, 0.40, 0.24], [0.50, 0.87, 0.62]],
-        [[0.03, 0.25, 0.15], [0.20, 0.55, 0.36]],
-        [[0.06, 0.45, 0.27], [0.38, 0.80, 0.54]],
-        [[0.30, 0.68, 0.45], [0.80, 0.96, 0.83]],
+      // Colour ramps (deep, mid, bright, mint): 0 the app's orb, 1-3 the baskets, 4 soft prints.
+      const RAMPS = [
+        [[0.0, 0.471, 0.255], [0.0, 0.667, 0.275], [0.0, 0.922, 0.353], [0.569, 0.98, 0.608]],
+        [[0.0, 0.2, 0.11], [0.0, 0.33, 0.18], [0.0, 0.52, 0.28], [0.3, 0.72, 0.45]],
+        [[0.0, 0.42, 0.23], [0.0, 0.62, 0.27], [0.0, 0.85, 0.33], [0.55, 0.95, 0.6]],
+        [[0.0, 0.62, 0.3], [0.3, 0.85, 0.45], [0.62, 0.97, 0.66], [0.86, 0.99, 0.87]],
+        [[0.36, 0.76, 0.52], [0.54, 0.86, 0.64], [0.72, 0.94, 0.76], [0.9, 0.98, 0.91]],
       ];
-      const palOf = (f) => {
-        const i = Math.max(0, Math.min(3, Math.floor(f))), j = Math.min(3, i + 1), t = Math.max(0, Math.min(1, f - i));
-        return [0, 1].map((c) => PAL[i][c].map((v, k) => v + (PAL[j][c][k] - v) * t));
+      const rampOf = (f) => {
+        const i = Math.max(0, Math.min(4, Math.floor(f))), j = Math.min(4, i + 1), t = Math.max(0, Math.min(1, f - i));
+        return RAMPS[i].map((c, k) => c.map((v, ch) => v + (RAMPS[j][k][ch] - v) * t));
       };
 
-      const blob = (o) => Object.assign({ x: 960, y: 520, r: 0, sx: 960, sy: 520, m: 0, bw: 400, vis: 1, pal: 0, shape: "house" }, o);
-      const S = { b: [blob({}), blob({ shape: "machine" }), blob({ shape: "coffee" })], smooth: 0, step: 0, energy: 0.2, level: 0, shadow: 1, floor: 0, halo: 1, alpha: 1,
-        n1: 0, n2: 0, n3: 0, typed: 0, orbit: 0, cam: 1 };
+      const blob = (o) => Object.assign({ x: 960, y: 520, r: 0, sx: 960, sy: 520, m: 0, bw: 400, bev: 30, vis: 1, pal: 0, shape: "house" }, o);
+      const S = { b: [blob({}), blob({ shape: "machine" }), blob({ shape: "coffee" })], smooth: 0, step: 0, energy: 0, level: 0, shadow: 0, floor: 0, halo: 1, alpha: 1,
+        n1: 0, n2: 0, n3: 0, pc: 0, b1: 0, b2: 0, typed: 0, orbit: 0, cam: 1 };
 
       function draw(t) {
-        const C = [], R = [], SC = [], M = [], BOX = [], SIZE = [], TR = [], VIS = [], DK = [], LT = [];
+        const C = [], R = [], SC = [], M = [], BOX = [], SIZE = [], TR = [], VIS = [], BEV = [], RAMP = [];
         S.b.forEach((b, i) => {
           const sh = shapes[b.shape];
           gl.activeTexture(gl.TEXTURE0 + i);
           gl.bindTexture(gl.TEXTURE_2D, sh.tex);
           C.push(b.x, b.y); R.push(b.r); SC.push(b.sx, b.sy); M.push(b.m);
           BOX.push(b.bw, (b.bw * sh.size[1]) / sh.size[0]); SIZE.push(sh.size[0], sh.size[1]);
-          TR.push(sh.trail); VIS.push(b.vis);
-          const [dk, lt] = palOf(b.pal);
-          DK.push(...dk); LT.push(...lt);
+          TR.push(sh.trail); VIS.push(b.vis); BEV.push(b.bev);
+          rampOf(b.pal).forEach((c) => RAMP.push(...c));
         });
         gl.viewport(0, 0, 1920, 1080);
         gl.clearColor(0, 0, 0, 0);
@@ -701,7 +861,7 @@
         gl.uniform1f(U.uTime, t);
         gl.uniform2fv(U.uC, C); gl.uniform1fv(U.uRad, R); gl.uniform2fv(U.uSC, SC); gl.uniform1fv(U.uM, M);
         gl.uniform2fv(U.uBox, BOX); gl.uniform2fv(U.uSize, SIZE); gl.uniform1fv(U.uTrail, TR); gl.uniform1fv(U.uVis, VIS);
-        gl.uniform3fv(U.uDark, DK); gl.uniform3fv(U.uLight, LT);
+        gl.uniform1fv(U.uBev, BEV); gl.uniform3fv(U.uRamp, RAMP);
         gl.uniform1f(U.uSmooth, S.smooth); gl.uniform1f(U.uStep, S.step); gl.uniform1f(U.uEnergy, S.energy);
         gl.uniform1f(U.uLevel, S.level); gl.uniform1f(U.uShadow, S.shadow); gl.uniform1f(U.uFloor, S.floor);
         gl.uniform1f(U.uHalo, S.halo); gl.uniform1f(U.uAlpha, S.alpha);
@@ -709,77 +869,115 @@
       }
 
       // =====================================================================
+      // Scene times.
+      // =====================================================================
+      const T2 = 6.5, T3 = 14.5, T4 = 28.9, T5 = 34.6, T6 = 45, T7 = 51;
+
+      // The trail: where each print lands on screen, and what was bought there.
+      const TRAIL = { cx: 960, cy: 600, w: 1680 };
+      TRAIL.h = (TRAIL.w * TH) / TW;
+      const printAt = (i) => [TRAIL.cx - TRAIL.w / 2 + trailCenters[i][0] * (TRAIL.w / TW), TRAIL.cy - TRAIL.h / 2 + trailCenters[i][1] * (TRAIL.w / TW)];
+      const BASKET = [[600, 560], [1120, 600], [1430, 600]];
+      const ICONS = {
+        cart: '<path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L19.5 8H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
+        cup: '<path d="M5 9h11v5a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V9z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8.5 3.5c0 1.5 1 1.5 1 3M12 3.5c0 1.5 1 1.5 1 3"/>',
+        bus: '<rect x="5" y="3" width="14" height="15" rx="3"/><path d="M5 11h14M8 18v2.5M16 18v2.5"/>',
+        car: '<path d="M4.5 16v-3.5L7 7h10l2.5 5.5V16"/><path d="M4 12.5h16V16H4z"/><circle cx="8" cy="17" r="1.4"/><circle cx="16" cy="17" r="1.4"/>',
+        tooth: '<path d="M8 3.5C5.5 3.5 4 5.4 4 7.8c0 1.9 1 3.4 1.5 5.4.6 2.5.8 7.3 2.6 7.3 1.5 0 1.4-4.2 3.9-4.2s2.4 4.2 3.9 4.2c1.8 0 2-4.8 2.6-7.3.5-2 1.5-3.5 1.5-5.4 0-2.4-1.5-4.3-4-4.3-1.6 0-2.5 1-4 1s-2.4-1-4-1z"/>',
+        play: '<rect x="3" y="5" width="18" height="14" rx="3.5"/><path d="M10.2 9.5v5l4.3-2.5z"/>',
+        bolt: '<path d="M13 2.5 5.5 13H11l-1 8.5L17.5 11H12l1-8.5z"/>',
+      };
+      const BUYS = [
+        ["cart", "Groceries", "€62.15", 0],
+        ["cup", "Coffee", "€4.20", 2],
+        ["bus", "Bus ticket", "€3.10", 0],
+        ["car", "Taxi", "€18.40", 2],
+        ["tooth", "Dentist", "€95.00", 1],
+        ["play", "Streaming", "€12.99", 2],
+        ["bolt", "Electricity", "€48.30", 0],
+      ];
+      const chipsEl = document.getElementById("chips");
+      BUYS.forEach(([ic, nm, am], i) => {
+        const el = document.createElement("div");
+        el.className = "chip";
+        el.id = `c${i}`;
+        el.innerHTML = `<span class="ic"><svg viewBox="0 0 24 24">${ICONS[ic]}</svg></span><span class="nm">${nm}</span><span class="am">${am}</span>`;
+        chipsEl.appendChild(el);
+      });
+
+      // =====================================================================
       // The orb's choreography (its own paused timeline, seeked every frame).
       // =====================================================================
       const [B0, B1, B2] = S.b;
       const io = "power3.inOut", soft = "sine.inOut";
       const O = gsap.timeline({ paused: true });
-      // 1. From inside the orb out: a macro of its surface pulls back to the whole sphere.
+      // 1. A macro of the orb's surface pulls back to the whole sphere.
       O.set(B0, { x: 960, y: 500, r: 2600, m: 0, pal: 0 }, 0)
+        .set(S, { energy: 0.25, halo: 1 }, 0)
         .to(B0, { r: 172, duration: 3.6, ease: "expo.inOut" }, 0.2)
         .to(S, { floor: 1, duration: 1.2, ease: soft }, 3.0)
-        // 2. It drifts to where the trail begins and becomes the first footprint; the trail walks on.
-        .set(B0, { shape: "trail", sx: 960, sy: 600, bw: 1680 }, 6.4)
-        .set(S, { step: 1 }, 6.4)
-        .to(B0, { x: 246, y: 530, r: 82, duration: 1.2, ease: io }, 6.5)
-        .to(S, { floor: 0, duration: 0.8, ease: soft }, 6.5)
-        .to(B0, { m: 1, duration: 1.0, ease: io }, 7.6)
-        .to(S, { step: 7.7, duration: 4.8, ease: "none" }, 8.3)
-        .set(B0, { x: 960, y: 520, r: 172 }, 13.0)
-        .to(B0, { m: 0, duration: 1.4, ease: io }, 13.0)
-        .set(S, { step: 0 }, 14.4)
-        // 3. It divides into three, sized by what each basket takes, then each takes its form.
-        .set(B0, { shape: "house" }, 14.4)
-        .set(B1, { x: 960, y: 520, r: 0, pal: 0, shape: "machine", m: 0, vis: 1 }, 14.4)
-        .set(B2, { x: 960, y: 520, r: 0, pal: 0, shape: "coffee", m: 0, vis: 1 }, 14.4)
-        .set(S, { smooth: 150 }, 14.4)
-        .to(B1, { r: 60, duration: 0.5, ease: "power2.out" }, 14.7)
-        .to(B2, { r: 60, duration: 0.5, ease: "power2.out" }, 14.7)
-        .to(B0, { x: 600, y: 560, r: 190, pal: 1, duration: 1.8, ease: io }, 14.8)
-        .to(B1, { x: 1120, y: 600, r: 82, pal: 2, duration: 1.8, ease: io }, 14.8)
-        .to(B2, { x: 1430, y: 600, r: 78, pal: 3, duration: 1.8, ease: io }, 14.8)
-        .to(S, { smooth: 0, duration: 1.2, ease: soft }, 15.8)
-        .set(B0, { sx: 600, sy: 560, bw: 470 }, 16.6)
-        .set(B1, { sx: 1120, sy: 600, bw: 218 }, 16.6)
-        .set(B2, { sx: 1430, sy: 600, bw: 212 }, 16.6)
-        .to(S, { n1: 2510, n2: 500, n3: 455, duration: 1.6, ease: "power2.out" }, 16.4)
-        .to(B0, { m: 1, duration: 1.0, ease: io }, 18.4)
-        .to(B1, { m: 1, duration: 1.0, ease: io }, 18.8)
-        .to(B2, { m: 1, duration: 1.0, ease: io }, 19.2)
-        // The extras are the one to steer: the others step back.
-        .to([B0, B1], { vis: 0.22, duration: 0.9, ease: soft }, 22.6)
-        .to(B2, { bw: 268, duration: 0.9, ease: io }, 22.6)
-        .to([B0, B1], { vis: 1, duration: 0.8, ease: soft }, 26.0)
-        .to(B2, { bw: 212, duration: 0.8, ease: io }, 26.0)
-        // They melt back into one.
-        .to([B0, B1, B2], { m: 0, duration: 1.0, ease: io }, 26.2)
-        .to(S, { smooth: 160, duration: 0.6, ease: soft }, 27.0)
-        .to(B0, { x: 960, y: 520, r: 160, pal: 0, duration: 1.3, ease: io }, 27.0)
-        .to([B1, B2], { x: 960, y: 520, r: 70, pal: 0, duration: 1.3, ease: io }, 27.0)
-        .to([B1, B2], { r: 0, duration: 0.5, ease: "power2.in" }, 28.2)
-        // 4. Beside the phone: it listens, then thinks.
-        .to(B0, { x: 520, y: 440, r: 120, duration: 1.2, ease: io }, 28.6)
-        .to(S, { floor: 1, duration: 0.8, ease: soft }, 29.0)
-        .to(S, { energy: 1, level: 0.6, duration: 0.4, ease: soft }, 31.5)
-        .to(S, { typed: 35, duration: 1.7, ease: "none" }, 31.7)
-        .to(S, { level: 0.15, duration: 0.6, ease: soft }, 33.5)
-        .to(S, { energy: 0.25, level: 0, duration: 0.8, ease: soft }, 35.0)
-        // 5. Back to the middle, with the banks around it.
-        .to(B0, { x: 960, y: 430, r: 104, duration: 1.2, ease: io }, 38.8)
-        .to(S, { floor: 0.7, duration: 0.8 }, 38.8)
-        .to(S, { orbit: 1, duration: 1.3, ease: "power3.out" }, 39.6)
-        .to(S, { orbit: 0, duration: 0.7, ease: "power3.in" }, 43.7)
-        // 6. End card.
-        .to(B0, { y: 380, r: 116, duration: 1.4, ease: io }, 44.4)
-        .to(S, { floor: 1, duration: 1.0 }, 44.4)
-        // A slow push-in through each scene.
-        .fromTo(S, { cam: 1 }, { cam: 1.035, duration: 7, ease: "none" }, 0)
-        .set(S, { cam: 1 }, 7)
-        .to(S, { cam: 1.03, duration: 7.4, ease: "none" }, 7)
-        .set(S, { cam: 1 }, 14.5)
-        .to(S, { cam: 1.025, duration: 14.2, ease: "none" }, 14.5)
-        .set(S, { cam: 1 }, 28.7)
-        .to(S, { cam: 1.02, duration: 21.3, ease: "none" }, 28.7);
+        // 2. It drifts to the start of the trail and becomes the first shoe print.
+        .set(B0, { shape: "trail", sx: TRAIL.cx, sy: TRAIL.cy, bw: TRAIL.w, bev: 22 }, T2 - 0.1)
+        .set(S, { step: 1 }, T2 - 0.1)
+        .to(B0, { x: 238, y: 533, r: 70, duration: 1.2, ease: io }, T2)
+        .to(S, { floor: 0, duration: 0.8, ease: soft }, T2)
+        .to(B0, { m: 1, pal: 4, duration: 1.0, ease: io }, T2 + 1.1)
+        .to(S, { halo: 0, shadow: 1, duration: 1.0, ease: soft }, T2 + 1.1)
+        .to(S, { step: 7.7, duration: 4.8, ease: "none" }, T2 + 1.8)
+        .set(B0, { x: 960, y: 520, r: 172 }, T2 + 6.5)
+        .to(B0, { m: 0, pal: 0, duration: 1.4, ease: io }, T2 + 6.5)
+        .to(S, { halo: 1, shadow: 0, duration: 1.4, ease: soft }, T2 + 6.5)
+        .set(S, { step: 0 }, T3 - 0.1)
+        // 3. It divides into three, sized by each basket's share, then each takes its form.
+        .set(B0, { shape: "house", bev: 40 }, T3 - 0.1)
+        .set(B1, { x: 960, y: 520, r: 0, pal: 0, shape: "machine", m: 0, vis: 1, bev: 20 }, T3 - 0.1)
+        .set(B2, { x: 960, y: 520, r: 0, pal: 0, shape: "coffee", m: 0, vis: 1, bev: 19 }, T3 - 0.1)
+        .set(S, { smooth: 150 }, T3 - 0.1)
+        .to([B1, B2], { r: 60, duration: 0.5, ease: "power2.out" }, T3 + 0.2)
+        .to(B0, { x: BASKET[0][0], y: BASKET[0][1], r: 190, pal: 1, duration: 1.8, ease: io }, T3 + 0.3)
+        .to(B1, { x: BASKET[1][0], y: BASKET[1][1], r: 82, pal: 2, duration: 1.8, ease: io }, T3 + 0.3)
+        .to(B2, { x: BASKET[2][0], y: BASKET[2][1], r: 78, pal: 3, duration: 1.8, ease: io }, T3 + 0.3)
+        .to(S, { smooth: 0, duration: 1.2, ease: soft }, T3 + 1.3)
+        .to(S, { halo: 0.55, shadow: 1, duration: 1.0, ease: soft }, T3 + 1.8)
+        .set(B0, { sx: BASKET[0][0], sy: BASKET[0][1], bw: 470 }, T3 + 2.1)
+        .set(B1, { sx: BASKET[1][0], sy: BASKET[1][1], bw: 218 }, T3 + 2.1)
+        .set(B2, { sx: BASKET[2][0], sy: BASKET[2][1], bw: 212 }, T3 + 2.1)
+        .to(S, { n1: 2510, n2: 500, n3: 455, pc: 1, duration: 1.6, ease: "power2.out" }, T3 + 1.9)
+        .to(B0, { m: 1, duration: 1.0, ease: io }, T3 + 3.9)
+        .to(B1, { m: 1, duration: 1.0, ease: io }, T3 + 4.3)
+        .to(B2, { m: 1, duration: 1.0, ease: io }, T3 + 4.7)
+        .to([B0, B1], { vis: 0.22, duration: 0.9, ease: soft }, T3 + 8.1)
+        .to(B2, { bw: 268, bev: 24, duration: 0.9, ease: io }, T3 + 8.1)
+        .to([B0, B1], { vis: 1, duration: 0.8, ease: soft }, T3 + 11.5)
+        .to(B2, { bw: 212, bev: 19, duration: 0.8, ease: io }, T3 + 11.5)
+        .to([B0, B1, B2], { m: 0, duration: 1.0, ease: io }, T3 + 11.7)
+        .to(S, { halo: 1, shadow: 0, duration: 1.0, ease: soft }, T3 + 11.7)
+        .to(S, { smooth: 160, duration: 0.6, ease: soft }, T3 + 12.5)
+        .to(B0, { x: 960, y: 520, r: 160, pal: 0, duration: 1.3, ease: io }, T3 + 12.5)
+        .to([B1, B2], { x: 960, y: 520, r: 70, pal: 0, duration: 1.3, ease: io }, T3 + 12.5)
+        .to([B1, B2], { r: 0, duration: 0.5, ease: "power2.in" }, T3 + 13.7)
+        // 4. To the side for the benchmarks.
+        .to(B0, { x: 1500, y: 470, r: 130, duration: 1.2, ease: io }, T4 - 0.3)
+        .to(S, { floor: 1, duration: 0.8, ease: soft }, T4)
+        .to(S, { b1: 13, b2: 18, duration: 1.4, ease: "power2.out" }, T4 + 1.4)
+        // 5. Beside the phone: it listens, then thinks.
+        .to(B0, { x: 520, y: 440, r: 120, duration: 1.2, ease: io }, T5 - 0.3)
+        .to(S, { energy: 1, level: 0.6, duration: 0.4, ease: soft }, T5 + 2.8)
+        .to(S, { typed: 35, duration: 1.7, ease: "none" }, T5 + 3.0)
+        .to(S, { level: 0.15, duration: 0.6, ease: soft }, T5 + 4.8)
+        .to(S, { energy: 0.25, level: 0, duration: 0.8, ease: soft }, T5 + 6.3)
+        // 6. Back to the middle, all the banks around it.
+        .to(B0, { x: 960, y: 430, r: 104, duration: 1.2, ease: io }, T6 - 0.4)
+        .to(S, { floor: 0.7, duration: 0.8 }, T6 - 0.4)
+        .to(S, { orbit: 1, duration: 1.4, ease: "power3.out" }, T6 + 0.5)
+        .to(S, { orbit: 0, duration: 0.8, ease: "power3.in" }, T7 - 1.1)
+        // 7. End card.
+        .to(B0, { y: 380, r: 116, duration: 1.4, ease: io }, T7 - 0.6)
+        .to(S, { floor: 1, duration: 1.0 }, T7 - 0.6);
+      // A slow push-in through each scene.
+      [[0, T2], [T2, T3], [T3, T4], [T4, T5], [T5, T6], [T6, T7], [T7, 57]].forEach(([a, b]) => {
+        O.set(S, { cam: 1 }, a).to(S, { cam: 1.03, duration: b - a, ease: "none" }, a);
+      });
 
       // Film grain: one fixed tile, shifted every frame.
       (function () {
@@ -789,20 +987,42 @@
         let seed = 1234567;
         const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
         for (let i = 0; i < 256 * 256; i++) {
-          const v = rnd() * 255;
-          img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+          img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = rnd() * 255;
           img.data[i * 4 + 3] = 9;
         }
         g.putImageData(img, 0, 0);
         document.getElementById("grain").style.backgroundImage = `url(${c.toDataURL()})`;
       })();
 
+      // Rings around the baskets, drawn by share.
+      const SHARES = [72, 14, 13], RING_R = [224, 112, 108];
+      const ringsEl = document.getElementById("rings");
+      const ringArcs = BASKET.map(([x, y], i) => {
+        const r = RING_R[i];
+        ringsEl.insertAdjacentHTML("beforeend",
+          `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="rgba(16,60,36,0.08)" stroke-width="6" class="rt" />` +
+          `<circle id="ra${i}" cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${["#004628", "#00AA46", "#5fd889"][i]}" stroke-width="6" stroke-linecap="round" transform="rotate(-90 ${x} ${y})" />`);
+        const el = document.getElementById(`ra${i}`);
+        const len = 2 * Math.PI * r;
+        el.setAttribute("stroke-dasharray", `${len} ${len}`);
+        el.setAttribute("stroke-dashoffset", `${len}`);
+        return { el, len, share: SHARES[i] / 100 };
+      });
+
+      // All the banks the app can connect.
+      const BANKS = ["op", "nordea", "danske", "revolut", "handelsbanken", "aktia", "saastopankki", "pop", "omasp", "alandsbanken"];
+      const tiles = BANKS.map((id) => {
+        const el = document.createElement("div");
+        el.className = "bank";
+        el.innerHTML = `<img src="assets/${id}.png" alt="" />`;
+        document.getElementById("park").appendChild(el);
+        return el;
+      });
+
       const $ = (id) => document.getElementById(id);
       const euro = (v) => "€" + Math.round(v).toLocaleString("en-US");
       const QUESTION = "How much can I spend before payday?";
-      const tiles = ["k1", "k2", "k3"].map((id) => $(id));
       function sceneAt(t) {
-        // the colour field drifts
         $("mesh1").style.transform = `translate(${560 + 120 * Math.sin(t * 0.11)}px, ${380 + 80 * Math.cos(t * 0.09)}px)`;
         $("mesh2").style.transform = `translate(${1420 + 140 * Math.cos(t * 0.08)}px, ${300 + 90 * Math.sin(t * 0.12)}px)`;
         $("mesh3").style.transform = `translate(${1080 + 160 * Math.sin(t * 0.07 + 2)}px, ${900 + 70 * Math.cos(t * 0.1)}px)`;
@@ -811,20 +1031,25 @@
         $("v1").textContent = euro(S.n1);
         $("v2").textContent = euro(S.n2);
         $("v3").textContent = euro(S.n3);
+        $("p1").textContent = Math.round(72 * S.pc);
+        $("p2").textContent = Math.round(14 * S.pc);
+        $("p3").textContent = Math.round(13 * S.pc);
+        ringArcs.forEach(({ el, len, share }) => el.setAttribute("stroke-dashoffset", `${len * (1 - share * S.pc)}`));
+        $("bp1").textContent = `${Math.round(S.b1)}%`;
+        $("bp2").textContent = `${Math.round(S.b2)}%`;
         $("typed").textContent = QUESTION.slice(0, Math.round(S.typed));
         $("caret").style.opacity = S.typed < 35 || Math.floor(t * 2.4) % 2 === 0 ? 1 : 0;
-        // the bank tiles orbit; the near half passes in front of the orb
+        // The banks orbit on a tilted ring; the near half passes in front of the orb.
         tiles.forEach((el, i) => {
           if (S.orbit <= 0.001) {
-            if (el.parentNode !== $("tiles")) $("tiles").appendChild(el);
+            if (el.parentNode !== $("park")) $("park").appendChild(el);
             return;
           }
-          const a = (t - 39.6) * 0.42 + (i * Math.PI * 2) / 3 - Math.PI / 2;
+          const a = (t - T6) * 0.3 + (i * Math.PI * 2) / tiles.length;
           const depth = (Math.sin(a) + 1) / 2;
-          const x = 960 + Math.cos(a) * 430 * S.orbit, y = 430 + Math.sin(a) * 120 * S.orbit;
-          const sc = (0.72 + 0.34 * depth) * (0.3 + 0.7 * S.orbit);
-          el.style.transform = `translate(${x}px, ${y}px) scale(${sc})`;
-          el.style.opacity = Math.min(1, S.orbit * 1.4);
+          const x = 960 + Math.cos(a) * 560 * S.orbit, y = 430 + Math.sin(a) * 150 * S.orbit;
+          el.style.transform = `translate(${x}px, ${y}px) scale(${(0.6 + 0.4 * depth) * (0.4 + 0.6 * S.orbit)})`;
+          el.style.opacity = Math.min(1, S.orbit * 1.5) * (0.55 + 0.45 * depth);
           const parent = Math.sin(a) > 0 ? $("banksFront") : $("banksBack");
           if (el.parentNode !== parent) parent.appendChild(el);
         });
@@ -838,7 +1063,7 @@
       window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
 
       // =====================================================================
-      // Type and objects on the root timeline (seeked by HyperFrames).
+      // Type, cards and objects on the root timeline (seeked by HyperFrames).
       // =====================================================================
       const tl = gsap.timeline({ paused: true });
       const rise = (sel, at, stagger = 0.09) =>
@@ -851,48 +1076,69 @@
       // 1
       fadeIn("#s1-tag", 3.2);
       rise("#s1-h", 3.5);
-      fadeOut("#s1-tag", 6.2);
-      sink("#s1-h", 6.15);
-      // 2
-      rise("#s2-h", 8.3);
-      fadeIn("#s2-l", 9.2);
-      sink("#s2-h", 12.7);
-      fadeOut("#s2-l", 12.6);
+      fadeOut("#s1-tag", T2 - 0.3);
+      sink("#s1-h", T2 - 0.35);
+      // 2: a purchase pops up at each print, then each flies into its basket.
+      rise("#s2-h", T2 + 1.6);
+      sink("#s2-h", T3 - 1.6);
+      BUYS.forEach(([, , , basket], i) => {
+        const [px, py] = printAt(i);
+        const above = i % 2 === 0;
+        const appear = i === 0 ? T2 + 2.0 : T2 + 1.8 + ((i - 1) * 4.8) / 6.7 + 0.35;
+        const el = `#c${i}`;
+        tl.set(el, { xPercent: -50, yPercent: -50, x: px, y: py + (above ? -118 : 118), opacity: 0, scale: 0.6 }, 7)
+          .to(el, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.7)" }, appear)
+          .to(el, { y: `+=${above ? -10 : 10}`, duration: T3 - appear, ease: "sine.inOut" }, appear + 0.6)
+          .to(el, { x: BASKET[basket][0], y: BASKET[basket][1], scale: 0.25, opacity: 0, duration: 1.2, ease: "power3.in" }, T3 + 0.4 + i * 0.06);
+      });
       // 3
-      tl.set("#s3-h2 .ln > span", { yPercent: 115 }, 14.5);
-      rise("#s3-h", 15.0);
-      fadeIn("#s3-l", 15.6);
-      ["#lab1", "#lab2", "#lab3"].forEach((s, i) => fadeIn(s, 16.2 + i * 0.15));
-      sink("#s3-h", 22.2);
-      fadeOut("#s3-l", 22.1);
-      tl.to(["#lab1", "#lab2"], { opacity: 0.28, duration: 0.8, ease: "sine.inOut" }, 22.6);
-      rise("#s3-h2", 22.7);
-      sink("#s3-h2", 25.8);
-      tl.to(["#lab1", "#lab2", "#lab3"], { opacity: 0, y: -10, filter: "blur(8px)", duration: 0.6, ease: "power2.in" }, 25.9);
+      tl.set("#s3-h2 .ln > span", { yPercent: 115 }, T3);
+      rise("#s3-h", T3 + 0.5);
+      fadeIn("#s3-l", T3 + 1.1);
+      tl.fromTo("#rings", { opacity: 0 }, { opacity: 1, duration: 0.6 }, T3 + 1.7);
+      ["#lab1", "#lab2", "#lab3"].forEach((s, i) => fadeIn(s, T3 + 1.8 + i * 0.15));
+      sink("#s3-h", T3 + 7.7);
+      fadeOut("#s3-l", T3 + 7.6);
+      tl.to(["#lab1", "#lab2"], { opacity: 0.28, duration: 0.8, ease: "sine.inOut" }, T3 + 8.1);
+      rise("#s3-h2", T3 + 8.2);
+      sink("#s3-h2", T3 + 11.3);
+      tl.to(["#lab1", "#lab2", "#lab3", "#rings"], { opacity: 0, y: -10, filter: "blur(8px)", duration: 0.6, ease: "power2.in" }, T3 + 11.4);
       // 4
-      tl.fromTo("#stage", { x: 900, rotationY: -34, rotationX: 6, transformPerspective: 2200 },
-        { x: 0, rotationY: -12, rotationX: 3, duration: 1.6, ease: "expo.out" }, 28.9)
-        .to("#stage", { rotationY: -6, rotationX: 2, duration: 4.6, ease: "none" }, 30.5);
-      rise("#s4-h", 29.9);
-      fadeIn("#s4-l", 30.5);
-      tl.fromTo("#bubble", { opacity: 0, scale: 0.7, y: 24 }, { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "back.out(1.5)" }, 31.4)
-        .to("#bubble", { x: 520, y: 150, scale: 0.3, opacity: 0, filter: "blur(6px)", duration: 0.9, ease: "power3.in" }, 33.6)
-        .to("#scr-answer", { opacity: 1, duration: 0.6, ease: "sine.inOut" }, 34.7)
-        // the camera leans into the answer
-        .to("#stage", { scale: 1.12, x: -150, y: 44, rotationY: 0, rotationX: 0, duration: 1.6, ease: "power3.inOut" }, 35.1);
-      sink("#s4-h", 34.9);
-      fadeOut("#s4-l", 34.8);
-      tl.to("#stage", { x: 900, rotationY: -20, opacity: 0, duration: 1.0, ease: "power3.in" }, 38.3);
+      rise("#s4-h", T4 + 0.3);
+      fadeIn("#s4-l", T4 + 0.8);
+      fadeIn("#bench1", T4 + 1.2);
+      fadeIn("#bench2", T4 + 1.35);
+      fadeIn("#bench3", T4 + 1.9);
+      tl.fromTo("#bf1", { scaleX: 0 }, { scaleX: 1, duration: 1.3, ease: "power3.out" }, T4 + 1.4)
+        .fromTo("#bf2", { scaleX: 0 }, { scaleX: 1, duration: 1.3, ease: "power3.out" }, T4 + 1.55);
+      sink("#s4-h", T5 - 0.9);
+      fadeOut(["#s4-l", "#bench1", "#bench2", "#bench3"], T5 - 0.9);
       // 5
-      rise("#s5-h", 40.3);
-      fadeIn("#s5-l", 40.9);
-      sink("#s5-h", 43.6);
-      fadeOut("#s5-l", 43.5);
+      tl.fromTo("#stage", { x: 900, rotationY: -34, rotationX: 6, transformPerspective: 2200 },
+        { x: 0, rotationY: -12, rotationX: 3, duration: 1.6, ease: "expo.out" }, T5 + 0.2)
+        .to("#stage", { rotationY: -6, rotationX: 2, duration: 4.4, ease: "none" }, T5 + 1.8);
+      rise("#s5-h", T5 + 1.2);
+      fadeIn("#s5-l", T5 + 1.8);
+      tl.fromTo("#bubble", { opacity: 0, scale: 0.7, y: 24 }, { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "back.out(1.5)" }, T5 + 2.7)
+        .to("#bubble", { x: 520, y: 150, scale: 0.3, opacity: 0, filter: "blur(6px)", duration: 0.9, ease: "power3.in" }, T5 + 4.9)
+        .to("#scr-answer", { opacity: 1, duration: 0.6, ease: "sine.inOut" }, T5 + 6.0)
+        .to("#stage", { scale: 1.1, x: -120, y: 40, rotationY: 0, rotationX: 0, duration: 1.6, ease: "power3.inOut" }, T5 + 6.2);
+      sink("#s5-h", T5 + 6.1);
+      fadeOut("#s5-l", T5 + 6.0);
+      ["#pl1", "#pl2", "#pl3"].forEach((s, i) =>
+        tl.fromTo(s, { opacity: 0, x: -40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.9, ease: "power3.out" }, T5 + 6.9 + i * 0.35));
+      fadeOut(["#pl1", "#pl2", "#pl3"], T6 - 1.0);
+      tl.to("#stage", { x: 900, rotationY: -20, opacity: 0, duration: 1.0, ease: "power3.in" }, T6 - 0.8);
       // 6
-      rise("#s6-w", 45.2);
-      fadeIn("#s6-l", 45.9);
-      fadeIn("#s6-f", 46.6);
-      tl.to("#word", { backgroundPosition: "0% 0", duration: 1.8, ease: "sine.inOut" }, 46.6);
+      rise("#s6-h", T6 + 1.2);
+      fadeIn("#s6-l", T6 + 1.8);
+      sink("#s6-h", T7 - 1.3);
+      fadeOut("#s6-l", T7 - 1.4);
+      // 7
+      rise("#s7-w", T7 + 0.6);
+      fadeIn("#s7-l", T7 + 1.3);
+      fadeIn("#s7-f", T7 + 2.0);
+      tl.to("#word", { backgroundPosition: "0% 0", duration: 1.8, ease: "sine.inOut" }, T7 + 2.0);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;
