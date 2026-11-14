@@ -13,7 +13,7 @@ import { BankLogo } from './BankLogo';
 type Step = 'choose' | 'consent' | 'auth' | 'done' | 'finished';
 
 /**
- * Connecting another bank (PSD2 account information) as a native sheet: pick
+ * Connecting another bank (PSD2 account information) as a full-screen view: pick
  * the bank, read what the consent covers, then sign in at that bank. The
  * sign-in is only simulated in the demo, with no login form of the bank's own.
  */
@@ -60,14 +60,15 @@ export function ConnectSheet({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="fullScreen"
+      statusBarTranslucent
       onRequestClose={onClose}
       onShow={() => {
         setStep('choose');
         setBank(null);
       }}>
       <View style={styles.sheet}>
-        <View style={styles.top}>
+        <View style={[styles.top, { paddingTop: insets.top + 12 }]}>
           {step === 'consent' ? (
             <Pressable onPress={() => setStep('choose')} hitSlop={12} accessibilityRole="button">
               <Text style={styles.topAction}>‹ {strings.connectBack}</Text>
@@ -158,7 +159,7 @@ export function ConnectSheet({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   sheet: { flex: 1, backgroundColor: colors.bg },
-  top: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16 },
+  top: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20 },
   topAction: { fontSize: 17, lineHeight: 22, color: colors.green700 },
   topActionDisabled: { color: colors.textTertiary },
   body: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24 },
