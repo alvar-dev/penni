@@ -7,8 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { serverHasVoice, speechUrl } from '../api';
 import { EN } from '../lang';
 import type { KokoroApi } from './KokoroEngine';
-import { sentences } from './sentences';
-import { speakable } from './speakable';
+import { sentences } from '../shared/sentences';
+import { speakable } from '../shared/speakable';
 
 /**
  * The on-device Kokoro voice exists only in the installed app; in Expo Go the
@@ -77,25 +77,38 @@ export function useSpeaker() {
   }, []);
 
   const speak = useCallback(
-    (id: string, text: string) => {
+    (id: string, text: string, onStart?: () => void) => {
       stop();
       const parts = sentences(text);
-      const spoken = parts.map(speakable);
+      const spoken = parts.map((part) => speakable(part, EN));
       if (spoken.length === 0) return;
       const mine = turn.current;
       const live = () => turn.current === mine;
       current.current = id;
-      const at = (sentence: number) => live() && setReading({ id, sentence });
-      at(0);
+      let begun = false;
+      let last = -1;
+      // Marks the sentence being read; the first call means the voice has started.
+      const at = (sentence: number) => {
+        if (!live()) return;
+        if (sentence !== last) {
+          last = sentence;
+          setReading({ id, sentence });
+        }
+        if (!begun) {
+          begun = true;
+          onStart?.();
+        }
+      };
+      setReading({ id, sentence: 0 });
 
       // The phone's own voice, a sentence at a time.
       const deviceVoice = (from = 0) => {
         const say = (i: number) => {
           if (!live()) return;
           if (i >= spoken.length) return finish(id);
-          at(i);
           Speech.speak(spoken[i], {
             language: EN ? 'en-US' : 'fi-FI',
+            onStart: () => at(i),
             onDone: () => say(i + 1),
             onStopped: () => finish(id),
             onError: () => finish(id),
@@ -114,7 +127,6 @@ export function useSpeaker() {
         const play = (i: number) => {
           if (!live()) return;
           if (i >= spoken.length) return finish(id);
-          at(i);
           prepare(i + 1);
           const p = createAudioPlayer({ uri: speechUrl(spoken[i]) });
           player.current = p;
@@ -124,6 +136,7 @@ export function useSpeaker() {
               started = true;
               p.play();
             }
+            if (status.playing) at(i);
             if (status.didJustFinish && player.current === p) {
               player.current = null;
               p.remove();

@@ -17,12 +17,15 @@
  * token, and asks are rate limited so the API budget cannot be drained.
  */
 import { spawn, type ChildProcess } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createInterface } from 'node:readline';
 
 import type { AskRequest, HistoryItem } from '../src/shared/api.ts';
 import { bankById } from '../src/shared/banks.ts';
+import { sentences } from '../src/shared/sentences.ts';
+import { speakable } from '../src/shared/speakable.ts';
 import { personas, summary, TODAY, withOtherBanks, type Persona } from './engine.mts';
 import type { ToolCall, Viz } from '../src/shared/api.ts';
 import { askModel, MODEL, tidy } from './llm.mts';
@@ -84,16 +87,31 @@ if (existsSync(STT_PYTHON)) {
 
 const recentTranscriptions: number[] = [];
 const recentSpeech: number[] = [];
-/** Recently spoken answers (the player asks for the same audio in several ranges). */
+/**
+ * Spoken sentences, kept in memory and on disk (server/.cache/speech), so a
+ * sentence is synthesized once: the player asks for the same audio in several
+ * ranges, answers are prepared before they are sent, and demo answers survive
+ * restarts. `background` work (preparing ahead) is not rate-limited.
+ */
 const speechCache = new Map<string, Promise<Buffer>>();
+const SPEECH_DIR = new URL('./.cache/speech/', import.meta.url);
 
-function spoken(text: string): Promise<Buffer> {
-  const hit = speechCache.get(text);
+function spoken(text: string, background = false): Promise<Buffer> {
+  const key = createHash('sha1').update(`${LANG}|${text}`).digest('hex');
+  const hit = speechCache.get(key);
   if (hit) return hit;
-  const now = Date.now();
-  while (recentSpeech.length && now - recentSpeech[0] > 60_000) recentSpeech.shift();
-  if (recentSpeech.length >= 30) return Promise.reject(new Error('busy'));
-  recentSpeech.push(now);
+  const file = new URL(`${key}.wav`, SPEECH_DIR);
+  if (existsSync(file)) {
+    const saved = Promise.resolve(readFileSync(file));
+    speechCache.set(key, saved);
+    return saved;
+  }
+  if (!background) {
+    const now = Date.now();
+    while (recentSpeech.length && now - recentSpeech[0] > 60_000) recentSpeech.shift();
+    if (recentSpeech.length >= 30) return Promise.reject(new Error('busy'));
+    recentSpeech.push(now);
+  }
   const job = fetch(`http://127.0.0.1:${STT_PORT}/speak`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -101,13 +119,40 @@ function spoken(text: string): Promise<Buffer> {
     signal: AbortSignal.timeout(30_000),
   }).then(async (response) => {
     if (!response.ok) throw new Error(`speech service ${response.status}`);
-    return Buffer.from(await response.arrayBuffer());
+    const audio = Buffer.from(await response.arrayBuffer());
+    try {
+      mkdirSync(SPEECH_DIR, { recursive: true });
+      writeFileSync(file, audio);
+    } catch {
+      // Memory is enough.
+    }
+    return audio;
   });
-  speechCache.set(text, job);
-  job.catch(() => speechCache.delete(text));
-  while (speechCache.size > 12) speechCache.delete(speechCache.keys().next().value!);
+  speechCache.set(key, job);
+  job.catch(() => speechCache.delete(key));
+  while (speechCache.size > 300) speechCache.delete(speechCache.keys().next().value!);
   return job;
 }
+
+/** Background speech work runs one sentence at a time, so it never crowds out a live answer. */
+let speechQueue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Prepares an answer's audio: the first sentence now (resolves when it is
+ * ready), the rest queued behind it. The same splitting and wording as the app.
+ */
+function prepareSpeech(answerText: string): Promise<unknown> {
+  if (!voiceReady) return Promise.resolve();
+  const parts = sentences(answerText).map((part) => speakable(part, EN));
+  if (parts.length === 0) return Promise.resolve();
+  const first = spoken(parts[0], true).catch(() => undefined);
+  for (const part of parts.slice(1)) speechQueue = speechQueue.then(() => spoken(part, true).catch(() => undefined));
+  return first;
+}
+
+/** Waits for the first sentence's audio, but never more than `ms`. */
+const readyToSpeak = (answerText: string, ms = 2500) =>
+  Promise.race([prepareSpeech(answerText), new Promise((resolve) => setTimeout(resolve, ms))]);
 
 async function transcribe(body: unknown): Promise<{ status: number; body: unknown }> {
   if (!speechReady) return { status: 503, body: { error: 'Speech recognition is still starting' } };
@@ -166,6 +211,14 @@ function customer(personaId: string, banks: string[] = []): Persona | undefined 
 async function prewarm(personaId: string) {
   const combos = (process.env.DEMO_BANKS ?? 'op;revolut;op+revolut').split(';').map((c) => c.split('+').filter((b) => bankById(b)));
   for (const banks of [[], ...combos]) await prewarmFor(personaId, banks);
+  // Then the demo answers' audio, so they are read the moment they appear.
+  for (let i = 0; i < 120 && !speechReady; i++) await new Promise((resolve) => setTimeout(resolve, 500));
+  if (!voiceReady) return;
+  const prefix = `${MODEL}|${TODAY}|${EN ? 'en|' : ''}${personaId}`;
+  const texts = [...cache.entries()].filter(([k]) => k.startsWith(prefix) && k.slice(prefix.length).match(/^[+|]/)).map(([, v]) => tidy(v.text));
+  for (const text of texts) await prepareSpeech(text);
+  await speechQueue;
+  console.log(`[prewarm] audio ready for ${texts.length} answers`);
 }
 
 /** Bank ids from a request: known ones only, each once, sorted. */
@@ -339,7 +392,9 @@ const server = createServer(async (req, res) => {
   const hit = key ? cache.get(key) : undefined;
   if (hit) {
     console.log(`[ask] ${parsed.personaId} cached | ${parsed.question.slice(0, 80)}`);
-    return send(res, 200, { ...hit, text: tidy(hit.text) });
+    const text = tidy(hit.text);
+    await readyToSpeak(text);
+    return send(res, 200, { ...hit, text });
   }
   const limited = allowAsk();
   if (limited) return send(res, 429, { error: limited });
@@ -354,6 +409,7 @@ const server = createServer(async (req, res) => {
         `cost=$${(answer.usage.usd ?? 0).toFixed(4)} total=$${spentUsd.toFixed(3)} | ${parsed.question.slice(0, 80)}`,
     );
     if (key) remember(key, { text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
+    await readyToSpeak(answer.text);
     return send(res, 200, { text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
   } catch (error) {
     console.error(`[ask] failed after ${((Date.now() - started) / 1000).toFixed(1)}s:`, (error as Error).message);

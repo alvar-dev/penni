@@ -35,7 +35,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { Drawer, DRAWER_TIMING } from './src/components/Drawer';
 import { NewChatIcon, PersonIcon, SpeakerIcon } from './src/components/Icon';
-import { sentences } from './src/tts/sentences';
+import { sentences } from './src/shared/sentences';
 import { KokoroEngine, useSpeaker } from './src/tts/useSpeaker';
 import { Orb, ORB_CANVAS, ORB_DIAMETER } from './src/components/Orb';
 
@@ -411,13 +411,28 @@ function Screen() {
       const controller = new AbortController();
       inFlight.current = controller;
       const timeout = setTimeout(() => controller.abort(), 90_000);
+      let waitingForVoice = false;
 
       ask({ personaId, question, history, banks: options.banks ?? bankIds }, controller.signal)
         .then((answer) => {
           if (seq !== requestSeq.current) return;
           const id = newId();
-          pushMessage(target, { id, role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
-          if (speaker.voiceOn) speaker.speak(id, answer.text);
+          const message: Message = { id, role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources };
+          if (!speaker.voiceOn) {
+            pushMessage(target, message);
+            return;
+          }
+          // The answer appears the moment the voice starts reading it (at most 2 s later).
+          waitingForVoice = true;
+          let shown = false;
+          const show = () => {
+            if (shown || seq !== requestSeq.current) return;
+            shown = true;
+            pushMessage(target, message);
+            setPhase('idle');
+          };
+          speaker.speak(id, answer.text, show);
+          setTimeout(show, 2000);
         })
         .catch((error: unknown) => {
           if (seq !== requestSeq.current) return;
@@ -430,7 +445,8 @@ function Screen() {
           clearTimeout(timeout);
           if (seq !== requestSeq.current) return;
           inFlight.current = null;
-          setPhase('idle');
+          // While waiting for the voice, the coach still looks busy; show() ends it.
+          if (!waitingForVoice) setPhase('idle');
         });
     },
     [messages, personaId, currentId, cancelRequest, pushMessage, bankIds, speaker],
