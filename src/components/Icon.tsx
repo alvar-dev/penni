@@ -19,3 +19,29 @@ export function PersonIcon({ size, color }: Props) {
     </Canvas>
   );
 }
+
+/** "Write new": an open square with a pencil, as in iOS, for starting a new conversation. */
+export function ComposeIcon({ size, color }: Props) {
+  return (
+    <Canvas style={{ width: size, height: size }} pointerEvents="none">
+      <Group transform={[{ scale: size / 24 }]}>
+        <Path
+          path="M11 4.6H7.2A2.6 2.6 0 0 0 4.6 7.2v9.6a2.6 2.6 0 0 0 2.6 2.6h9.6a2.6 2.6 0 0 0 2.6-2.6V13"
+          style="stroke"
+          strokeWidth={1.7}
+          strokeCap="round"
+          strokeJoin="round"
+          color={color}
+        />
+        <Path
+          path="M17.4 3.9a1.9 1.9 0 0 1 2.7 2.7l-7.6 7.6-3.4.8.8-3.4z"
+          style="stroke"
+          strokeWidth={1.7}
+          strokeCap="round"
+          strokeJoin="round"
+          color={color}
+        />
+      </Group>
+    </Canvas>
+  );
+}
