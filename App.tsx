@@ -455,12 +455,17 @@ function Screen() {
     [phase, submit],
   );
 
-  /** End of a spoken question: local Whisper turns it into text, then it is asked. */
+  /** End of a spoken question: local Whisper (or the phone itself) turns it into text, then it is asked. */
   const finishListening = useCallback(async () => {
-    const recording = mic.stop();
+    const recording = await mic.stop();
     if (!recording || !recording.heardSpeech) {
       setPhase('idle');
       if (!micNote) setNotice({ text: strings.noSpeech, retry: true });
+      return;
+    }
+    // Recognised on the phone already.
+    if (recording.text !== undefined) {
+      submit(recording.text);
       return;
     }
     setPhase('transcribing');
@@ -525,7 +530,7 @@ function Screen() {
 
   const newChat = useCallback(() => {
     cancelRequest();
-    mic.stop();
+    void mic.stop();
     setDraft('');
     setMessages([]);
     setCurrentId(null);
@@ -538,7 +543,7 @@ function Screen() {
       const conversation = conversations.find((c) => c.id === id);
       if (!conversation) return;
       cancelRequest();
-      mic.stop();
+      void mic.stop();
       setDraft('');
       setMessages(conversation.messages);
       setCurrentId(id);

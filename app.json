@@ -16,7 +16,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "fi.junction.rahavalmentaja"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -26,6 +27,17 @@
         "expo-audio",
         {
           "microphonePermission": "Mikrofonia käytetään, jotta voit kysyä puhumalla."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Mikrofonia käytetään, jotta voit kysyä puhumalla.",
+          "speechRecognitionPermission": "Puheentunnistus muuttaa kysymyksesi tekstiksi.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.as"
+          ]
         }
       ]
     ],

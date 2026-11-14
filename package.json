@@ -8,6 +8,7 @@
     "expo": "~58.0.25",
     "expo-audio": "~58.0.12",
     "expo-constants": "~58.0.16",
+    "expo-speech-recognition": "^58.0.1",
     "expo-status-bar": "~58.0.5",
     "react": "19.3.0",
     "react-native": "0.88.1",
@@ -31,7 +32,8 @@
     "lint": "expo lint",
     "server": "node --env-file=.env.local server/index.mts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p server",
-    "demo": "bash scripts/demo.sh"
+    "demo": "bash scripts/demo.sh",
+    "deploy:server": "bash scripts/deploy-resella.sh"
   },
   "private": true
 }

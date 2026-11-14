@@ -2,12 +2,16 @@ import { requestRecordingPermissionsAsync, setAudioModeAsync, useAudioStream } f
 import { useCallback, useEffect, useRef } from 'react';
 import { useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
+import { canRecognizeOnDevice, deviceSpeech, SPEECH_LANG } from './deviceSpeech';
 import { createVad, stepVad, type VadState } from './vad';
 
 export type MicStart = 'ok' | 'denied' | 'error';
 
-/** A finished recording: 16-bit mono PCM, base64-encoded for the API. */
-export type Recording = { audio: string; sampleRate: number; seconds: number; heardSpeech: boolean };
+/**
+ * A finished recording: 16-bit mono PCM, base64-encoded for the API; or, when
+ * the phone's own recognizer did the work, just the recognised `text`.
+ */
+export type Recording = { audio: string; sampleRate: number; seconds: number; heardSpeech: boolean; text?: string };
 
 /** How many recent loudness values the waveform shows. */
 export const WAVE_BARS = 48;
@@ -24,6 +28,10 @@ const LOUD_DB = -14;
  *
  * Nothing is written to disk; the audio stays in memory until it is sent to
  * the local Whisper service (server/, stt/) and is then dropped.
+ *
+ * In the installed app the phone's own recognizer is used instead (see
+ * deviceSpeech.ts): it listens, ends on a pause by itself and returns text,
+ * and its volume drives the orb and the waveform.
  */
 export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void) {
   const active = useSharedValue(false);
@@ -34,6 +42,40 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
   useEffect(() => {
     autoStop.current = onAutoStop;
   }, [onAutoStop]);
+
+  // The phone's recognizer: the latest transcript, and whether it has ended.
+  const speech = useRef({ transcript: '', ended: true, startedAt: 0, waiters: [] as (() => void)[], limit: undefined as ReturnType<typeof setTimeout> | undefined });
+  useEffect(() => {
+    if (!deviceSpeech) return;
+    const subscriptions = [
+      deviceSpeech.addListener('result', (event) => {
+        const text = event.results[0]?.transcript;
+        if (text) speech.current.transcript = text;
+      }),
+      deviceSpeech.addListener('volumechange', (event) => {
+        if (!active.get()) return;
+        // -2..10, below 0 inaudible.
+        const loudness = Math.min(1, Math.max(0, event.value / 10));
+        level.set(withTiming(loudness, { duration: 90 }));
+        history.set([...history.get().slice(1 - WAVE_BARS), loudness]);
+      }),
+      deviceSpeech.addListener('error', (event) => {
+        if (__DEV__) console.warn('speech recognition', event.error, event.message);
+      }),
+      // Also after an error. A pause ends the question here, like the VAD does below.
+      deviceSpeech.addListener('end', () => {
+        const s = speech.current;
+        s.ended = true;
+        clearTimeout(s.limit);
+        s.waiters.splice(0).forEach((resolve) => resolve());
+        if (active.get()) {
+          active.set(false);
+          autoStop.current();
+        }
+      }),
+    ];
+    return () => subscriptions.forEach((s) => s.remove());
+  }, [active, level, history]);
 
   const { stream } = useAudioStream({
     sampleRate: 16000,
@@ -62,6 +104,31 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
   });
 
   const start = useCallback(async (): Promise<MicStart> => {
+    if (deviceSpeech) {
+      try {
+        const permission = await deviceSpeech.requestPermissionsAsync();
+        if (!permission.granted) return 'denied';
+        const local = await canRecognizeOnDevice();
+        speech.current = { transcript: '', ended: false, startedAt: Date.now(), waiters: [], limit: undefined };
+        history.set([]);
+        active.set(true);
+        deviceSpeech.start({
+          lang: SPEECH_LANG,
+          interimResults: true,
+          continuous: false,
+          requiresOnDeviceRecognition: local,
+          addsPunctuation: local,
+          volumeChangeEventOptions: { enabled: true, intervalMillis: 90 },
+        });
+        // A question is never longer than this.
+        speech.current.limit = setTimeout(() => deviceSpeech?.stop(), 30_000);
+        return 'ok';
+      } catch {
+        active.set(false);
+        speech.current.ended = true;
+        return 'error';
+      }
+    }
     try {
       const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) return 'denied';
@@ -78,7 +145,25 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
   }, [stream, active, history]);
 
   /** Stops recording and returns what was heard (null if nothing was recorded). */
-  const stop = useCallback((): Recording | null => {
+  const stop = useCallback(async (): Promise<Recording | null> => {
+    if (deviceSpeech) {
+      active.set(false);
+      level.set(withTiming(0, { duration: 250 }));
+      const s = speech.current;
+      if (!s.ended) {
+        // Let the recognizer finish the last words (it ends with a final result).
+        await new Promise<void>((resolve) => {
+          s.waiters.push(resolve);
+          deviceSpeech?.stop();
+          setTimeout(resolve, 1500);
+        });
+      }
+      if (!s.startedAt) return null;
+      const text = s.transcript.trim();
+      const seconds = (Date.now() - s.startedAt) / 1000;
+      speech.current = { transcript: '', ended: true, startedAt: 0, waiters: [], limit: undefined };
+      return { audio: '', sampleRate: 0, seconds, heardSpeech: text.length > 0, text };
+    }
     active.set(false);
     try {
       stream.stop();
