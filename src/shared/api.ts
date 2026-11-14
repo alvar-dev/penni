@@ -87,7 +87,7 @@ export type Viz =
       kind: 'accounts';
       label: string;
       value: number;
-      banks: { id?: string; name: string; example?: boolean; accounts: { name: string; balance: number; note?: string }[] }[];
+      banks: { id?: string; name: string; accounts: { name: string; balance: number; note?: string }[] }[];
       /** No other bank connected yet: the card offers to connect one. */
       connectable: boolean;
       footnote?: string;

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { strings, type Viz as VizData } from '../content';
+import type { Viz as VizData } from '../content';
 import { colors, type } from '../theme';
 import { AccountsChart } from './charts/AccountsChart';
 import { BasketsChart } from './charts/BasketsChart';
@@ -14,7 +14,7 @@ import { RunwayChart } from './charts/RunwayChart';
 import { TrendChart } from './charts/TrendChart';
 
 /** The visual half of an answer: a label, the headline number and its chart. */
-export function Viz({ viz, example, onConnect }: { viz: VizData; example?: boolean; onConnect?: () => void }) {
+export function Viz({ viz, onConnect }: { viz: VizData; onConnect?: () => void }) {
   return (
     <View style={styles.card}>
       <Text style={styles.label}>{viz.label}</Text>
@@ -36,7 +36,6 @@ export function Viz({ viz, example, onConnect }: { viz: VizData; example?: boole
         <AccountsChart banks={viz.banks} connectable={viz.connectable && !!onConnect} footnote={viz.footnote} onConnect={onConnect} />
       ) : null}
       {viz.kind === 'replay' ? <ReplayChart points={viz.points} event={viz.event} overdrawnDays={viz.overdrawnDays} /> : null}
-      {example ? <Text style={styles.example}>{strings.exampleTag}</Text> : null}
     </View>
   );
 }
@@ -52,5 +51,4 @@ const styles = StyleSheet.create({
   label: { ...type.caption, color: colors.textSecondary },
   figure: { ...type.hero, color: colors.green700, marginTop: 2, marginBottom: 6 },
   figureUnit: { fontSize: 28, fontWeight: '600', letterSpacing: 0 },
-  example: { ...type.caption, fontSize: 12, color: colors.textTertiary, marginTop: 14 },
 });

@@ -103,7 +103,6 @@ export function ConnectSheet({
                 </Pressable>
               );
             })}
-            <Text style={styles.legal}>{strings.connectBankNote}.</Text>
           </ScrollView>
         ) : (
           <>
@@ -112,10 +111,7 @@ export function ConnectSheet({
                 <Text style={styles.title}>{strings.connectTitle}</Text>
                 <View style={styles.bank}>
                   <BankLogo id={bank.id} size={44} />
-                  <View style={styles.flex}>
-                    <Text style={styles.bankName}>{bank.name}</Text>
-                    <Text style={styles.bankNote}>{strings.connectBankNote}</Text>
-                  </View>
+                  <Text style={[styles.bankName, styles.flex]}>{bank.name}</Text>
                 </View>
 
                 <Text style={styles.section}>{strings.connectScopeTitle}</Text>
@@ -176,7 +172,6 @@ const styles = StyleSheet.create({
   already: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700 },
   bank: { flexDirection: 'row', alignItems: 'center', marginTop: 20, padding: 14, borderRadius: 16, backgroundColor: colors.surface, gap: 12 },
   bankName: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: colors.text },
-  bankNote: { ...type.caption, color: colors.textSecondary },
   scopeRow: { paddingVertical: 12 },
   scopeTitle: { fontSize: 16, lineHeight: 21, fontWeight: '500', color: colors.text },
   scopeDetail: { ...type.caption, color: colors.textSecondary, marginTop: 1 },

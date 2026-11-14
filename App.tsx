@@ -740,7 +740,7 @@ function Screen() {
                   </Animated.View>
                 ) : (
                   <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
-                    {message.viz ? <Viz viz={message.viz} example={message.example} onConnect={canConnectMore ? () => setConnectOpen(true) : undefined} /> : null}
+                    {message.viz ? <Viz viz={message.viz} onConnect={canConnectMore ? () => setConnectOpen(true) : undefined} /> : null}
                     <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
                     {message.sources?.length ? (
                       <Text style={styles.answerSource}>

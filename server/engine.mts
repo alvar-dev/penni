@@ -727,7 +727,6 @@ function allAccounts(p: Persona): ToolResult {
         ...others.map((o) => ({
           id: o.id,
           name: o.name,
-          example: true,
           accounts: o.accounts.map((a) => ({
             name: a.name,
             balance: a.balance,

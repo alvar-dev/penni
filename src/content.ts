@@ -41,7 +41,6 @@ export const strings = {
   micError: 'Mikrofoni ei käynnistynyt.',
   inputPlaceholder: 'Kirjoita kysymys',
   thinking: 'Lasketaan…',
-  exampleTag: 'Esimerkkidata',
   orbStart: 'Kysy puhumalla',
   orbStop: 'Lopeta kuuntelu',
   send: 'Lähetä',
@@ -66,7 +65,6 @@ export const strings = {
   connectLead: 'Kun annat luvan, S-Pankki hakee tilitietosi toisesta pankista. Valmentaja näkee silloin koko taloutesi ja neuvoo sen perusteella.',
   connectChoose: 'Valitse pankki',
   connectBack: 'Pankit',
-  connectBankNote: 'Tiedot ovat tässä demossa esimerkkidataa',
   connectScopeTitle: 'Luvalla saa',
   connectScope: [
     ['Saldot ja tapahtumat', 'Tilit, kortit ja ostot'],
@@ -83,8 +81,6 @@ export const strings = {
   accountsConnect: 'Yhdistä toinen pankki',
   accountsConnectMore: 'Yhdistä lisää pankkeja',
   connectAlready: 'Yhdistetty',
-  accountsConnectNote: 'PSD2 · vain lukuoikeus',
-  accountsExample: 'esimerkkidata',
   banksTitle: 'Pankit',
   banksDisconnect: 'Poista yhteys',
   planStart: 'Aloita: {amount} € joka palkkapäivä',
@@ -102,7 +98,7 @@ export const suggestions = [
 /*
  * PLACEHOLDER ANSWERS, used only by the development preview links in App.tsx
  * (?preview=chat etc.) so layouts can be checked without calling the model.
- * Nothing here is computed from the data; each is tagged "Esimerkkidata".
+ * Nothing here is computed from the data.
  * Real answers come from the server (src/api.ts).
  */
 const MONTHS = ['maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo'];

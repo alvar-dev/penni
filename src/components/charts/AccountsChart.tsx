@@ -5,7 +5,7 @@ import { strings } from '../../content';
 import { BankLogo } from '../BankLogo';
 import { colors, formatEur, type } from '../../theme';
 
-type Bank = { id?: string; name: string; example?: boolean; accounts: { name: string; balance: number; note?: string }[] };
+type Bank = { id?: string; name: string; accounts: { name: string; balance: number; note?: string }[] };
 type Props = { banks: Bank[]; connectable: boolean; footnote?: string; onConnect?: () => void };
 
 /**
@@ -20,7 +20,6 @@ export function AccountsChart({ banks, connectable, footnote, onConnect }: Props
           <View style={styles.bankHeader}>
             {bank.id ? <BankLogo id={bank.id} size={20} /> : null}
             <Text style={[styles.bankName, !!bank.id && styles.bankNameWithLogo]}>{bank.name}</Text>
-            {bank.example ? <Text style={styles.example}>{strings.accountsExample}</Text> : null}
           </View>
           {bank.accounts.map((a, i) => (
             <View key={a.name} style={[styles.row, i > 0 && styles.rowLine]}>
@@ -43,7 +42,6 @@ export function AccountsChart({ banks, connectable, footnote, onConnect }: Props
           <Text style={styles.connectPlus}>+</Text>
           <View style={styles.rowBody}>
             <Text style={styles.connectText}>{banks.length > 1 ? strings.accountsConnectMore : strings.accountsConnect}</Text>
-            <Text style={styles.note}>{strings.accountsConnectNote}</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </Pressable>
@@ -59,7 +57,6 @@ const styles = StyleSheet.create({
   bankHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   bankNameWithLogo: { marginLeft: 8 },
   bankName: { ...type.caption, fontWeight: '600', color: colors.textSecondary },
-  example: { ...type.caption, color: colors.textTertiary, marginLeft: 8 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   rowBody: { flex: 1 },
