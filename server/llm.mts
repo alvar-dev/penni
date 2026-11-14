@@ -1,0 +1,154 @@
+/**
+ * The conversation with the model (Featherless, OpenAI-compatible API).
+ *
+ *   1. The model reads the question and calls one calculation tool.
+ *   2. The engine runs it on the customer's own transactions.
+ *   3. The model words a short answer from the tool's facts only.
+ *
+ * The model never sees individual transactions, only the computed facts.
+ */
+import type { HistoryItem, Viz } from '../src/shared/api.ts';
+import { runTool, TODAY, TOOLS, type Persona } from './engine.mts';
+
+const API_URL = 'https://api.featherless.ai/v1/chat/completions';
+const KEY = process.env.FEATHERLESS_API_KEY ?? '';
+export const MODEL = process.env.FEATHERLESS_MODEL ?? 'moonshotai/Kimi-K3';
+
+/** USD per million tokens, from Featherless's model list on 2026-11-14. */
+const PRICES: Record<string, { input: number; output: number }> = {
+  'moonshotai/Kimi-K3': { input: 3, output: 15 },
+  'zai-org/GLM-5.3': { input: 1.4, output: 4.4 },
+  'deepseek-ai/DeepSeek-V4.1-Flash': { input: 0.3, output: 1.2 },
+};
+
+type Message = Record<string, unknown> & { role: string };
+type Usage = { prompt_tokens?: number; completion_tokens?: number };
+type Completion = {
+  choices: { message: { content?: string | null; reasoning_content?: string; tool_calls?: ToolCall[] }; finish_reason?: string }[];
+  usage?: Usage;
+};
+type ToolCall = { id: string; type: 'function'; function: { name: string; arguments: string } };
+
+export type Answer = {
+  text: string;
+  viz?: Viz;
+  tool?: string;
+  usage: { input: number; output: number; usd: number | null };
+};
+
+function systemPrompt(p: Persona): string {
+  const [y, m, d] = TODAY.split('-').map(Number);
+  const weekday = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' });
+  return `You are the money coach inside S-mobiili, S-Pankki's mobile app. You help one customer understand their own spending and build healthier money habits.
+
+Today is ${weekday} ${TODAY}. The customer is ${p.age} years old and lives in postal code ${p.postalCode}. You can see their S-Pankki account transactions from October 2024 up to today.
+
+Spending falls into three baskets:
+1. mandatory and regular: housing, utility bills, groceries, transport
+2. mandatory but irregular: health, home and tech (a broken washing machine)
+3. everyday spending that slips through your fingers: restaurants and cafés, entertainment, shopping and hobbies, travel, taxis
+
+How to work:
+- For any question about the customer's own money, call exactly one tool. Never compute, estimate or invent numbers yourself.
+- "Last month" is ${TODAY.slice(0, 4)}-${String(m - 1).padStart(2, '0')}. "This year" is ${y}-01 to ${TODAY.slice(0, 7)}. If no period is given for a total, use the last full month.
+- The data has categories and merchant types but no merchant names, so it cannot show single subscriptions (such as Netflix), single shops or accounts in other banks. If asked about those, use the closest tool if it helps and say plainly what the data cannot show.
+- If the question is not about the customer's money, answer briefly without a tool and steer back to their spending.
+
+How to answer, once you have a tool result:
+- Reply in English, unless the customer clearly wrote in another language.
+- One to three short sentences in plain everyday language. No markdown, no lists, no headings.
+- Use only numbers that appear in the tool result. Round to whole euros unless the amount is under €10. Write amounts like €84 and €1,234.
+- A chart above your text already shows the numbers, so pick the one or two that matter instead of repeating them all.
+- When it helps, end with one concrete, friendly suggestion that refers to their own numbers. Never shame or lecture.
+- If the tool result contains pass_through: true, say that their salary moves on to another bank, so you see only part of their spending.
+- If the tool result contains an error, explain briefly what you could not look up.`;
+}
+
+async function complete(body: Record<string, unknown>): Promise<Completion> {
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: MODEL, ...body }),
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (response.ok) return (await response.json()) as Completion;
+    const detail = (await response.text()).slice(0, 300);
+    // One retry for capacity errors only; anything else is a bug worth seeing.
+    if (attempt === 0 && [429, 502, 503].includes(response.status)) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      continue;
+    }
+    throw new Error(`Featherless ${response.status}: ${detail}`);
+  }
+}
+
+function clean(text: string | null | undefined): string {
+  return (text ?? '')
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .replace(/\*\*|__|`/g, '')
+    .replace(/^\s*[-*•]\s+/gm, '')
+    .trim();
+}
+
+export async function askModel(p: Persona, question: string, history: HistoryItem[]): Promise<Answer> {
+  if (!KEY) throw new Error('FEATHERLESS_API_KEY is missing from .env.local');
+
+  const messages: Message[] = [
+    { role: 'system', content: systemPrompt(p) },
+    ...history.map((h) => ({ role: h.role, content: h.text })),
+    { role: 'user', content: question },
+  ];
+  const usage = { input: 0, output: 0 };
+  const count = (u?: Usage) => {
+    usage.input += u?.prompt_tokens ?? 0;
+    usage.output += u?.completion_tokens ?? 0;
+  };
+  const price = PRICES[MODEL];
+  const finish = (text: string, viz?: Viz, tool?: string): Answer => ({
+    text,
+    viz,
+    tool,
+    usage: { ...usage, usd: price ? (usage.input * price.input + usage.output * price.output) / 1e6 : null },
+  });
+
+  // 1. Pick a calculation.
+  const first = await complete({ messages, tools: TOOLS, tool_choice: 'auto', max_tokens: 2000, temperature: 0.3 });
+  count(first.usage);
+  const choice = first.choices[0];
+  const call = choice.message.tool_calls?.[0];
+  if (!call) {
+    const text = clean(choice.message.content);
+    if (!text) throw new Error(`Model returned neither a tool call nor text (finish: ${choice.finish_reason})`);
+    return finish(text);
+  }
+
+  // 2. Run it.
+  let args: Record<string, unknown> = {};
+  try {
+    args = call.function.arguments ? (JSON.parse(call.function.arguments) as Record<string, unknown>) : {};
+  } catch {
+    args = {};
+  }
+  const result = runTool(p, call.function.name, args);
+
+  // 3. Word the answer from the facts.
+  const assistantTurn: Message = { role: 'assistant', content: choice.message.content ?? '', tool_calls: [call] };
+  if (choice.message.reasoning_content) assistantTurn.reasoning_content = choice.message.reasoning_content;
+  const followUp = [...messages, assistantTurn, { role: 'tool', tool_call_id: call.id, content: JSON.stringify(result.facts) }];
+  // The model thinks before it writes, and the thinking counts towards
+  // max_tokens, so leave plenty of room; only generated tokens are billed.
+  const second = await complete({ messages: followUp, tools: TOOLS, tool_choice: 'none', max_tokens: 1800, temperature: 0.5 });
+  count(second.usage);
+  let text = clean(second.choices[0].message.content);
+  if (second.choices[0].finish_reason === 'length') text = lastFullSentence(text);
+  if (!text) throw new Error(`Model returned no answer text (finish: ${second.choices[0].finish_reason})`);
+  return finish(text, 'error' in result.facts ? undefined : result.viz, call.function.name);
+}
+
+/** A cut-off answer is shown up to its last complete sentence, never mid-word. */
+function lastFullSentence(text: string): string {
+  const end = Math.max(text.lastIndexOf('. '), text.lastIndexOf('! '), text.lastIndexOf('? '));
+  if (/[.!?]$/.test(text)) return text;
+  return end > 0 ? text.slice(0, end + 1) : '';
+}

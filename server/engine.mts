@@ -1,0 +1,646 @@
+/**
+ * The calculation engine. Every number the customer sees is computed here from
+ * their own transactions; the language model only picks which calculation to
+ * run and words the answer. Each tool returns `facts` (what the model may use
+ * in its text) and `viz` (what the app draws above the text).
+ */
+import { readFileSync } from 'node:fs';
+
+import type { Basket, Summary, SummaryTile, Viz } from '../src/shared/api.ts';
+
+type Tx = { date: string; month: string; day: number; category: string; amount: number; balance: number; mcc: string };
+export type Persona = { id: string; age: number; postalCode: string; tx: Tx[] };
+type PeerGroup = { n: number; monthlyMedian: Record<string, number> };
+
+const dataDir = new URL('./data/', import.meta.url);
+const raw = JSON.parse(readFileSync(new URL('personas.json', dataDir), 'utf8')) as {
+  today: string;
+  personas: { id: string; age: number; postalCode: string; tx: [string, string, string, number, number, string][] }[];
+};
+const benchmarks = JSON.parse(readFileSync(new URL('benchmarks.json', dataDir), 'utf8')) as {
+  groups: Record<string, PeerGroup>;
+};
+
+export const TODAY = raw.today;
+const TODAY_MONTH = TODAY.slice(0, 7);
+const LAST_FULL_MONTH = addMonths(TODAY_MONTH, -1);
+
+export const personas = new Map<string, Persona>(
+  raw.personas.map((p) => [
+    p.id,
+    {
+      id: p.id,
+      age: p.age,
+      postalCode: p.postalCode,
+      tx: p.tx.map(([date, , category, amount, balance, mcc]) => ({
+        date,
+        month: date.slice(0, 7),
+        day: Number(date.slice(8, 10)),
+        category,
+        amount,
+        balance,
+        mcc,
+      })),
+    },
+  ]),
+);
+const FIRST_MONTH = [...personas.values()].reduce((m, p) => (p.tx[0].month < m ? p.tx[0].month : m), TODAY_MONTH);
+
+// ---------------------------------------------------------------------------
+// What can be asked about: the ten spending categories, finer groups by
+// merchant type (MCC), and all spending together.
+
+const CATEGORIES: Record<string, { label: string; category: string }> = {
+  housing: { label: 'Housing', category: 'Housing' },
+  utilities: { label: 'Utility bills', category: 'Utilities' },
+  groceries: { label: 'Groceries', category: 'Groceries' },
+  transport: { label: 'Transport', category: 'Transportation' },
+  health: { label: 'Health', category: 'Health' },
+  home_tech: { label: 'Home and tech', category: 'Home & Tech' },
+  restaurants_cafes: { label: 'Restaurants and cafés', category: 'Restaurants' },
+  entertainment: { label: 'Entertainment', category: 'Entertainment' },
+  shopping_hobbies: { label: 'Shopping and hobbies', category: 'Lifestyle' },
+  travel: { label: 'Travel', category: 'Travel' },
+};
+const GROUPS: Record<string, { label: string; mcc: string[] }> = {
+  taxi: { label: 'Taxis', mcc: ['4121'] },
+  fuel: { label: 'Fuel', mcc: ['5541', '5542'] },
+  public_transport: { label: 'Public transport', mcc: ['4111'] },
+  parking: { label: 'Parking', mcc: ['7523'] },
+  restaurant: { label: 'Restaurants', mcc: ['5812'] },
+  fast_food_cafe: { label: 'Fast food and cafés', mcc: ['5814'] },
+  bar: { label: 'Bars', mcc: ['5813'] },
+  supermarket: { label: 'Supermarkets', mcc: ['5411'] },
+  kiosk: { label: 'Kiosks and corner shops', mcc: ['5499'] },
+  pharmacy: { label: 'Pharmacies', mcc: ['5912'] },
+  doctor: { label: 'Doctor visits', mcc: ['8011', '8099'] },
+  dentist: { label: 'Dentist', mcc: ['8021'] },
+  cinema: { label: 'Cinema', mcc: ['7832'] },
+  events: { label: 'Events and theatre', mcc: ['7922'] },
+  leisure: { label: 'Leisure', mcc: ['7999', '7991', '7996'] },
+  electronics: { label: 'Electronics', mcc: ['5732', '5734'] },
+  furniture: { label: 'Furniture', mcc: ['5712'] },
+  hardware_home: { label: 'Hardware and home goods', mcc: ['5200', '5251'] },
+  clothing: { label: 'Clothing', mcc: ['5651', '5691'] },
+  sporting_goods: { label: 'Sports gear', mcc: ['5941'] },
+  books: { label: 'Books', mcc: ['5942'] },
+  toys_hobby: { label: 'Toys and hobby supplies', mcc: ['5945'] },
+  flights: { label: 'Flights', mcc: ['4511'] },
+  hotels: { label: 'Hotels', mcc: ['7011'] },
+  travel_agency: { label: 'Travel agencies', mcc: ['4722'] },
+  car_rental: { label: 'Car rental', mcc: ['7512'] },
+};
+export const WHAT_KEYS = ['all_spending', ...Object.keys(CATEGORIES), ...Object.keys(GROUPS)];
+
+const SPEND_CATEGORIES = new Set(Object.values(CATEGORIES).map((c) => c.category));
+const BASKET_OF: Record<string, Basket> = {
+  Housing: 'regular',
+  Utilities: 'regular',
+  Groceries: 'regular',
+  Transportation: 'regular',
+  Health: 'irregular',
+  'Home & Tech': 'irregular',
+  Restaurants: 'everyday',
+  Entertainment: 'everyday',
+  Lifestyle: 'everyday',
+  Travel: 'everyday',
+};
+const LABEL_OF_CATEGORY = Object.fromEntries(Object.values(CATEGORIES).map((c) => [c.category, c.label]));
+
+/** Taxis are a choice, unlike the rest of transport. */
+function basketOf(t: Tx): Basket | undefined {
+  if (t.mcc === '4121') return 'everyday';
+  return BASKET_OF[t.category];
+}
+
+function matcher(what: string): { label: string; test: (t: Tx) => boolean } | null {
+  if (what === 'all_spending') return { label: 'All spending', test: (t) => SPEND_CATEGORIES.has(t.category) };
+  const category = CATEGORIES[what];
+  if (category) return { label: category.label, test: (t) => t.category === category.category };
+  const group = GROUPS[what];
+  if (group) return { label: group.label, test: (t) => group.mcc.includes(t.mcc) };
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Dates
+
+function addMonths(month: string, n: number): string {
+  const [y, m] = month.split('-').map(Number);
+  const i = y * 12 + (m - 1) + n;
+  return `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
+}
+
+function monthsBetween(from: string, to: string): string[] {
+  const out: string[] = [];
+  for (let m = from; m <= to; m = addMonths(m, 1)) out.push(m);
+  return out;
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const monthIndex = (month: string) => Number(month.slice(5, 7)) - 1;
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayLabel = (date: string) => `${MONTH_SHORT[Number(date.slice(5, 7)) - 1]} ${Number(date.slice(8, 10))}`;
+const dayTitle = (date: string) => `${WEEKDAYS[new Date(date + 'T00:00:00Z').getUTCDay()]}, ${dayLabel(date)}`;
+
+function periodLabel(from: string, to: string): string {
+  const year = (m: string) => m.slice(0, 4);
+  const suffix = (m: string) => (m === TODAY_MONTH ? ' (so far)' : '');
+  if (from === to) return `${MONTH_NAMES[monthIndex(from)]} ${year(from)}${suffix(to)}`;
+  if (year(from) === year(to)) {
+    return `${MONTH_SHORT[monthIndex(from)]}–${MONTH_SHORT[monthIndex(to)]} ${year(to)}${suffix(to)}`;
+  }
+  return `${MONTH_SHORT[monthIndex(from)]} ${year(from)}–${MONTH_SHORT[monthIndex(to)]} ${year(to)}${suffix(to)}`;
+}
+
+function dayDiff(a: string, b: string): number {
+  return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000);
+}
+
+function addDays(date: string, n: number): string {
+  return new Date(Date.parse(date + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+}
+
+/** Normalises a requested period to valid months inside the data. */
+function resolvePeriod(from?: string, to?: string): { from: string; to: string } | { error: string } {
+  const valid = (m?: string) => typeof m === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(m);
+  let a = valid(from) ? from! : LAST_FULL_MONTH;
+  let b = valid(to) ? to! : a;
+  if (a > b) [a, b] = [b, a];
+  if (b < FIRST_MONTH || a > TODAY_MONTH) {
+    return { error: `No data for that period. Data covers ${FIRST_MONTH} to ${TODAY} (today).` };
+  }
+  if (a < FIRST_MONTH) a = FIRST_MONTH;
+  if (b > TODAY_MONTH) b = TODAY_MONTH;
+  return { from: a, to: b };
+}
+
+// ---------------------------------------------------------------------------
+// Small helpers
+
+const round = (v: number) => Math.round(v);
+const round2 = (v: number) => Math.round(v * 100) / 100;
+const spendOf = (t: Tx) => -t.amount;
+
+function sumBy(tx: Tx[], test: (t: Tx) => boolean): number {
+  let s = 0;
+  for (const t of tx) if (test(t)) s += spendOf(t);
+  return s;
+}
+
+function isPassThrough(p: Persona): boolean {
+  const recent = p.tx.filter((t) => t.month >= addMonths(TODAY_MONTH, -6));
+  return recent.some((t) => t.category === 'Salary Sweep');
+}
+
+function mode(values: number[]): number | null {
+  const counts = new Map<number, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  let best: number | null = null;
+  let bestCount = 0;
+  for (const [v, c] of counts) if (c > bestCount) [best, bestCount] = [v, c];
+  return best;
+}
+
+function ageBand(age: number): string {
+  return age < 30 ? '18-29' : age < 45 ? '30-44' : age < 65 ? '45-64' : '65+';
+}
+
+const PEER_LABELS: Record<string, string> = {
+  '18-29': 'Ages 18–29',
+  '30-44': 'Ages 30–44',
+  '45-64': 'Ages 45–64',
+  '65+': 'Ages 65+',
+};
+
+const BASKET_NAMES: Record<Basket, string> = {
+  regular: 'Essentials, regular',
+  irregular: 'Essentials, irregular',
+  everyday: 'Slips through',
+};
+
+export type ToolResult = { facts: Record<string, unknown>; viz?: Viz };
+
+// ---------------------------------------------------------------------------
+// Tools
+
+function spendingTotal(p: Persona, args: { what?: string; from_month?: string; to_month?: string }): ToolResult {
+  const m = matcher(args.what ?? 'all_spending');
+  if (!m) return { facts: { error: `Unknown "what". Use one of: ${WHAT_KEYS.join(', ')}` } };
+  const period = resolvePeriod(args.from_month, args.to_month);
+  if ('error' in period) return { facts: period };
+
+  const inPeriod = monthsBetween(period.from, period.to);
+  const total = sumBy(p.tx, (t) => inPeriod.includes(t.month) && m.test(t));
+  const count = p.tx.filter((t) => inPeriod.includes(t.month) && m.test(t) && t.amount < 0).length;
+
+  // Context for the chart: up to 12 months ending at the period, at least 6.
+  const shown = monthsBetween(
+    inPeriod.length >= 6 ? addMonths(period.to, -Math.min(11, inPeriod.length - 1)) : addMonths(period.to, -5),
+    period.to,
+  ).filter((month) => month >= FIRST_MONTH);
+  const monthly = shown.map((month) => ({ month, total: round2(sumBy(p.tx, (t) => t.month === month && m.test(t))) }));
+  const before = monthly.filter((x) => x.month < period.from && x.month !== TODAY_MONTH);
+  const previousAvg = before.length ? before.reduce((s, x) => s + x.total, 0) / before.length : null;
+
+  const label = periodLabel(period.from, period.to);
+  return {
+    facts: {
+      what: m.label,
+      period: label,
+      total_eur: round2(total),
+      purchases: count,
+      monthly_average_in_period_eur: inPeriod.length > 1 ? round2(total / inPeriod.length) : undefined,
+      average_of_previous_months_eur: previousAvg === null ? undefined : round2(previousAvg),
+      monthly_eur: Object.fromEntries(monthly.map((x) => [x.month, x.total])),
+      pass_through: isPassThrough(p) || undefined,
+    },
+    viz: {
+      kind: 'trend',
+      label: `${m.label}, ${label}`,
+      value: round2(total),
+      average: previousAvg === null ? undefined : round2(previousAvg),
+      points: monthly.map((x) => ({
+        label: MONTH_SHORT[monthIndex(x.month)],
+        title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? ' (so far)' : ''}`,
+        value: x.total,
+        selected: inPeriod.includes(x.month),
+      })),
+    },
+  };
+}
+
+function safeToSpend(p: Persona): ToolResult {
+  const tx = p.tx;
+  const balance = tx[tx.length - 1].balance;
+
+  const salaryDays = tx.filter((t) => t.category === 'Salary' && t.month >= addMonths(TODAY_MONTH, -6)).map((t) => t.day);
+  const payDay = mode(salaryDays) ?? 15;
+  let payday = `${TODAY_MONTH}-${String(Math.min(payDay, 28)).padStart(2, '0')}`;
+  if (payday <= TODAY) payday = `${addMonths(TODAY_MONTH, 1)}-${String(Math.min(payDay, 28)).padStart(2, '0')}`;
+  const days = Math.max(1, dayDiff(TODAY, payday));
+
+  // Rent or maintenance charge still to come before payday.
+  const housing = tx.filter((t) => t.category === 'Housing');
+  const housingDay = mode(housing.filter((t) => t.month >= addMonths(TODAY_MONTH, -6)).map((t) => t.day));
+  const lastHousing = housing.length ? spendOf(housing[housing.length - 1]) : 0;
+  let housingDue = 0;
+  if (housingDay !== null && lastHousing > 0) {
+    for (let d = addDays(TODAY, 1); d < payday; d = addDays(d, 1)) {
+      const paidThisMonth = housing.some((t) => t.month === d.slice(0, 7));
+      if (Number(d.slice(8, 10)) === housingDay && !paidThisMonth) housingDue = lastHousing;
+    }
+  }
+
+  // Everyday necessities at the pace of the last 90 days, a cushion for the
+  // irregular basket at the pace of the last 180 days.
+  const since = (n: number) => addDays(TODAY, -n);
+  const needsPerDay =
+    sumBy(tx, (t) => t.date > since(90) && t.mcc !== '4121' && ['Utilities', 'Groceries', 'Transportation'].includes(t.category)) / 90;
+  const cushionPerDay = sumBy(tx, (t) => t.date > since(180) && basketOf(t) === 'irregular') / 180;
+
+  const needs = round(needsPerDay * days);
+  const cushion = round(cushionPerDay * days);
+  const upcoming = round(housingDue) + needs;
+  const free = round(balance - upcoming - cushion);
+
+  // For the chart: end-of-day balance for the last three weeks, then the path
+  // to payday if only the necessities and the cushion are spent.
+  const points: { label: string; title: string; balance: number; projected: boolean }[] = [];
+  let i = 0;
+  let last = tx[0].balance;
+  for (let d = addDays(TODAY, -20); d <= TODAY; d = addDays(d, 1)) {
+    while (i < tx.length && tx[i].date <= d) last = tx[i++].balance;
+    points.push({ label: dayLabel(d), title: dayTitle(d), balance: round2(last), projected: false });
+  }
+  let expected = balance;
+  for (let d = addDays(TODAY, 1); d <= payday; d = addDays(d, 1)) {
+    expected -= needsPerDay + cushionPerDay;
+    if (housingDue && Number(d.slice(8, 10)) === housingDay) expected -= housingDue;
+    points.push({ label: dayLabel(d), title: dayTitle(d), balance: round2(expected), projected: true });
+  }
+
+  return {
+    facts: {
+      today: TODAY,
+      balance_now_eur: round2(balance),
+      next_payday: payday,
+      days_until_payday: days,
+      rent_or_maintenance_still_due_eur: housingDue ? round(housingDue) : 0,
+      groceries_bills_transport_until_payday_eur: needs,
+      cushion_for_surprises_eur: cushion,
+      free_to_spend_until_payday_eur: free,
+      free_per_day_eur: round(free / days),
+      pass_through: isPassThrough(p) || undefined,
+    },
+    viz: {
+      kind: 'runway',
+      label: 'Free to spend until payday',
+      value: free,
+      perDay: round(free / days),
+      days,
+      paydayLabel: `payday ${dayLabel(payday)}`,
+      points,
+      parts: [
+        { basket: 'regular', name: 'Essentials still due', value: upcoming },
+        { basket: 'irregular', name: 'Cushion for surprises', value: cushion },
+        { basket: 'everyday', name: 'Free to spend', value: Math.max(0, free) },
+      ],
+    },
+  };
+}
+
+function spendingProfile(p: Persona): ToolResult {
+  const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
+  const inWindow = (t: Tx) => months.includes(t.month);
+  const perMonth = (v: number) => v / months.length;
+
+  const baskets: Record<Basket, number> = { regular: 0, irregular: 0, everyday: 0 };
+  const byCategory = new Map<string, number>();
+  for (const t of p.tx) {
+    if (!inWindow(t) || !SPEND_CATEGORIES.has(t.category)) continue;
+    const b = basketOf(t);
+    if (b) baskets[b] += spendOf(t);
+    if (b === 'everyday') {
+      const key = t.mcc === '4121' ? 'Taxis' : LABEL_OF_CATEGORY[t.category];
+      byCategory.set(key, (byCategory.get(key) ?? 0) + spendOf(t));
+    }
+  }
+  const spend = baskets.regular + baskets.irregular + baskets.everyday;
+  const income = p.tx.filter((t) => inWindow(t) && (t.category === 'Salary' || t.category === 'Other Income')).reduce((s, t) => s + t.amount, 0);
+  const year = monthsBetween(addMonths(LAST_FULL_MONTH, -11), LAST_FULL_MONTH);
+  const negativeMonths = year.filter((month) => p.tx.some((t) => t.month === month && t.balance < 0)).length;
+
+  const band = ageBand(p.age);
+  const peers = benchmarks.groups[band];
+  const label = periodLabel(months[0], months[months.length - 1]);
+
+  return {
+    facts: {
+      period: label,
+      monthly_average_spending_eur: round(perMonth(spend)),
+      monthly_by_basket_eur: {
+        mandatory_regular: round(perMonth(baskets.regular)),
+        mandatory_irregular: round(perMonth(baskets.irregular)),
+        everyday_slips_through: round(perMonth(baskets.everyday)),
+      },
+      everyday_share_of_spending_pct: spend ? round((baskets.everyday / spend) * 100) : 0,
+      biggest_everyday_items_monthly_eur: Object.fromEntries(
+        [...byCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => [k, round(perMonth(v))]),
+      ),
+      monthly_income_eur: round(perMonth(income)),
+      months_with_negative_balance_last_12: negativeMonths,
+      peers: {
+        age_group: band,
+        customers: peers.n,
+        median_everyday_share_pct: round(peers.monthlyMedian.everydayShare * 100),
+        median_everyday_monthly_eur: round(peers.monthlyMedian['basket:everyday']),
+        median_monthly_spending_eur: round(peers.monthlyMedian.spend),
+      },
+      pass_through: isPassThrough(p) || undefined,
+    },
+    viz: {
+      kind: 'baskets',
+      label: `Average monthly spending, ${label}`,
+      value: round(perMonth(spend)),
+      parts: (['regular', 'irregular', 'everyday'] as Basket[]).map((b) => ({
+        basket: b,
+        name: BASKET_NAMES[b],
+        value: round(perMonth(baskets[b])),
+      })),
+      share: spend ? baskets.everyday / spend : 0,
+      peerShare: peers.monthlyMedian.everydayShare,
+      peerLabel: PEER_LABELS[band] ?? band,
+    },
+  };
+}
+
+function whatIf(p: Persona, args: { what?: string; change_pct?: number }): ToolResult {
+  const m = matcher(args.what ?? '');
+  if (!m) return { facts: { error: `Unknown "what". Use one of: ${WHAT_KEYS.join(', ')}` } };
+  const pct = Math.max(-100, Math.min(100, Number(args.change_pct ?? -20)));
+  const months = monthsBetween(addMonths(LAST_FULL_MONTH, -5), LAST_FULL_MONTH);
+  const baseline = sumBy(p.tx, (t) => months.includes(t.month) && m.test(t)) / months.length;
+  const changed = baseline * (1 + pct / 100);
+  const monthlyDelta = baseline - changed;
+
+  return {
+    facts: {
+      what: m.label,
+      change_pct: pct,
+      based_on: periodLabel(months[0], months[months.length - 1]),
+      monthly_now_eur: round(baseline),
+      monthly_after_change_eur: round(changed),
+      saving_per_month_eur: round(monthlyDelta),
+      saving_per_year_eur: round(monthlyDelta * 12),
+    },
+    viz: {
+      kind: 'projection',
+      label: monthlyDelta >= 0 ? `Yearly saving, ${m.label.toLowerCase()}` : `Yearly extra cost, ${m.label.toLowerCase()}`,
+      value: round(Math.abs(monthlyDelta * 12)),
+      nowMonthly: round(baseline),
+      afterMonthly: round(changed),
+      changeLabel: `${pct > 0 ? '+' : '−'}${Math.abs(pct)}%`,
+    },
+  };
+}
+
+function topCategories(p: Persona, args: { from_month?: string; to_month?: string }): ToolResult {
+  const period = resolvePeriod(args.from_month, args.to_month);
+  if ('error' in period) return { facts: period };
+  const inPeriod = monthsBetween(period.from, period.to);
+  const totals = new Map<string, number>();
+  const basketOfLabel = new Map<string, Basket>();
+  for (const t of p.tx) {
+    if (!inPeriod.includes(t.month) || !SPEND_CATEGORIES.has(t.category)) continue;
+    const key = LABEL_OF_CATEGORY[t.category];
+    totals.set(key, (totals.get(key) ?? 0) + spendOf(t));
+    basketOfLabel.set(key, BASKET_OF[t.category]);
+  }
+  const rows = [...totals.entries()].sort((a, b) => b[1] - a[1]).filter(([, v]) => v > 0);
+  const total = rows.reduce((s, [, v]) => s + v, 0);
+  const label = periodLabel(period.from, period.to);
+  return {
+    facts: {
+      period: label,
+      total_spending_eur: round(total),
+      by_category_eur: Object.fromEntries(rows.map(([k, v]) => [k, round(v)])),
+      pass_through: isPassThrough(p) || undefined,
+    },
+    viz: {
+      kind: 'ranking',
+      label: `Where your money went, ${label}`,
+      value: round(total),
+      rows: rows.slice(0, 8).map(([k, v]) => ({ label: k, value: round(v), basket: basketOfLabel.get(k) ?? 'everyday' })),
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// The start screen: a few facts at a glance, and questions that follow from them.
+
+export function summary(p: Persona): Summary {
+  const month = LAST_FULL_MONTH;
+  const monthName = MONTH_NAMES[monthIndex(month)];
+  const previousName = MONTH_SHORT[monthIndex(addMonths(month, -1))];
+  const spend = (m: string, test: (t: Tx) => boolean = () => true) =>
+    sumBy(p.tx, (t) => t.month === m && SPEND_CATEGORIES.has(t.category) && test(t));
+
+  const safe = safeToSpend(p).facts as { free_to_spend_until_payday_eur: number; free_per_day_eur: number; days_until_payday: number };
+  const profile = spendingProfile(p).facts as { everyday_share_of_spending_pct: number; peers: { median_everyday_share_pct: number } };
+
+  const last6 = monthsBetween(addMonths(month, -5), month);
+  const totals = last6.map((m) => round(spend(m)));
+  const total = totals[totals.length - 1];
+  const previous = totals[totals.length - 2] || 0;
+  const change = previous ? Math.round(((total - previous) / previous) * 100) : 0;
+
+  // The biggest everyday item last month (taxis count separately from transport).
+  const everydayKey = (t: Tx) => (t.mcc === '4121' ? 'Taxis' : LABEL_OF_CATEGORY[t.category]);
+  const everyday = new Map<string, number>();
+  for (const t of p.tx) {
+    if (t.month !== month || basketOf(t) !== 'everyday' || !SPEND_CATEGORIES.has(t.category)) continue;
+    everyday.set(everydayKey(t), (everyday.get(everydayKey(t)) ?? 0) + spendOf(t));
+  }
+  const [topLabel, topValue] = [...everyday.entries()].sort((a, b) => b[1] - a[1])[0] ?? ['Restaurants and cafés', 0];
+
+  // The category that grew most against the three months before.
+  let grew = { label: 'Groceries', delta: -Infinity };
+  for (const c of Object.values(CATEGORIES)) {
+    if (c.category === 'Housing') continue;
+    const now = spend(month, (t) => t.category === c.category);
+    const before = [1, 2, 3].reduce((s, k) => s + spend(addMonths(month, -k), (t) => t.category === c.category), 0) / 3;
+    if (now - before > grew.delta) grew = { label: c.label, delta: now - before };
+  }
+
+  const tiles: SummaryTile[] = [
+    {
+      id: 'safe',
+      label: 'Free until payday',
+      value: safe.free_to_spend_until_payday_eur,
+      unit: '€',
+      sub:
+        safe.free_to_spend_until_payday_eur > 0
+          ? `≈ €${safe.free_per_day_eur} a day · ${safe.days_until_payday} days`
+          : `${safe.days_until_payday} days to payday`,
+      question: 'How much can I spend before payday?',
+      tone: safe.free_to_spend_until_payday_eur < 0 ? 'negative' : 'neutral',
+    },
+    {
+      id: 'month',
+      label: `Spent in ${monthName}`,
+      value: total,
+      unit: '€',
+      sub: change === 0 ? `same as ${previousName}` : `${change > 0 ? '↑' : '↓'} ${Math.abs(change)}% vs ${previousName}`,
+      question: `Where did my money go in ${monthName}?`,
+      spark: totals,
+    },
+    {
+      id: 'everyday',
+      label: 'Slips through',
+      value: profile.everyday_share_of_spending_pct,
+      unit: '%',
+      sub: `people your age ${profile.peers.median_everyday_share_pct}%`,
+      question: 'What kind of spender am I?',
+      compare: [profile.everyday_share_of_spending_pct / 100, profile.peers.median_everyday_share_pct / 100],
+    },
+    {
+      id: 'top',
+      label: topLabel,
+      value: round(topValue),
+      unit: '€',
+      sub: `biggest extra in ${MONTH_SHORT[monthIndex(month)]}`,
+      question: `How much would I save if I cut ${topLabel.toLowerCase()} by 20%?`,
+    },
+  ];
+
+  const suggestions = [
+    `How much did I spend on ${grew.label.toLowerCase()} in ${monthName}?`,
+    'How has my spending changed over the year?',
+  ];
+  return { tiles, suggestions };
+}
+
+export function runTool(p: Persona, name: string, args: Record<string, unknown>): ToolResult {
+  switch (name) {
+    case 'spending_total':
+      return spendingTotal(p, args);
+    case 'safe_to_spend':
+      return safeToSpend(p);
+    case 'spending_profile':
+      return spendingProfile(p);
+    case 'what_if':
+      return whatIf(p, args);
+    case 'top_categories':
+      return topCategories(p, args);
+    default:
+      return { facts: { error: `Unknown tool ${name}` } };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tool descriptions for the model (OpenAI function-calling format).
+
+const monthArg = (what: string) => ({ type: 'string', description: `${what} month, YYYY-MM`, pattern: '^\\d{4}-\\d{2}$' });
+const whatArg = {
+  type: 'string',
+  enum: WHAT_KEYS,
+  description:
+    'What to measure: all_spending, a category (housing, utilities, groceries, transport, health, home_tech, restaurants_cafes, entertainment, shopping_hobbies, travel) or a narrower merchant group (taxi, fuel, public_transport, parking, restaurant, fast_food_cafe, bar, supermarket, kiosk, pharmacy, doctor, dentist, cinema, events, leisure, electronics, furniture, hardware_home, clothing, sporting_goods, books, toys_hobby, flights, hotels, travel_agency, car_rental). For everyday words such as restaurants, eating out, dining or cafés, use the whole category restaurants_cafes; use a narrower group only when the customer names it specifically (bars, fast food, coffee). Coffee shops are part of fast_food_cafe.',
+};
+
+export const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'spending_total',
+      description: 'How much the customer spent on something in a month or a range of months, with the months before it for comparison. Also use it for trends ("has X gone up?").',
+      parameters: {
+        type: 'object',
+        properties: { what: whatArg, from_month: monthArg('First'), to_month: monthArg('Last (inclusive)') },
+        required: ['what', 'from_month', 'to_month'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'safe_to_spend',
+      description: 'How much the customer can safely spend before the next payday, after setting aside upcoming mandatory costs and a cushion for surprises. Use for "what can I spend this week / until payday", "can I afford X now".',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'spending_profile',
+      description: 'The customer\'s spending split into the three baskets over the last three full months, compared with people of the same age. Use for "what kind of spender am I", "where does my money go", "am I doing well".',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'what_if',
+      description: 'What changing spending on something by a percentage would save (or cost) per month and per year, based on the last six full months.',
+      parameters: {
+        type: 'object',
+        properties: { what: whatArg, change_pct: { type: 'number', description: 'Change in percent, e.g. -20 for 20 % less' } },
+        required: ['what', 'change_pct'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'top_categories',
+      description: 'Spending by category in a month or a range of months, largest first. Use for "what did I spend most on in July".',
+      parameters: {
+        type: 'object',
+        properties: { from_month: monthArg('First'), to_month: monthArg('Last (inclusive)') },
+        required: ['from_month', 'to_month'],
+      },
+    },
+  },
+];

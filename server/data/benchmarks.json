@@ -1,0 +1,114 @@
+{
+ "window": [
+  "2025-09",
+  "2026-08"
+ ],
+ "excludedPassThrough": 264,
+ "groups": {
+  "18-29": {
+   "n": 713,
+   "monthlyMedian": {
+    "Housing": 726.79,
+    "Utilities": 98.95,
+    "Groceries": 269.29,
+    "Transportation": 124.66,
+    "Health": 27.21,
+    "Home & Tech": 107.7,
+    "Restaurants": 183.67,
+    "Entertainment": 129.63,
+    "Lifestyle": 79.52,
+    "Travel": 25.05,
+    "basket:regular": 1235.14,
+    "basket:irregular": 144.69,
+    "basket:everyday": 461.88,
+    "spend": 1865.03,
+    "income": 2013.93,
+    "everydayShare": 0.2432
+   }
+  },
+  "30-44": {
+   "n": 1891,
+   "monthlyMedian": {
+    "Housing": 979.03,
+    "Utilities": 149.37,
+    "Groceries": 498.3,
+    "Transportation": 219.92,
+    "Health": 97.88,
+    "Home & Tech": 150.53,
+    "Restaurants": 183.88,
+    "Entertainment": 117.66,
+    "Lifestyle": 189.84,
+    "Travel": 68.17,
+    "basket:regular": 1885.03,
+    "basket:irregular": 260.87,
+    "basket:everyday": 614.88,
+    "spend": 2763.08,
+    "income": 3100.48,
+    "everydayShare": 0.2257
+   }
+  },
+  "45-64": {
+   "n": 1976,
+   "monthlyMedian": {
+    "Housing": 1171.28,
+    "Utilities": 186.39,
+    "Groceries": 546.25,
+    "Transportation": 253.75,
+    "Health": 104.19,
+    "Home & Tech": 235.28,
+    "Restaurants": 261.15,
+    "Entertainment": 147.41,
+    "Lifestyle": 188.89,
+    "Travel": 138.03,
+    "basket:regular": 2179.36,
+    "basket:irregular": 349.21,
+    "basket:everyday": 812.64,
+    "spend": 3378.22,
+    "income": 3785.09,
+    "everydayShare": 0.244
+   }
+  },
+  "65+": {
+   "n": 256,
+   "monthlyMedian": {
+    "Housing": 880.34,
+    "Utilities": 125.81,
+    "Groceries": 504.95,
+    "Transportation": 120.33,
+    "Health": 244.09,
+    "Home & Tech": 46.28,
+    "Restaurants": 73.73,
+    "Entertainment": 60.74,
+    "Lifestyle": 118.89,
+    "Travel": 52.43,
+    "basket:regular": 1669.0,
+    "basket:irregular": 307.55,
+    "basket:everyday": 356.47,
+    "spend": 2382.12,
+    "income": 2590.57,
+    "everydayShare": 0.1487
+   }
+  },
+  "all": {
+   "n": 4836,
+   "monthlyMedian": {
+    "Housing": 1005.17,
+    "Utilities": 155.74,
+    "Groceries": 484.61,
+    "Transportation": 208.0,
+    "Health": 92.28,
+    "Home & Tech": 166.33,
+    "Restaurants": 205.92,
+    "Entertainment": 126.94,
+    "Lifestyle": 168.35,
+    "Travel": 77.12,
+    "basket:regular": 1915.34,
+    "basket:irregular": 276.47,
+    "basket:everyday": 642.07,
+    "spend": 2846.79,
+    "income": 3208.22,
+    "everydayShare": 0.2319
+   }
+  }
+ }
+}
