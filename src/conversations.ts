@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { EN, tr } from './lang';
 import type { Message } from './content';
 
 /** A saved conversation. Kept on the device only. */
@@ -52,10 +53,10 @@ export function groupByDay(conversations: Conversation[], now = Date.now()): { t
   const today = startOfDay(now);
   const day = 86_400_000;
   const groups: { title: string; items: Conversation[] }[] = [
-    { title: 'Tänään', items: [] },
-    { title: 'Eilen', items: [] },
-    { title: 'Edelliset 7 päivää', items: [] },
-    { title: 'Aiemmin', items: [] },
+    { title: tr('Tänään', 'Today'), items: [] },
+    { title: tr('Eilen', 'Yesterday'), items: [] },
+    { title: tr('Edelliset 7 päivää', 'Previous 7 days'), items: [] },
+    { title: tr('Aiemmin', 'Earlier'), items: [] },
   ];
   for (const c of [...conversations].sort((a, b) => b.updatedAt - a.updatedAt)) {
     const at = startOfDay(c.updatedAt);
@@ -69,5 +70,7 @@ export function groupByDay(conversations: Conversation[], now = Date.now()): { t
 export function shortTime(t: number, now = Date.now()): string {
   const d = new Date(t);
   const sameDay = new Date(now).toDateString() === d.toDateString();
-  return sameDay ? `${d.getHours()}.${String(d.getMinutes()).padStart(2, '0')}` : `${d.getDate()}.${d.getMonth() + 1}.`;
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  if (EN) return sameDay ? `${d.getHours()}:${minutes}` : `${d.getDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]}`;
+  return sameDay ? `${d.getHours()}.${minutes}` : `${d.getDate()}.${d.getMonth() + 1}.`;
 }

@@ -10,6 +10,7 @@
 import type { HistoryItem, ToolCall, Viz } from '../src/shared/api.ts';
 import { sourcesUsed, type Comparison } from './finland.mts';
 import { runTool, summary, TODAY, TOOLS, type Persona } from './engine.mts';
+import { tr } from './lang.mts';
 
 const API_URL = 'https://api.featherless.ai/v1/chat/completions';
 const KEY = process.env.FEATHERLESS_API_KEY ?? '';
@@ -53,7 +54,7 @@ ${p.others?.length ? `They have also connected ${p.others.map((o) => o.name).joi
 Spending falls into three baskets:
 1. mandatory and regular: housing, utility bills, groceries, transport
 2. mandatory but irregular: health, home and tech (a broken washing machine)
-3. discretionary everyday spending, in Finnish "vapaavalintaiset menot" (never "sormien läpi"): restaurants and cafés, entertainment, shopping and hobbies, travel, taxis
+3. discretionary everyday spending, ${tr('in Finnish "vapaavalintaiset menot" (never "sormien läpi")', 'called "discretionary spending"')}: restaurants and cafés, entertainment, shopping and hobbies, travel, taxis
 
 How to work:
 - For any question about the customer's own money, call exactly one tool. Never compute, estimate or invent numbers yourself, and never say you are showing a chart or a view unless a tool in this turn produced it.
@@ -65,14 +66,14 @@ How to work:
 - For money in total, savings, debts, credit cards or other banks, use all_accounts. When its result suggests paying the card from savings, say why in plain words: the card costs much more interest than savings earn, so paying it first saves the amount shown; keep it friendly.
 
 How to answer, once you have a tool result:
-- Reply in Finnish, unless the customer clearly wrote in another language.
+- Reply in ${tr('Finnish', 'English')}, unless the customer clearly wrote in another language.
 - Two or three short sentences, at most 55 words, in plain everyday language. No markdown, no lists, no headings, and no dashes (— or –) between clauses: use a comma or a full stop instead.
-- Use only numbers that appear in the tool result. Round to whole euros unless the amount is under 10 €. Write amounts the Finnish way: 84 €, 1 234 €, 84,20 €.
+- Use only numbers that appear in the tool result. Round to whole euros unless the amount is under 10 €. ${tr('Write amounts the Finnish way: 84 €, 1 234 €, 84,20 €.', 'Write amounts like €84, €1,234, €84.20.')}
 - A chart above your text already shows the numbers, so pick the one or two that matter instead of repeating them all.
 - You are a coach, not only a calculator. When the numbers show a pattern (surprises causing overdrafts, everyday spending well above people their age, a month far from usual), name it in plain words and end with one concrete, friendly next step that uses their own numbers. Never shame or lecture.
 - After a surprise_fund result, explain that big irregular costs feel random one by one but add up to a predictable amount, and suggest setting aside the suggested amount every payday, paid for by spending that much less on everyday extras. The app shows a button under your answer to start that plan, so you can invite them to start it.
-- The tool result may contain official_comparisons: figures from Statistics Finland (Tilastokeskus), already written in Finnish. If one of them makes the answer clearly more useful (a fair "how do I compare", a price rise that explains a change, how common something is), add exactly one comparison sentence and say it comes from Tilastokeskus, keeping its numbers and year. Use at most one, and none if none fits; their numbers count as numbers from the tool result. They describe Finnish households in general, so say "suomalaiset" or the age group, never "S-Pankin asiakkaat".
-${noticed ? `- You have noticed this in their money (Finnish): "${noticed.title}. ${noticed.text}" When an answer touches on it (balance, overdrafts, buffers, savings, debt, cards, everyday spending), end with it as the next step, in one sentence with its numbers. Mention it at most once in a conversation, and leave it out where it does not fit.
+- The tool result may contain official_comparisons: figures from Statistics Finland (Tilastokeskus), already written in ${tr('Finnish', 'English')}. If one of them makes the answer clearly more useful (a fair "how do I compare", a price rise that explains a change, how common something is), add exactly one comparison sentence and say it comes from ${tr('Tilastokeskus', 'Statistics Finland')}, keeping its numbers and year. Use at most one, and none if none fits; their numbers count as numbers from the tool result. They describe Finnish households in general, so say ${tr('"suomalaiset" or the age group, never "S-Pankin asiakkaat"', '"people in Finland" or the age group, never "S-Pankki customers"')}.
+${noticed ? `- You have noticed this in their money: "${noticed.title}. ${noticed.text}" When an answer touches on it (balance, overdrafts, buffers, savings, debt, cards, everyday spending), end with it as the next step, in one sentence with its numbers. Mention it at most once in a conversation, and leave it out where it does not fit or where your answer already says the same thing (for example after surprise_fund).
 ` : ''}- If the tool result contains pass_through: true, say that their salary moves on to another bank, so you see only part of their spending.
 - If the tool result contains an error, explain briefly what you could not look up.`;
 }
@@ -200,7 +201,7 @@ export async function askModel(p: Persona, question: string, history: HistoryIte
   if (second.choices[0].finish_reason === 'length') text = lastFullSentence(text);
   if (!text) {
     // Now and then the model spends the whole budget thinking. Ask once more, briefly.
-    const now: Message = { role: 'system', content: 'Write the answer to the customer now: two or three short Finnish sentences from the tool result, no further deliberation.' };
+    const now: Message = { role: 'system', content: `Write the answer to the customer now: two or three short ${tr('Finnish', 'English')} sentences from the tool result, no further deliberation.` };
     second = await complete({ messages: [...followUp, now], tools: TOOLS, tool_choice: 'none', max_tokens: 4000, temperature: 0.3 });
     count(second.usage);
     text = clean(second.choices[0].message.content);
@@ -225,7 +226,10 @@ function otherChart(previous: ToolCall): ToolCall | null {
 }
 
 /** Shown instead of an answer whose numbers did not come from the data. */
-const NO_TOOL_ANSWER = 'En osannut laskea tähän vastausta tiedoistasi. Kokeile kysyä tarkemmin, esimerkiksi mistä kuukaudesta tai mistä menoista on kyse.';
+const NO_TOOL_ANSWER = tr(
+  'En osannut laskea tähän vastausta tiedoistasi. Kokeile kysyä tarkemmin, esimerkiksi mistä kuukaudesta tai mistä menoista on kyse.',
+  "I couldn't work that out from your data. Try asking more precisely, for example which month or which spending you mean.",
+);
 
 /** A cut-off answer is shown up to its last complete sentence, never mid-word. */
 function lastFullSentence(text: string): string {

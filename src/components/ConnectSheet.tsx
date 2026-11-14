@@ -4,6 +4,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { strings } from '../content';
+import { EN } from '../lang';
 import { OTHER_BANKS, type OtherBankInfo } from '../shared/banks';
 import { colors, type } from '../theme';
 import { BankLogo } from './BankLogo';
@@ -137,7 +138,7 @@ export function ConnectSheet({
                 ) : step === 'auth' ? (
                   <Animated.View entering={FadeIn.duration(180)} style={styles.buttonRow}>
                     <ActivityIndicator color="#FFFFFF" />
-                    <Text style={[styles.buttonText, styles.buttonTextWait]}>{strings.connectAuthenticating.replace('{bank}', bank.inessive)}</Text>
+                    <Text style={[styles.buttonText, styles.buttonTextWait]}>{strings.connectAuthenticating.replace('{bank}', EN ? bank.name : bank.inessive)}</Text>
                   </Animated.View>
                 ) : (
                   // done and finished

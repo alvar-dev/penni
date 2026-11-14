@@ -1,4 +1,5 @@
 import { Skia, type SkPath, type SkPathBuilder } from '@shopify/react-native-skia';
+import { EN } from '../../lang';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { usePanGesture } from 'react-native-gesture-handler';
@@ -181,7 +182,8 @@ export function LegendItem({ color, label, dashed, swatch }: { color: string; la
 export function formatAxis(v: number): string {
   if (Math.abs(v) < 1000) return formatEur(v, 0);
   const k = Math.abs(v) / 1000;
-  return `${v < 0 ? '\u2212' : ''}${(Number.isInteger(k) ? k.toFixed(0) : k.toFixed(1)).replace('.', ',')}\u00A0t€`;
+  const n = Number.isInteger(k) ? k.toFixed(0) : k.toFixed(1);
+  return EN ? `${v < 0 ? '\u2212' : ''}€${n}k` : `${v < 0 ? '\u2212' : ''}${n.replace('.', ',')}\u00A0t€`;
 }
 
 export const axisText = { fontSize: 11, lineHeight: 14, color: colors.textTertiary, fontVariant: ['tabular-nums' as const] };

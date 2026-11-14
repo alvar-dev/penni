@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useDerivedValue } from 'react-native-reanimated';
 
+import { tr } from '../../lang';
 import { colors, formatEur, type } from '../../theme';
 import { axisText, formatAxis, LegendItem, linear, niceTicks, smoothArea, smoothPath, useReveal, useScrub, useWidth } from './common';
 
@@ -64,7 +65,7 @@ export function ReplayChart({ points, event, overdrawnDays }: Props) {
       <View
         onLayout={onLayout}
         accessible
-        accessibilityLabel={`Menon ${event.label} jälkeen ${overdrawnDays.actual} päivää miinuksella, yllätysrahaston kanssa ${overdrawnDays.withFund}`}>
+        accessibilityLabel={tr(`Menon ${event.label} jälkeen ${overdrawnDays.actual} päivää miinuksella, yllätysrahaston kanssa ${overdrawnDays.withFund}`, `After ${event.label}: ${overdrawnDays.actual} days overdrawn, ${overdrawnDays.withFund} with a surprise fund`)}>
         {width > 0 ? (
           <GestureDetector gesture={scrub}>
             <View style={{ height: HEIGHT }}>
@@ -127,19 +128,19 @@ export function ReplayChart({ points, event, overdrawnDays }: Props) {
       </View>
 
       <View style={styles.legend}>
-        <LegendItem color={AS_IT_WENT} label="Toteutunut" />
-        <LegendItem color={colors.green700} label="Yllätysrahaston kanssa" />
+        <LegendItem color={AS_IT_WENT} label={tr('Toteutunut', 'As it went')} />
+        <LegendItem color={colors.green700} label={tr('Yllätysrahaston kanssa', 'With a surprise fund')} />
       </View>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
           <Text style={[styles.statValue, overdrawnDays.actual > 0 && styles.statBad]}>{overdrawnDays.actual}</Text>
-          <Text style={styles.statLabel}>päivää miinuksella{'\n'}kuukauden aikana</Text>
+          <Text style={styles.statLabel}>{tr('päivää miinuksella\nkuukauden aikana', 'days overdrawn\nthat month')}</Text>
         </View>
         <Text style={styles.statArrow}>→</Text>
         <View style={styles.stat}>
           <Text style={[styles.statValue, styles.statGood]}>{overdrawnDays.withFund}</Text>
-          <Text style={styles.statLabel}>yllätysrahaston{'\n'}kanssa</Text>
+          <Text style={styles.statLabel}>{tr('yllätysrahaston\nkanssa', 'with a\nsurprise fund')}</Text>
         </View>
       </View>
     </View>

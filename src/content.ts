@@ -1,3 +1,4 @@
+import { EN } from './lang';
 import type { ToolCall, Viz } from './shared/api';
 
 export type { Viz };
@@ -15,7 +16,7 @@ export type Persona = { id: string; name: string; age: number; postalCode: strin
  * postal code come from the data; the dataset has no names, so these are made up.
  */
 export const personas: Persona[] = [
-  { id: 'CUST03915', name: 'Aino', age: 36, postalCode: '01510', tagline: 'Maltillinen kuluttaja, jota yllätysmenot satuttavat' },
+  { id: 'CUST03915', name: 'Lefa', age: 36, postalCode: '01510', tagline: 'Maltillinen kuluttaja, jota yllätysmenot satuttavat' },
   { id: 'CUST04376', name: 'Noora', age: 27, postalCode: '01800', tagline: 'Pienet tulot, paljon ravintoloita' },
   { id: 'CUST04925', name: 'Mikael', age: 45, postalCode: '02680', tagline: 'Hyvät tulot, silti välillä miinuksella' },
   { id: 'CUST00332', name: 'Laura', age: 39, postalCode: '01400', tagline: 'Säästää kuukausittain' },
@@ -24,7 +25,7 @@ export const personas: Persona[] = [
   { id: 'CUST03667', name: 'Petri', age: 45, postalCode: '00430', tagline: 'Palkka siirtyy toiseen pankkiin' },
 ];
 
-export const strings = {
+const fi = {
   heroTitle: 'Kysy rahoistasi',
   greeting: 'Hei',
   heroHint: 'Napauta palloa ja kysy rahoistasi.',
@@ -89,11 +90,74 @@ export const strings = {
   planStop: 'Lopeta',
 };
 
-export const suggestions = [
-  'Paljonko käytin takseihin viime kuussa?',
-  'Paljonko voin käyttää tällä viikolla?',
-  'Millainen kuluttaja olen?',
-];
+const en: typeof fi = {
+  heroTitle: 'Ask about your money',
+  greeting: 'Hi',
+  heroHint: 'Tap the orb and ask about your money.',
+  listeningTitle: 'Listening',
+  listeningHint: 'Ask, then pause for a moment.',
+  transcribingInline: 'Recognising speech…',
+  transcribingTitle: 'One moment',
+  transcribingHint: 'Turning your speech into text.',
+  noSpeech: "I didn't hear anything",
+  notUnderstood: "I couldn't make that out",
+  speechUnavailable: 'Speech recognition is not available right now',
+  retry: 'Try again',
+  micDenied: 'Microphone access is blocked. Allow it in your phone settings.',
+  micError: "The microphone didn't start.",
+  inputPlaceholder: 'Ask a question',
+  thinking: 'Calculating…',
+  orbStart: 'Ask by voice',
+  orbStop: 'Stop listening',
+  send: 'Send',
+  source: 'Source: Statistics Finland,',
+  menuOpen: 'Open menu',
+  menuClose: 'Close menu',
+  newChat: 'New conversation',
+  historyTitle: 'Conversations',
+  historyEmpty: 'Your past conversations appear here.',
+  noAnswer: 'No answer',
+  deleteTitle: 'Delete this conversation?',
+  deleteHint: 'Long-press a conversation to delete it.',
+  delete: 'Delete',
+  cancel: 'Cancel',
+  errorNetwork: "I couldn't reach the coach. Check that the server is running and try again.",
+  errorBusy: 'Too many questions just now. Wait a moment and ask again.',
+  errorModel: "The coach didn't answer in time. Try again.",
+  thinkingSteps: ['Looking at your transactions…', 'Calculating…', 'Writing the answer…'],
+  connectTitle: 'Connect another bank',
+  connectLead: 'With your permission, S-Pankki fetches your account data from another bank. The coach then sees your whole finances and advises on all of it.',
+  connectChoose: 'Choose a bank',
+  connectBack: 'Banks',
+  connectScopeTitle: 'The permission covers',
+  connectScope: [
+    ['Balances and transactions', 'Accounts, cards and purchases'],
+    ['No payment rights', 'No money can be moved or paid'],
+    ['Valid for 180 days', 'You can withdraw it at any time'],
+  ] as [string, string][],
+  connectLegal: "Account information service under the Payment Services Directive (PSD2). You sign in with the other bank's own credentials.",
+  connectContinue: 'Continue to sign in',
+  connectAuthenticating: 'Signing in to {bank}…',
+  connectDone: 'Connected',
+  connectClose: 'Close',
+  connectedEvent: '{bank} connected',
+  accountsConnect: 'Connect another bank',
+  accountsConnectMore: 'Connect more banks',
+  connectAlready: 'Connected',
+  banksTitle: 'Banks',
+  banksDisconnect: 'Disconnect',
+  planStart: 'Start: €{amount} every payday',
+  planOn: 'Surprise fund on · from {date}',
+  planHome: 'Surprise fund on · €{amount} every payday',
+  planStop: 'Stop',
+};
+
+/** The app's texts in its language (see lang.ts). */
+export const strings = EN ? en : fi;
+
+export const suggestions = EN
+  ? ['How much did I spend on taxis last month?', 'How much can I spend this week?', 'What kind of spender am I?']
+  : ['Paljonko käytin takseihin viime kuussa?', 'Paljonko voin käyttää tällä viikolla?', 'Millainen kuluttaja olen?'];
 
 /*
  * PLACEHOLDER ANSWERS, used only by the development preview links in App.tsx

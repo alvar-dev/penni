@@ -745,7 +745,7 @@ function Screen() {
                     <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
                     {message.sources?.length ? (
                       <Text style={styles.answerSource}>
-                        {strings.source} {message.sources.map((s) => s.replace(/^Tilastokeskus, /, '')).join(' · ')}
+                        {strings.source} {message.sources.map((s) => s.replace(/^(Tilastokeskus|Statistics Finland), /, '')).join(' · ')}
                       </Text>
                     ) : null}
                     {message.viz?.kind === 'replay' ? (

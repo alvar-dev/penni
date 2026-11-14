@@ -1,3 +1,5 @@
+import { EN } from './lang';
+
 /**
  * Colours are the S Group design-system values read from S-Pankki's public
  * stylesheet (the --sds-brand-color-* tokens). The typeface is the platform
@@ -52,10 +54,14 @@ export const type = {
 /** 1234.5 -> "1 234,50" (no sign; non-breaking spaces). */
 export function formatNumber(value: number, decimals = 2): string {
   const [whole, fraction] = Math.abs(value).toFixed(decimals).split('.');
-  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')}${fraction ? ',' + fraction : ''}`;
+  // English: 1,234.50; Finnish: 1 234,50.
+  return EN
+    ? `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${fraction ? '.' + fraction : ''}`
+    : `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')}${fraction ? ',' + fraction : ''}`;
 }
 
 /** 1234.5 -> "1 234,50 €", -67 -> "−67 €" (Finnish formatting). */
 export function formatEur(value: number, decimals = 2): string {
-  return `${value < 0 ? '\u2212' : ''}${formatNumber(value, decimals)}\u00A0€`;
+  const sign = value < 0 ? '\u2212' : '';
+  return EN ? `${sign}€${formatNumber(value, decimals)}` : `${sign}${formatNumber(value, decimals)}\u00A0€`;
 }

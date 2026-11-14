@@ -27,7 +27,9 @@ PORT = int(os.environ.get('STT_PORT', '8788'))
 MAX_BYTES = 16000 * 2 * 60  # one minute of 16 kHz audio
 
 # Whisper's well-known inventions on near-silent input (cf. ~/Programming/jari).
-JUNK = {'', '.', '..', '...', 'kiitos', 'kiitos.', 'kiitos!', 'hyvää', 'tekstitys yle', 'yle', 'kiitos katsomisesta.', 'kiitos kun katsoit.'}
+# What Whisper says when it hears silence or noise, in Finnish and English.
+JUNK = {'', '.', '..', '...', 'kiitos', 'kiitos.', 'kiitos!', 'hyvää', 'tekstitys yle', 'yle', 'kiitos katsomisesta.', 'kiitos kun katsoit.',
+        'you', 'you.', 'thank you.', 'thank you', 'thanks for watching!', 'thanks for watching.', 'bye.', 'bye!'}
 
 lock = Lock()  # one transcription at a time; MLX work is not worth interleaving
 

@@ -1,4 +1,5 @@
 import type { OtherBankInfo } from '../src/shared/banks.ts';
+import { tr } from './lang.mts';
 
 /**
  * A second bank, connected under PSD2 (account information). The challenge
@@ -63,13 +64,13 @@ export function buildOtherBank(customerId: string, bank: OtherBankInfo, fromMont
   const tens = (v: number) => Math.round(v / 10) * 10;
   const accounts: OtherAccount[] = neobank
     ? [
-        { name: `${bank.name}-tili`, kind: 'current', balance: tens(monthlyIncome * (0.15 + 0.1 * r())) },
-        { name: 'Säästöholvi', kind: 'savings', balance: tens(monthlyIncome * (0.25 + 0.2 * r())), ratePct: 2 },
+        { name: tr(`${bank.name}-tili`, `${bank.name} account`), kind: 'current', balance: tens(monthlyIncome * (0.15 + 0.1 * r())) },
+        { name: tr('Säästöholvi', 'Savings vault'), kind: 'savings', balance: tens(monthlyIncome * (0.25 + 0.2 * r())), ratePct: 2 },
       ]
     : [
-        { name: 'Säästötili', kind: 'savings', balance: tens(monthlyIncome * (0.4 + 0.3 * r())), ratePct: 1.25 },
+        { name: tr('Säästötili', 'Savings account'), kind: 'savings', balance: tens(monthlyIncome * (0.4 + 0.3 * r())), ratePct: 1.25 },
         {
-          name: 'Luottokortti',
+          name: tr('Luottokortti', 'Credit card'),
           kind: 'credit',
           balance: -tens(monthlyIncome * (0.25 + 0.2 * r())),
           ratePct: [14.9, 15.9, 16.9, 17.9, 19.9][Math.floor(r() * 5)],

@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useDerivedValue } from 'react-native-reanimated';
 
+import { tr } from '../../lang';
 import { colors, formatEur } from '../../theme';
 import { axisText, formatAxis, linear, niceTicks, smoothArea, smoothPath, Tooltip, useReveal, useScrub, useWidth } from './common';
 
@@ -72,7 +73,7 @@ export function TrendChart({ points, average }: { points: Point[]; average?: num
               </Text>
             ))}
             {average !== undefined ? (
-              <Text style={[axisText, styles.avgLabel, { top: geometry.y(average) - 16 }]}>ka. {formatEur(average, average < 10 ? 2 : 0)}</Text>
+              <Text style={[axisText, styles.avgLabel, { top: geometry.y(average) - 16 }]}>{tr('ka.', 'avg')} {formatEur(average, average < 10 ? 2 : 0)}</Text>
             ) : null}
             {points.map((p, i) =>
               i % step === (points.length - 1) % step ? (

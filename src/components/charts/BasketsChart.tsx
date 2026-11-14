@@ -1,4 +1,5 @@
 import { Canvas, Path, Skia, type SkPath } from '@shopify/react-native-skia';
+import { tr } from '../../lang';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useDerivedValue, type SharedValue } from 'react-native-reanimated';
@@ -44,7 +45,7 @@ export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = 'm
           </Canvas>
           <View style={styles.center} pointerEvents="none">
             <Text style={styles.centerValue}>{pct(share)}</Text>
-            <Text style={styles.centerLabel}>vapaa-{'\n'}valintaiset</Text>
+            <Text style={styles.centerLabel}>{tr('vapaa-\nvalintaiset', 'discre-\ntionary')}</Text>
           </View>
         </View>
 
@@ -63,8 +64,8 @@ export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = 'm
         </View>
       </View>
 
-      <Text style={styles.compareTitle}>Vapaavalintaisten menojen osuus</Text>
-      <CompareBar label="Sinä" value={share} max={Math.max(share, peerShare, 0.01)} color={colors.green700} reveal={reveal} />
+      <Text style={styles.compareTitle}>{tr('Vapaavalintaisten menojen osuus', 'Discretionary share of spending')}</Text>
+      <CompareBar label={tr('Sinä', 'You')} value={share} max={Math.max(share, peerShare, 0.01)} color={colors.green700} reveal={reveal} />
       <CompareBar label={peerLabel} value={peerShare} max={Math.max(share, peerShare, 0.01)} color="#C7C7C7" reveal={reveal} note={peerNote} />
     </View>
   );

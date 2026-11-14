@@ -1,4 +1,5 @@
 import { Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, Path, vec } from '@shopify/react-native-skia';
+import { tr } from '../../lang';
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -69,7 +70,7 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
 
   return (
     <View>
-      <View onLayout={onLayout} accessible accessibilityLabel={`Saldo nyt ${formatEur(points[todayIndex].balance, 0)}, arvio palkkapäivänä ${formatEur(value, 0)}`}>
+      <View onLayout={onLayout} accessible accessibilityLabel={tr(`Saldo nyt ${formatEur(points[todayIndex].balance, 0)}, arvio palkkapäivänä ${formatEur(value, 0)}`, `Balance now ${formatEur(points[todayIndex].balance, 0)}, about ${formatEur(value, 0)} on payday`)}>
         {width > 0 ? (
           <GestureDetector gesture={scrub}>
             <View style={{ height: HEIGHT }}>
@@ -105,7 +106,7 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
                 </Text>
               ))}
               <Text style={[axisText, styles.xLabel, { left: LEFT }]}>{points[0].label}</Text>
-              <Text style={[axisText, styles.xLabel, styles.today, { left: g.pts[todayIndex].x - 30 }]}>tänään</Text>
+              <Text style={[axisText, styles.xLabel, styles.today, { left: g.pts[todayIndex].x - 30 }]}>{tr('tänään', 'today')}</Text>
               <Text style={[axisText, styles.xLabel, styles.payday]}>{paydayLabel}</Text>
               {active ? (
                 <Tooltip
@@ -123,8 +124,8 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
       </View>
 
       <View style={styles.legend}>
-        <LegendItem color={colors.green700} label="Saldo" />
-        <LegendItem color={aheadColor} label="Arvio, jos maksat vain pakolliset" dashed />
+        <LegendItem color={colors.green700} label={tr('Saldo', 'Balance')} />
+        <LegendItem color={aheadColor} label={tr('Arvio, jos maksat vain pakolliset', 'Forecast if you pay only essentials')} dashed />
       </View>
 
       <View style={styles.rows}>
@@ -139,7 +140,10 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
       {value > 0 ? (
         <View style={styles.pill}>
           <Text style={styles.pillText}>
-            ≈ {formatEur(perDay, 0)} päivässä · {days} {days === 1 ? 'päivä' : 'päivää'} palkkaan
+            {tr(
+              `≈ ${formatEur(perDay, 0)} päivässä · ${days} ${days === 1 ? 'päivä' : 'päivää'} palkkaan`,
+              `≈ ${formatEur(perDay, 0)} a day · ${days} ${days === 1 ? 'day' : 'days'} to payday`,
+            )}
           </Text>
         </View>
       ) : null}

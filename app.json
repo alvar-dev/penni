@@ -26,14 +26,14 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Mikrofonia käytetään, jotta voit kysyä puhumalla."
+          "microphonePermission": "The microphone lets you ask questions by voice."
         }
       ],
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Mikrofonia käytetään, jotta voit kysyä puhumalla.",
-          "speechRecognitionPermission": "Puheentunnistus muuttaa kysymyksesi tekstiksi.",
+          "microphonePermission": "The microphone lets you ask questions by voice.",
+          "speechRecognitionPermission": "Speech recognition turns your questions into text.",
           "androidSpeechServicePackages": [
             "com.google.android.googlequicksearchbox",
             "com.google.android.as"

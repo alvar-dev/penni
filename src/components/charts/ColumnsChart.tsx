@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 
+import { tr } from '../../lang';
 import { colors, formatEur } from '../../theme';
 import { axisText, formatAxis, linear, niceTicks, Tooltip, useReveal, useScrub, useWidth } from './common';
 
@@ -69,7 +70,7 @@ export function ColumnsChart({ bars, average }: { bars: Bar[]; average?: number 
               </Text>
             ))}
             {average !== undefined ? (
-              <Text style={[axisText, styles.avgLabel, { top: g.y(average) - 16 }]}>ka. {formatEur(average, average < 10 ? 2 : 0)}</Text>
+              <Text style={[axisText, styles.avgLabel, { top: g.y(average) - 16 }]}>{tr('ka.', 'avg')} {formatEur(average, average < 10 ? 2 : 0)}</Text>
             ) : null}
             {bars.map((b, i) =>
               i % step === (bars.length - 1) % step ? (

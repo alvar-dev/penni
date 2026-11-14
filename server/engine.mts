@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 
 import type { Basket, Insight, Summary, SummaryTile, Viz } from '../src/shared/api.ts';
 import { bankById } from '../src/shared/banks.ts';
+import { EN, euros, thousands, tr } from './lang.mts';
 import { buildOtherBank, type OtherBank } from './otherbank.mts';
 import { everydayShareFinland, forBuffer, forCategories, forProfile, forSaving, forSpending, forSurprises, type Comparison } from './finland.mts';
 
@@ -75,44 +76,44 @@ const spending = (p: Persona) => p.spendTx ?? p.tx;
 // merchant type (MCC), and all spending together.
 
 const CATEGORIES: Record<string, { label: string; category: string }> = {
-  housing: { label: 'Asuminen', category: 'Housing' },
-  utilities: { label: 'Asumisen laskut', category: 'Utilities' },
-  groceries: { label: 'Ruokaostokset', category: 'Groceries' },
-  transport: { label: 'Liikenne', category: 'Transportation' },
-  health: { label: 'Terveys', category: 'Health' },
-  home_tech: { label: 'Koti ja tekniikka', category: 'Home & Tech' },
-  restaurants_cafes: { label: 'Ravintolat ja kahvilat', category: 'Restaurants' },
-  entertainment: { label: 'Viihde', category: 'Entertainment' },
-  shopping_hobbies: { label: 'Ostokset ja harrastukset', category: 'Lifestyle' },
-  travel: { label: 'Matkailu', category: 'Travel' },
+  housing: { label: tr('Asuminen', 'Housing'), category: 'Housing' },
+  utilities: { label: tr('Asumisen laskut', 'Bills'), category: 'Utilities' },
+  groceries: { label: tr('Ruokaostokset', 'Groceries'), category: 'Groceries' },
+  transport: { label: tr('Liikenne', 'Transport'), category: 'Transportation' },
+  health: { label: tr('Terveys', 'Health'), category: 'Health' },
+  home_tech: { label: tr('Koti ja tekniikka', 'Home and tech'), category: 'Home & Tech' },
+  restaurants_cafes: { label: tr('Ravintolat ja kahvilat', 'Restaurants and cafés'), category: 'Restaurants' },
+  entertainment: { label: tr('Viihde', 'Entertainment'), category: 'Entertainment' },
+  shopping_hobbies: { label: tr('Ostokset ja harrastukset', 'Shopping and hobbies'), category: 'Lifestyle' },
+  travel: { label: tr('Matkailu', 'Travel'), category: 'Travel' },
 };
 const GROUPS: Record<string, { label: string; mcc: string[] }> = {
-  taxi: { label: 'Taksit', mcc: ['4121'] },
-  fuel: { label: 'Polttoaine', mcc: ['5541', '5542'] },
-  public_transport: { label: 'Joukkoliikenne', mcc: ['4111'] },
-  parking: { label: 'Pysäköinti', mcc: ['7523'] },
-  restaurant: { label: 'Ravintolat', mcc: ['5812'] },
-  fast_food_cafe: { label: 'Pikaruoka ja kahvilat', mcc: ['5814'] },
-  bar: { label: 'Baarit', mcc: ['5813'] },
-  supermarket: { label: 'Ruokakaupat', mcc: ['5411'] },
-  kiosk: { label: 'Kioskit ja lähikaupat', mcc: ['5499'] },
-  pharmacy: { label: 'Apteekit', mcc: ['5912'] },
-  doctor: { label: 'Lääkärikäynnit', mcc: ['8011', '8099'] },
-  dentist: { label: 'Hammaslääkäri', mcc: ['8021'] },
-  cinema: { label: 'Elokuvat', mcc: ['7832'] },
-  events: { label: 'Tapahtumat ja teatteri', mcc: ['7922'] },
-  leisure: { label: 'Vapaa-ajan palvelut', mcc: ['7999', '7991', '7996'] },
-  electronics: { label: 'Elektroniikka', mcc: ['5732', '5734'] },
-  furniture: { label: 'Huonekalut', mcc: ['5712'] },
-  hardware_home: { label: 'Rauta- ja kodintarvikkeet', mcc: ['5200', '5251'] },
-  clothing: { label: 'Vaatteet', mcc: ['5651', '5691'] },
-  sporting_goods: { label: 'Urheiluvälineet', mcc: ['5941'] },
-  books: { label: 'Kirjat', mcc: ['5942'] },
-  toys_hobby: { label: 'Lelut ja harrastustarvikkeet', mcc: ['5945'] },
-  flights: { label: 'Lennot', mcc: ['4511'] },
-  hotels: { label: 'Hotellit', mcc: ['7011'] },
-  travel_agency: { label: 'Matkatoimistot', mcc: ['4722'] },
-  car_rental: { label: 'Autonvuokraus', mcc: ['7512'] },
+  taxi: { label: tr('Taksit', 'Taxis'), mcc: ['4121'] },
+  fuel: { label: tr('Polttoaine', 'Fuel'), mcc: ['5541', '5542'] },
+  public_transport: { label: tr('Joukkoliikenne', 'Public transport'), mcc: ['4111'] },
+  parking: { label: tr('Pysäköinti', 'Parking'), mcc: ['7523'] },
+  restaurant: { label: tr('Ravintolat', 'Restaurants'), mcc: ['5812'] },
+  fast_food_cafe: { label: tr('Pikaruoka ja kahvilat', 'Fast food and cafés'), mcc: ['5814'] },
+  bar: { label: tr('Baarit', 'Bars'), mcc: ['5813'] },
+  supermarket: { label: tr('Ruokakaupat', 'Supermarkets'), mcc: ['5411'] },
+  kiosk: { label: tr('Kioskit ja lähikaupat', 'Kiosks and corner shops'), mcc: ['5499'] },
+  pharmacy: { label: tr('Apteekit', 'Pharmacies'), mcc: ['5912'] },
+  doctor: { label: tr('Lääkärikäynnit', 'Doctor visits'), mcc: ['8011', '8099'] },
+  dentist: { label: tr('Hammaslääkäri', 'Dentist'), mcc: ['8021'] },
+  cinema: { label: tr('Elokuvat', 'Cinema'), mcc: ['7832'] },
+  events: { label: tr('Tapahtumat ja teatteri', 'Events and theatre'), mcc: ['7922'] },
+  leisure: { label: tr('Vapaa-ajan palvelut', 'Leisure services'), mcc: ['7999', '7991', '7996'] },
+  electronics: { label: tr('Elektroniikka', 'Electronics'), mcc: ['5732', '5734'] },
+  furniture: { label: tr('Huonekalut', 'Furniture'), mcc: ['5712'] },
+  hardware_home: { label: tr('Rauta- ja kodintarvikkeet', 'Hardware and home goods'), mcc: ['5200', '5251'] },
+  clothing: { label: tr('Vaatteet', 'Clothing'), mcc: ['5651', '5691'] },
+  sporting_goods: { label: tr('Urheiluvälineet', 'Sports equipment'), mcc: ['5941'] },
+  books: { label: tr('Kirjat', 'Books'), mcc: ['5942'] },
+  toys_hobby: { label: tr('Lelut ja harrastustarvikkeet', 'Toys and hobby supplies'), mcc: ['5945'] },
+  flights: { label: tr('Lennot', 'Flights'), mcc: ['4511'] },
+  hotels: { label: tr('Hotellit', 'Hotels'), mcc: ['7011'] },
+  travel_agency: { label: tr('Matkatoimistot', 'Travel agencies'), mcc: ['4722'] },
+  car_rental: { label: tr('Autonvuokraus', 'Car rental'), mcc: ['7512'] },
 };
 export const WHAT_KEYS = ['all_spending', ...Object.keys(CATEGORIES), ...Object.keys(GROUPS)];
 
@@ -138,7 +139,7 @@ function basketOf(t: Tx): Basket | undefined {
 }
 
 function matcher(what: string): { label: string; test: (t: Tx) => boolean } | null {
-  if (what === 'all_spending') return { label: 'Kaikki menot', test: (t) => SPEND_CATEGORIES.has(t.category) };
+  if (what === 'all_spending') return { label: tr('Kaikki menot', 'All spending'), test: (t) => SPEND_CATEGORIES.has(t.category) };
   const category = CATEGORIES[what];
   if (category) return { label: category.label, test: (t) => t.category === category.category };
   const group = GROUPS[what];
@@ -161,19 +162,27 @@ function monthsBetween(from: string, to: string): string[] {
   return out;
 }
 
-const MONTH_NAMES = ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu', 'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'];
-const MONTH_SHORT = ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu'];
+const MONTH_NAMES = tr(
+  ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu', 'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'],
+  ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+);
+const MONTH_SHORT = tr(
+  ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu'],
+  ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+);
 const monthIndex = (month: string) => Number(month.slice(5, 7)) - 1;
-const WEEKDAYS = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'];
-const dayLabel = (date: string) => `${Number(date.slice(8, 10))}.${Number(date.slice(5, 7))}.`;
+const WEEKDAYS = tr(['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'], ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
+/** 15.9. or 15 Sep */
+const dayLabel = (date: string) =>
+  EN ? `${Number(date.slice(8, 10))} ${MONTH_SHORT[Number(date.slice(5, 7)) - 1]}` : `${Number(date.slice(8, 10))}.${Number(date.slice(5, 7))}.`;
 const dayTitle = (date: string) => `${WEEKDAYS[new Date(date + 'T00:00:00Z').getUTCDay()]} ${dayLabel(date)}`;
 
 function periodLabel(from: string, to: string): string {
   const year = (m: string) => m.slice(0, 4);
-  const suffix = (m: string) => (m === TODAY_MONTH ? ' (tähän asti)' : '');
+  const suffix = (m: string) => (m === TODAY_MONTH ? tr(' (tähän asti)', ' (so far)') : '');
   if (from === to) return `${MONTH_NAMES[monthIndex(from)]} ${year(from)}${suffix(to)}`;
   if (year(from) === year(to)) {
-    return `${MONTH_SHORT[monthIndex(from)]}–${MONTH_NAMES[monthIndex(to)]} ${year(to)}${suffix(to)}`;
+    return `${(EN ? MONTH_NAMES : MONTH_SHORT)[monthIndex(from)]}–${MONTH_NAMES[monthIndex(to)]} ${year(to)}${suffix(to)}`;
   }
   return `${monthIndex(from) + 1}/${year(from)}–${monthIndex(to) + 1}/${year(to)}${suffix(to)}`;
 }
@@ -228,9 +237,9 @@ function mode(values: number[]): number | null {
 }
 
 const BASKET_NAMES: Record<Basket, string> = {
-  regular: 'Pakolliset, säännölliset',
-  irregular: 'Pakolliset, yllättävät',
-  everyday: 'Vapaavalintaiset',
+  regular: tr('Pakolliset, säännölliset', 'Essential, regular'),
+  irregular: tr('Pakolliset, yllättävät', 'Essential, unexpected'),
+  everyday: tr('Vapaavalintaiset', 'Discretionary'),
 };
 
 export type ToolResult = { facts: Record<string, unknown>; viz?: Viz };
@@ -275,12 +284,12 @@ function spendingTotal(p: Persona, args: { what?: string; from_month?: string; t
       args.chart === 'columns'
         ? {
             kind: 'columns',
-            label: inPeriod.length > 1 ? `${m.label}, ${label} · kuukaudessa` : `${m.label}, ${label}`,
+            label: inPeriod.length > 1 ? `${m.label}, ${label} · ${tr('kuukaudessa', 'per month')}` : `${m.label}, ${label}`,
             value: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : round2(total),
             average: previousAvg === null ? undefined : round2(previousAvg),
             bars: monthly.map((x) => ({
               label: MONTH_SHORT[monthIndex(x.month)],
-              title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? ' (tähän asti)' : ''}`,
+              title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? tr(' (tähän asti)', ' (so far)') : ''}`,
               value: x.total,
               selected: inPeriod.includes(x.month),
             })),
@@ -288,12 +297,12 @@ function spendingTotal(p: Persona, args: { what?: string; from_month?: string; t
         : {
             kind: 'trend',
             // Over several months the headline is the usual month, not the sum.
-            label: inPeriod.length > 1 ? `${m.label}, ${label} · kuukaudessa` : `${m.label}, ${label}`,
+            label: inPeriod.length > 1 ? `${m.label}, ${label} · ${tr('kuukaudessa', 'per month')}` : `${m.label}, ${label}`,
             value: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : round2(total),
             average: previousAvg === null ? undefined : round2(previousAvg),
             points: monthly.map((x) => ({
               label: MONTH_SHORT[monthIndex(x.month)],
-              title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? ' (tähän asti)' : ''}`,
+              title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? tr(' (tähän asti)', ' (so far)') : ''}`,
               value: x.total,
               selected: inPeriod.includes(x.month),
             })),
@@ -373,16 +382,16 @@ function safeToSpend(p: Persona): ToolResult {
     },
     viz: {
       kind: 'runway',
-      label: 'Vapaata rahaa palkkapäivään',
+      label: tr('Vapaata rahaa palkkapäivään', 'Free to spend until payday'),
       value: free,
       perDay: round(free / days),
       days,
       paydayLabel: `palkka ${dayLabel(payday)}`,
       points,
       parts: [
-        { basket: 'regular', name: 'Pakolliset tulossa', value: upcoming },
-        { basket: 'irregular', name: 'Vara yllätyksiin', value: cushion },
-        { basket: 'everyday', name: 'Vapaasti käytettävissä', value: Math.max(0, free) },
+        { basket: 'regular', name: tr('Pakolliset tulossa', 'Essentials still to pay'), value: upcoming },
+        { basket: 'irregular', name: tr('Vara yllätyksiin', 'Cushion for surprises'), value: cushion },
+        { basket: 'everyday', name: tr('Vapaasti käytettävissä', 'Free to spend'), value: Math.max(0, free) },
       ],
     },
   };
@@ -400,7 +409,7 @@ function spendingProfile(p: Persona): ToolResult {
     const b = basketOf(t);
     if (b) baskets[b] += spendOf(t);
     if (b === 'everyday') {
-      const key = t.mcc === '4121' ? 'Taksit' : LABEL_OF_CATEGORY[t.category];
+      const key = t.mcc === '4121' ? GROUPS.taxi.label : LABEL_OF_CATEGORY[t.category];
       byCategory.set(key, (byCategory.get(key) ?? 0) + spendOf(t));
     }
   }
@@ -433,7 +442,7 @@ function spendingProfile(p: Persona): ToolResult {
     },
     viz: {
       kind: 'baskets',
-      label: `Menot keskimäärin kuukaudessa, ${label}`,
+      label: tr(`Menot keskimäärin kuukaudessa, ${label}`, `Average monthly spending, ${label}`),
       value: round(perMonth(spend)),
       parts: (['regular', 'irregular', 'everyday'] as Basket[]).map((b) => ({
         basket: b,
@@ -443,7 +452,7 @@ function spendingProfile(p: Persona): ToolResult {
       share: spend ? baskets.everyday / spend : 0,
       peerShare: finland.share,
       peerLabel: finland.label,
-      peerNote: finland.source.replace('Tilastokeskus, kulutustutkimus', 'Tilastokeskus'),
+      peerNote: finland.note,
     },
   };
 }
@@ -469,7 +478,10 @@ function whatIf(p: Persona, args: { what?: string; change_pct?: number }): ToolR
     },
     viz: {
       kind: 'projection',
-      label: monthlyDelta >= 0 ? `Säästö vuodessa, ${m.label.toLowerCase()}` : `Lisäkulu vuodessa, ${m.label.toLowerCase()}`,
+      label:
+        monthlyDelta >= 0
+          ? tr(`Säästö vuodessa, ${m.label.toLowerCase()}`, `Saved per year, ${m.label.toLowerCase()}`)
+          : tr(`Lisäkulu vuodessa, ${m.label.toLowerCase()}`, `Extra cost per year, ${m.label.toLowerCase()}`),
       value: round(Math.abs(monthlyDelta * 12)),
       nowMonthly: round(baseline),
       afterMonthly: round(changed),
@@ -504,17 +516,17 @@ function topCategories(p: Persona, args: { from_month?: string; to_month?: strin
       args.chart === 'donut'
         ? {
             kind: 'donut',
-            label: `Mihin rahat menivät, ${label}`,
+            label: tr(`Mihin rahat menivät, ${label}`, `Where the money went, ${label}`),
             value: round(total),
             // The five largest, the rest together.
             slices: [
               ...rows.slice(0, 5).map(([k, v]) => ({ label: k, value: round(v) })),
-              ...(rows.length > 5 ? [{ label: 'Muut', value: round(rows.slice(5).reduce((s, [, v]) => s + v, 0)) }] : []),
+              ...(rows.length > 5 ? [{ label: tr('Muut', 'Other'), value: round(rows.slice(5).reduce((s, [, v]) => s + v, 0)) }] : []),
             ],
           }
         : {
             kind: 'ranking',
-            label: `Mihin rahat menivät, ${label}`,
+            label: tr(`Mihin rahat menivät, ${label}`, `Where the money went, ${label}`),
             value: round(total),
             rows: rows.slice(0, 8).map(([k, v]) => ({ label: k, value: round(v), basket: basketOfLabel.get(k) ?? 'everyday' })),
           },
@@ -639,10 +651,10 @@ function surpriseFund(p: Persona): ToolResult {
     facts,
     viz: {
       kind: 'replay',
-      label: 'Sivuun joka palkkapäivä yllätyksiä varten',
+      label: tr('Sivuun joka palkkapäivä yllätyksiä varten', 'Set aside every payday for surprises'),
       value: r.monthly,
       points: window.map((x) => ({ label: dayLabel(x.date), title: dayTitle(x.date), actual: x.actual, withFund: x.withFund })),
-      event: { index: window.findIndex((x) => x.date === r.worst!.date), label: `${r.worst.label.toLowerCase()} ${formatThousands(round(r.worst.amount))}\u00A0€` },
+      event: { index: window.findIndex((x) => x.date === r.worst!.date), label: `${r.worst.label.toLowerCase()} ${euros(round(r.worst.amount))}` },
       overdrawnDays: { actual: r.worst.actualDays, withFund: r.worst.fundDays },
       paydayLabel: dayLabel(payday),
     },
@@ -685,7 +697,7 @@ function cardPayoff(others: OtherBank[]) {
 
 function allAccounts(p: Persona): ToolResult {
   const balance = round2(p.tx[p.tx.length - 1].balance);
-  const own = { bank: 'S-Pankki', name: 'Käyttötili', balance_eur: balance };
+  const own = { bank: 'S-Pankki', name: tr('Käyttötili', 'Current account'), balance_eur: balance };
   const ownBank = { id: 'spankki', name: 'S-Pankki', accounts: [{ name: own.name, balance }] };
   const others = p.others ?? [];
   if (others.length === 0) {
@@ -694,15 +706,15 @@ function allAccounts(p: Persona): ToolResult {
         connected_banks: ['S-Pankki'],
         accounts: [own],
         not_connected:
-          'Only S-Pankki accounts are visible. Under the account list there is a button to connect other banks (PSD2, read-only access). Suggest it in one short sentence, for example "Jos sinulla on tilejä muissa pankeissa, yhdistä ne alta, niin näen koko tilanteen." Do not call it a card (that could mean a credit card) and do not guess what they have elsewhere.',
+          `Only S-Pankki accounts are visible. Under the account list there is a button to connect other banks (PSD2, read-only access). Suggest it in one short sentence, for example "${tr('Jos sinulla on tilejä muissa pankeissa, yhdistä ne alta, niin näen koko tilanteen.', "If you have accounts in other banks, connect them below and I'll see the whole picture.")}" Do not call it a card (that could mean a credit card) and do not guess what they have elsewhere.`,
       },
-      viz: { kind: 'accounts', label: 'Tilisi S-Pankissa', value: round(balance), banks: [ownBank], connectable: true },
+      viz: { kind: 'accounts', label: tr('Tilisi S-Pankissa', 'Your S-Pankki accounts'), value: round(balance), banks: [ownBank], connectable: true },
     };
   }
   const { all, elsewhere, saved, cards, debt, cardCost, savingsEarn, payments, pay, left, interestSaved } = cardPayoff(others);
   const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
   const cardMonthly = sumBy(others.flatMap((o) => o.tx), (t) => months.includes(t.month)) / months.length;
-  const pctText = (v: number) => `${String(v).replace('.', ',')}\u00A0%`;
+  const pctText = (v: number) => (EN ? `${v}%` : `${String(v).replace('.', ',')}\u00A0%`);
   const net = balance + elsewhere + saved - debt;
 
   return {
@@ -727,7 +739,7 @@ function allAccounts(p: Persona): ToolResult {
     },
     viz: {
       kind: 'accounts',
-      label: 'Kaikki tilisi yhteensä',
+      label: tr('Kaikki tilisi yhteensä', 'All your accounts'),
       value: round(net),
       banks: [
         ownBank,
@@ -739,15 +751,17 @@ function allAccounts(p: Persona): ToolResult {
             balance: a.balance,
             note:
               a.kind === 'credit'
-                ? `korko ${pctText(a.ratePct ?? 0)} · raja ${formatThousands(a.limit ?? 0)}\u00A0€`
+                ? `${tr('korko', 'interest')} ${pctText(a.ratePct ?? 0)} · ${tr('raja', 'limit')} ${euros(a.limit ?? 0)}`
                 : a.ratePct
-                  ? `korko ${pctText(a.ratePct)}`
+                  ? `${tr('korko', 'interest')} ${pctText(a.ratePct)}`
                   : undefined,
           })),
         })),
       ],
       connectable: true,
-      footnote: cards.length ? `${cards.length > 1 ? 'Korttien' : 'Kortin'} korot noin ${formatThousands(round(cardCost))}\u00A0€ vuodessa` : undefined,
+      footnote: cards.length
+        ? tr(`${cards.length > 1 ? 'Korttien' : 'Kortin'} korot noin ${euros(round(cardCost))} vuodessa`, `Card interest about ${euros(round(cardCost))} a year`)
+        : undefined,
     },
   };
 }
@@ -758,7 +772,7 @@ function everydayMonthly(p: Persona): number {
   return sumBy(spending(p), (t) => months.includes(t.month) && basketOf(t) === 'everyday') / months.length;
 }
 
-const formatThousands = (v: number) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+const formatThousands = thousands;
 
 // ---------------------------------------------------------------------------
 // The start screen: a few facts at a glance, and questions that follow from them.
@@ -780,8 +794,9 @@ const FORMS: Record<string, { illative: string; partitive: string }> = {
 
 export function summary(p: Persona): Summary {
   const month = LAST_FULL_MONTH;
-  const inMonth = `${MONTH_NAMES[monthIndex(month)]}ssa`; // elokuussa
-  const ofMonth = `${MONTH_NAMES[monthIndex(month)]}n`; // elokuun
+  const monthName = MONTH_NAMES[monthIndex(month)];
+  const inMonth = tr(`${monthName}ssa`, `in ${monthName}`); // elokuussa / in August
+  const ofMonth = tr(`${monthName}n`, monthName); // elokuun / August
 
   const spend = (m: string, test: (t: Tx) => boolean = () => true) =>
     sumBy(spending(p), (t) => t.month === m && SPEND_CATEGORIES.has(t.category) && test(t));
@@ -797,16 +812,16 @@ export function summary(p: Persona): Summary {
   const change = usual ? Math.round(((total - usual) / usual) * 100) : 0;
 
   // The biggest everyday item last month (taxis count separately from transport).
-  const everydayKey = (t: Tx) => (t.mcc === '4121' ? 'Taksit' : LABEL_OF_CATEGORY[t.category]);
+  const everydayKey = (t: Tx) => (t.mcc === '4121' ? GROUPS.taxi.label : LABEL_OF_CATEGORY[t.category]);
   const everyday = new Map<string, number>();
   for (const t of spending(p)) {
     if (t.month !== month || basketOf(t) !== 'everyday' || !SPEND_CATEGORIES.has(t.category)) continue;
     everyday.set(everydayKey(t), (everyday.get(everydayKey(t)) ?? 0) + spendOf(t));
   }
-  const [topLabel, topValue] = [...everyday.entries()].sort((a, b) => b[1] - a[1])[0] ?? ['Ravintolat ja kahvilat', 0];
+  const [topLabel, topValue] = [...everyday.entries()].sort((a, b) => b[1] - a[1])[0] ?? [CATEGORIES.restaurants_cafes.label, 0];
 
   // The category that grew most against the three months before.
-  let grew = { label: 'Ruokaostokset', delta: -Infinity };
+  let grew = { label: CATEGORIES.groceries.label, delta: -Infinity };
   for (const c of Object.values(CATEGORIES)) {
     if (c.category === 'Housing') continue;
     const now = spend(month, (t) => t.category === c.category);
@@ -817,32 +832,32 @@ export function summary(p: Persona): Summary {
   const tiles: SummaryTile[] = [
     {
       id: 'safe',
-      label: 'Vapaata palkkapäivään',
+      label: tr('Vapaata palkkapäivään', 'Free until payday'),
       value: safe.free_to_spend_until_payday_eur,
       unit: '€',
       sub:
         safe.free_to_spend_until_payday_eur > 0
-          ? `≈ ${safe.free_per_day_eur} € päivässä · ${safe.days_until_payday} pv`
-          : `${safe.days_until_payday} päivää palkkaan`,
-      question: 'Paljonko voin käyttää ennen palkkapäivää?',
+          ? tr(`≈ ${safe.free_per_day_eur} € päivässä · ${safe.days_until_payday} pv`, `≈ ${euros(safe.free_per_day_eur)} a day · ${safe.days_until_payday} days`)
+          : tr(`${safe.days_until_payday} päivää palkkaan`, `${safe.days_until_payday} days to payday`),
+      question: tr('Paljonko voin käyttää ennen palkkapäivää?', 'How much can I spend before payday?'),
       tone: safe.free_to_spend_until_payday_eur < 0 ? 'negative' : 'neutral',
     },
     {
       id: 'month',
-      label: `Menot ${inMonth}`,
+      label: tr(`Menot ${inMonth}`, `Spending ${inMonth}`),
       value: total,
       unit: '€',
-      sub: Math.abs(change) < 3 ? 'tavallisen verran' : `${change > 0 ? '↑' : '↓'} ${Math.abs(change)} % tavallisesta`,
-      question: `Mihin rahat menivät ${inMonth}?`,
+      sub: Math.abs(change) < 3 ? tr('tavallisen verran', 'about usual') : tr(`${change > 0 ? '↑' : '↓'} ${Math.abs(change)} % tavallisesta`, `${change > 0 ? '↑' : '↓'} ${Math.abs(change)}% vs usual`),
+      question: tr(`Mihin rahat menivät ${inMonth}?`, `Where did my money go ${inMonth}?`),
       spark: totals,
     },
     {
       id: 'everyday',
-      label: 'Vapaavalintaiset',
+      label: tr('Vapaavalintaiset', 'Discretionary'),
       value: profile.everyday_share_of_spending_pct,
       unit: '%',
-      sub: `Suomessa ikäisilläsi ${profile.finland_everyday_share_pct} %`,
-      question: 'Millainen kuluttaja olen?',
+      sub: tr(`Suomessa ikäisilläsi ${profile.finland_everyday_share_pct} %`, `Your age in Finland: ${profile.finland_everyday_share_pct}%`),
+      question: tr('Millainen kuluttaja olen?', 'What kind of spender am I?'),
       compare: [profile.everyday_share_of_spending_pct / 100, profile.finland_everyday_share_pct / 100],
     },
     {
@@ -850,29 +865,39 @@ export function summary(p: Persona): Summary {
       label: topLabel,
       value: round(topValue),
       unit: '€',
-      sub: `${ofMonth} suurin arkimeno`,
-      question: `Paljonko säästäisin, jos vähentäisin ${FORMS[topLabel]?.partitive ?? topLabel.toLowerCase()} 20 %?`,
+      sub: tr(`${ofMonth} suurin arkimeno`, `Biggest everyday cost, ${ofMonth}`),
+      question: tr(
+        `Paljonko säästäisin, jos vähentäisin ${FORMS[topLabel]?.partitive ?? topLabel.toLowerCase()} 20 %?`,
+        `How much would I save if I cut ${topLabel.toLowerCase()} by 20%?`,
+      ),
     },
   ];
 
   const suggestions = [
-    `Paljonko käytin ${FORMS[grew.label]?.illative ?? grew.label.toLowerCase()} ${inMonth}?`,
-    'Miten kulutukseni on muuttunut vuodessa?',
+    tr(`Paljonko käytin ${FORMS[grew.label]?.illative ?? grew.label.toLowerCase()} ${inMonth}?`, `How much did I spend on ${grew.label.toLowerCase()} ${inMonth}?`),
+    tr('Miten kulutukseni on muuttunut vuodessa?', 'How has my spending changed over the year?'),
   ];
   // The coach speaks first, as one piece of advice: what to do, and what it is worth.
   const fund = replayFund(p);
   let insight: Insight | undefined;
   if (fund.worst && fund.worst.actualDays > 0) {
-    const ofMonthWorst = `${MONTH_NAMES[monthIndex(fund.worst.date.slice(0, 7))]}n`; // heinäkuun
+    const worstMonth = MONTH_NAMES[monthIndex(fund.worst.date.slice(0, 7))];
+    const ofMonthWorst = tr(`${worstMonth}n`, worstMonth); // heinäkuun / July
     insight = {
       kind: 'surprise',
-      title: `Vältä miinuspäivät: ${formatThousands(fund.monthly)} € joka palkkapäivä`,
+      title: tr(`Vältä miinuspäivät: ${euros(fund.monthly)} joka palkkapäivä`, `Avoid overdrawn days: ${euros(fund.monthly)} every payday`),
       text:
         fund.worst.fundDays === 0
-          ? `${formatThousands(fund.monthly)} € joka palkkapäivä olisi estänyt ${ofMonthWorst} ${fund.worst.actualDays} miinuspäivää.`
-          : `${formatThousands(fund.monthly)} € joka palkkapäivä olisi vähentänyt ${ofMonthWorst} miinuspäiviä ${fund.worst.actualDays}:stä ${fund.worst.fundDays}:een.`,
-      question: 'Miten varaudun yllättäviin menoihin?',
-      action: 'Katso, miten se toimii',
+          ? tr(
+              `${euros(fund.monthly)} joka palkkapäivä olisi estänyt ${ofMonthWorst} ${fund.worst.actualDays} miinuspäivää.`,
+              `${euros(fund.monthly)} every payday would have prevented the ${fund.worst.actualDays} overdrawn days in ${ofMonthWorst}.`,
+            )
+          : tr(
+              `${euros(fund.monthly)} joka palkkapäivä olisi vähentänyt ${ofMonthWorst} miinuspäiviä ${fund.worst.actualDays}:stä ${fund.worst.fundDays}:een.`,
+              `${euros(fund.monthly)} every payday would have cut the overdrawn days in ${ofMonthWorst} from ${fund.worst.actualDays} to ${fund.worst.fundDays}.`,
+            ),
+      question: tr('Miten varaudun yllättäviin menoihin?', 'How can I prepare for unexpected costs?'),
+      action: tr('Katso, miten se toimii', 'See how it works'),
     };
   }
   const others = p.others ?? [];
@@ -881,10 +906,13 @@ export function summary(p: Persona): Summary {
     if (payoff.pay > 0) {
       insight = {
         kind: 'banks',
-        title: `Säästä ${formatThousands(round(payoff.interestSaved))} € vuodessa korttikoroissa`,
-        text: `Säästät noin ${formatThousands(round(payoff.interestSaved))} € korkoja vuodessa${payoff.left > 0 ? `, ja puskuria jää ${formatThousands(round(payoff.left))} €` : ''}.`,
-        question: 'Kannattaako maksaa luottokortti säästöillä?',
-        action: 'Katso laskelma',
+        title: tr(`Säästä ${euros(round(payoff.interestSaved))} vuodessa korttikoroissa`, `Save ${euros(round(payoff.interestSaved))} a year on card interest`),
+        text: tr(
+          `Säästät noin ${euros(round(payoff.interestSaved))} korkoja vuodessa${payoff.left > 0 ? `, ja puskuria jää ${euros(round(payoff.left))}` : ''}.`,
+          `Paying the card from savings saves about ${euros(round(payoff.interestSaved))} in interest a year${payoff.left > 0 ? `, and ${euros(round(payoff.left))} stays as a buffer` : ''}.`,
+        ),
+        question: tr('Kannattaako maksaa luottokortti säästöillä?', 'Should I pay off my credit card with savings?'),
+        action: tr('Katso laskelma', 'See the numbers'),
       };
     } else {
       // No card debt there: what the other cards add to everyday spending.
@@ -893,10 +921,16 @@ export function summary(p: Persona): Summary {
       const alone = spendingProfile({ ...p, others: undefined, spendTx: undefined }).facts as { everyday_share_of_spending_pct: number };
       insight = {
         kind: 'banks',
-        title: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} menee ${formatThousands(Math.round(cardMonthly / 10) * 10)} € kuussa`,
-        text: `Vapaavalintaisten menojen osuus nousee ${alone.everyday_share_of_spending_pct}\u00A0%:sta ${profile.everyday_share_of_spending_pct}\u00A0%:iin.`,
-        question: 'Millainen kuluttaja olen?',
-        action: 'Katso koko kuva',
+        title: tr(
+          `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} menee ${euros(Math.round(cardMonthly / 10) * 10)} kuussa`,
+          `${others.length === 1 ? `Your ${others[0].name} card` : 'Your other cards'}: ${euros(Math.round(cardMonthly / 10) * 10)} a month`,
+        ),
+        text: tr(
+          `Vapaavalintaisten menojen osuus nousee ${alone.everyday_share_of_spending_pct}\u00A0%:sta ${profile.everyday_share_of_spending_pct}\u00A0%:iin.`,
+          `Your discretionary share rises from ${alone.everyday_share_of_spending_pct}% to ${profile.everyday_share_of_spending_pct}%.`,
+        ),
+        question: tr('Millainen kuluttaja olen?', 'What kind of spender am I?'),
+        action: tr('Katso koko kuva', 'See the whole picture'),
       };
     }
   }

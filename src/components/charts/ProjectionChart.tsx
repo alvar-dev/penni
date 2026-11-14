@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useDerivedValue } from 'react-native-reanimated';
 
+import { tr } from '../../lang';
 import { colors, formatEur } from '../../theme';
 import { axisText, formatAxis, LegendItem, linear, niceTicks, straightPath, Tooltip, useReveal, useScrub, useWidth } from './common';
 
@@ -50,7 +51,7 @@ export function ProjectionChart({ nowMonthly, afterMonthly, changeLabel, yearly 
 
   return (
     <View>
-      <View onLayout={onLayout} accessible accessibilityLabel={`Vuodessa nykyisellä tahdilla ${formatEur(nowMonthly * 12, 0)}, muutoksen jälkeen ${formatEur(afterMonthly * 12, 0)}`}>
+      <View onLayout={onLayout} accessible accessibilityLabel={tr(`Vuodessa nykyisellä tahdilla ${formatEur(nowMonthly * 12, 0)}, muutoksen jälkeen ${formatEur(afterMonthly * 12, 0)}`, `${formatEur(nowMonthly * 12, 0)} a year at today's pace, ${formatEur(afterMonthly * 12, 0)} after the change`)}>
         {width > 0 ? (
           <GestureDetector gesture={scrub}>
             <View style={{ height: HEIGHT }}>
@@ -85,8 +86,8 @@ export function ProjectionChart({ nowMonthly, afterMonthly, changeLabel, yearly 
               <Tooltip
                 x={g.now[picked].x}
                 width={width}
-                title={picked === 0 ? 'Nyt' : `${picked} kk päästä`}
-                value={`${saving ? 'säästö' : 'lisäkulu'} ${formatEur(difference, 0)}`}
+                title={picked === 0 ? tr('Nyt', 'Now') : tr(`${picked} kk päästä`, `in ${picked} mo`)}
+                value={`${saving ? tr('säästö', 'saved') : tr('lisäkulu', 'extra')} ${formatEur(difference, 0)}`}
               />
             </View>
           </GestureDetector>

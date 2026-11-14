@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 
+import { tr } from '../../lang';
 import { colors, formatEur } from '../../theme';
 import { useReveal } from './common';
 
@@ -19,7 +20,7 @@ const OTHER = '#C7C7C7';
 export function DonutChart({ slices, total }: { slices: Slice[]; total: number }) {
   const reveal = useReveal(0, 1100);
   const sum = slices.reduce((s, x) => s + Math.max(0, x.value), 0) || 1;
-  const colorOf = (s: Slice, i: number) => (s.label === 'Muut' ? OTHER : RAMP[Math.min(i, RAMP.length - 1)]);
+  const colorOf = (s: Slice, i: number) => (s.label === 'Muut' || s.label === 'Other' ? OTHER : RAMP[Math.min(i, RAMP.length - 1)]);
 
   const arcs = useMemo(() => {
     const r = (SIZE - STROKE) / 2;
@@ -61,7 +62,7 @@ export function DonutChart({ slices, total }: { slices: Slice[]; total: number }
             <Text style={styles.legendValue}>{formatEur(s.value, 0)}</Text>
           </View>
         ))}
-        <Text style={styles.total}>Yhteensä {formatEur(total, 0)}</Text>
+        <Text style={styles.total}>{tr('Yhteensä', 'Total')} {formatEur(total, 0)}</Text>
       </View>
     </View>
   );

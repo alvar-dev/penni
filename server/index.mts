@@ -26,6 +26,7 @@ import { bankById } from '../src/shared/banks.ts';
 import { personas, summary, TODAY, withOtherBanks, type Persona } from './engine.mts';
 import type { ToolCall, Viz } from '../src/shared/api.ts';
 import { askModel, MODEL, tidy } from './llm.mts';
+import { EN, LANG } from './lang.mts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? '0.0.0.0';
@@ -52,7 +53,7 @@ let speechReady = false;
 let stt: ChildProcess | null = null;
 
 if (existsSync(STT_PYTHON)) {
-  stt = spawn(STT_PYTHON, [STT_SCRIPT], { env: { ...process.env, STT_PORT: String(STT_PORT) }, stdio: ['ignore', 'pipe', 'pipe'] });
+  stt = spawn(STT_PYTHON, [STT_SCRIPT], { env: { ...process.env, STT_PORT: String(STT_PORT), STT_LANGUAGE: LANG }, stdio: ['ignore', 'pipe', 'pipe'] });
   for (const stream of [stt.stdout!, stt.stderr!]) {
     createInterface({ input: stream }).on('line', (line) => {
       if (line.includes('[stt] ready')) speechReady = true;
@@ -112,7 +113,7 @@ try {
   // No cache yet.
 }
 const cacheKey = (personaId: string, question: string, banks: string[] = []) =>
-  `${MODEL}|${TODAY}|${personaId}${banks.length ? `+${[...banks].sort().join('+')}` : ''}|${question.toLowerCase().replace(/[^a-z0-9€%]+/g, ' ').trim()}`;
+  `${MODEL}|${TODAY}|${EN ? 'en|' : ''}${personaId}${banks.length ? `+${[...banks].sort().join('+')}` : ''}|${question.toLowerCase().replace(/[^a-z0-9€%]+/g, ' ').trim()}`;
 function remember(key: string, value: Cached) {
   cache.set(key, value);
   try {

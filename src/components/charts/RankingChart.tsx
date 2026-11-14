@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { tr } from '../../lang';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import type { Basket } from '../../shared/api';
@@ -8,9 +9,9 @@ import { LegendItem, useReveal } from './common';
 type Row = { label: string; value: number; basket: Basket };
 
 const BASKET_LABELS: Record<Basket, string> = {
-  regular: 'Pakolliset, säännölliset',
-  irregular: 'Pakolliset, yllättävät',
-  everyday: 'Vapaavalintaiset',
+  regular: tr('Pakolliset, säännölliset', 'Essential, regular'),
+  irregular: tr('Pakolliset, yllättävät', 'Essential, unexpected'),
+  everyday: tr('Vapaavalintaiset', 'Discretionary'),
 };
 
 /** Spending by category, largest first, each bar in its basket's colour. */
