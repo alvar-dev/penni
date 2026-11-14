@@ -42,6 +42,7 @@ import { Viz } from './src/components/Viz';
 import { ListeningTime, Waveform } from './src/components/Waveform';
 import { newId, personas, placeholderAnswer, strings, suggestions, type Message } from './src/content';
 import { loadConversations, saveConversations, titleFrom, type Conversation } from './src/conversations';
+import { loadPlans, savePlans, type Plan } from './src/plan';
 import type { Summary } from './src/shared/api';
 import { useVoiceInput } from './src/hooks/useVoiceInput';
 import { colors, type } from './src/theme';
@@ -77,6 +78,32 @@ const ORB_SCALE: Record<OrbMode, number> = {
 };
 const ORB_SPRING = { damping: 20, stiffness: 150, mass: 0.9 };
 
+/** Replaces {name} placeholders in a string. */
+function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ''));
+}
+
+/** Under a surprise-fund answer: switch the suggested plan on (or off). */
+function PlanButton({ monthly, date, active, onStart, onStop }: { monthly: number; date: string; active: boolean; onStart: () => void; onStop: () => void }) {
+  return active ? (
+    <View style={styles.planRow}>
+      <View style={styles.planOn}>
+        <Text style={styles.planOnText}>✓ {fill(strings.planOn, { amount: monthly, date })}</Text>
+      </View>
+      <Pressable onPress={onStop} accessibilityRole="button" hitSlop={8}>
+        <Text style={styles.planStop}>{strings.planStop}</Text>
+      </Pressable>
+    </View>
+  ) : (
+    <Pressable
+      onPress={onStart}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.planButton, pressed && styles.planButtonPressed]}>
+      <Text style={styles.planButtonText}>{fill(strings.planStart, { amount: monthly })}</Text>
+    </Pressable>
+  );
+}
+
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -104,6 +131,9 @@ function Screen() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const historyLoaded = useRef(false);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [plans, setPlans] = useState<Record<string, Plan>>({});
+  const plansLoaded = useRef(false);
+  const [thinkingStep, setThinkingStep] = useState(0);
 
   const level = useSharedValue(0);
   const energy = useSharedValue(0);
@@ -217,6 +247,42 @@ function Screen() {
       .catch(() => setSummary(null));
     return () => controller.abort();
   }, [personaId]);
+
+  // Surprise-fund plans the customer switched on, per customer, on the device only.
+  useEffect(() => {
+    void loadPlans().then((saved) => {
+      plansLoaded.current = true;
+      setPlans((prev) => ({ ...saved, ...prev }));
+    });
+  }, []);
+  useEffect(() => {
+    if (plansLoaded.current) void savePlans(plans);
+  }, [plans]);
+  const plan = plans[personaId];
+  const setPlan = useCallback(
+    (monthly: number | null) =>
+      setPlans((prev) => {
+        const next = { ...prev };
+        if (monthly === null) delete next[personaId];
+        else next[personaId] = { monthly, startedAt: Date.now() };
+        return next;
+      }),
+    [personaId],
+  );
+
+  // What the coach is doing while an answer is on its way.
+  useEffect(() => {
+    if (phase !== 'thinking') return;
+    const reset = setTimeout(() => setThinkingStep(0), 0);
+    const a = setTimeout(() => setThinkingStep(1), 2200);
+    const b = setTimeout(() => setThinkingStep(2), 4800);
+    return () => {
+      clearTimeout(reset);
+      clearTimeout(a);
+      clearTimeout(b);
+      setThinkingStep(0);
+    };
+  }, [phase]);
 
   // Past conversations live on the device only.
   useEffect(() => {
@@ -419,10 +485,11 @@ function Screen() {
     if (latest) openConversation(latest.id);
   }, [visibleConversations, openConversation]);
 
-  const actions = useRef({ send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest });
+  const planMonthly = summary?.plan?.monthly;
+  const actions = useRef({ send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly });
   useEffect(() => {
-    actions.current = { send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest };
-  }, [send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest]);
+    actions.current = { send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly };
+  }, [send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly]);
 
   // Development only: jump straight to a state, e.g. exp://127.0.0.1:8081/--/?preview=chat
   useEffect(() => {
@@ -486,6 +553,16 @@ function Screen() {
         actions.current.onOrbPress();
       } else if (name === 'keyboard') {
         inputRef.current?.focus();
+      } else if (name === 'reset') {
+        // A clean start for a demo: no saved conversations, no plan.
+        setConversations([]);
+        actions.current.setPlan(null);
+        actions.current.cancelRequest();
+        setMessages([]);
+        setCurrentId(null);
+        setPhase('idle');
+      } else if (name === 'planon' || name === 'planoff') {
+        actions.current.setPlan(name === 'planon' ? (actions.current.planMonthly ?? 0) : null);
       } else if (name === 'notice') {
         setNotice({ text: strings.noSpeech, retry: true });
       } else if (name === 'open') {
@@ -546,12 +623,21 @@ function Screen() {
                   <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
                     {message.viz ? <Viz viz={message.viz} example={message.example} /> : null}
                     <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
+                    {message.viz?.kind === 'replay' ? (
+                      <PlanButton
+                        monthly={plan?.monthly ?? message.viz.value}
+                        date={message.viz.paydayLabel}
+                        active={!!plan}
+                        onStart={() => setPlan(message.viz?.value ?? 0)}
+                        onStop={() => setPlan(null)}
+                      />
+                    ) : null}
                   </Animated.View>
                 ),
               )}
               {phase === 'thinking' ? (
                 <Animated.Text entering={FadeIn.duration(200)} style={styles.thinking}>
-                  {strings.thinking}
+                  {strings.thinkingSteps[thinkingStep] ?? strings.thinking}
                 </Animated.Text>
               ) : null}
             </ScrollView>
@@ -626,13 +712,22 @@ function Screen() {
                     <Text style={styles.title}>
                       {phase === 'transcribing' ? strings.transcribingTitle : listening ? strings.listeningTitle : `${strings.greeting}, ${persona.name}`}
                     </Text>
-                    <Text style={styles.hint}>
-                      {phase === 'transcribing'
-                        ? strings.transcribingHint
-                        : listening
-                          ? (micNote ?? strings.listeningHint)
-                          : strings.heroHint}
-                    </Text>
+                    {phase === 'transcribing' || listening ? (
+                      <Text style={styles.hint}>{phase === 'transcribing' ? strings.transcribingHint : (micNote ?? strings.listeningHint)}</Text>
+                    ) : plan && summary?.plan ? (
+                      <View style={styles.planPill}>
+                        <Text style={styles.planPillText}>
+                          {fill(strings.planHome, { amount: plan.monthly, date: summary.plan.nextPayday })}
+                        </Text>
+                      </View>
+                    ) : summary?.insight ? (
+                      <Pressable onPress={() => send(summary.insight!.question)} accessibilityRole="button" style={styles.insight}>
+                        <Text style={styles.insightText}>{summary.insight.text}</Text>
+                        <Text style={styles.insightAction}>{summary.insight.action} ›</Text>
+                      </Pressable>
+                    ) : (
+                      <Text style={styles.hint}>{strings.heroHint}</Text>
+                    )}
                   </Animated.View>
                 ) : null}
               </View>
@@ -747,6 +842,18 @@ const styles = StyleSheet.create({
   answer: { marginBottom: 28 },
   answerText: { ...type.body, color: colors.text, marginTop: 14, paddingHorizontal: 2 },
   answerTextAlone: { marginTop: 0 },
+  planButton: { alignSelf: 'flex-start', marginTop: 14, backgroundColor: colors.green700, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 11 },
+  planButtonPressed: { backgroundColor: colors.green900 },
+  planButtonText: { fontSize: 15, lineHeight: 20, fontWeight: '600', color: '#FFFFFF' },
+  planRow: { flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 14 },
+  planOn: { flexShrink: 1, backgroundColor: colors.greenTint, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10 },
+  planOnText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700 },
+  planStop: { fontSize: 14, color: colors.textSecondary },
+  insight: { alignItems: 'center', marginTop: 6, paddingHorizontal: 8 },
+  insightText: { ...type.label, fontWeight: '400', color: colors.textSecondary, textAlign: 'center' },
+  insightAction: { ...type.label, fontWeight: '600', color: colors.green700, marginTop: 4 },
+  planPill: { marginTop: 8, backgroundColor: colors.greenTint, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 7 },
+  planPillText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700, textAlign: 'center' },
   thinking: { ...type.label, color: colors.textTertiary, paddingHorizontal: 2 },
 
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: colors.bg },

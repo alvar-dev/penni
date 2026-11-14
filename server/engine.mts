@@ -6,7 +6,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-import type { Basket, Summary, SummaryTile, Viz } from '../src/shared/api.ts';
+import type { Basket, Insight, Summary, SummaryTile, Viz } from '../src/shared/api.ts';
 
 type Tx = { date: string; month: string; day: number; category: string; amount: number; balance: number; mcc: string };
 export type Persona = { id: string; age: number; postalCode: string; tx: Tx[] };
@@ -258,8 +258,9 @@ function spendingTotal(p: Persona, args: { what?: string; from_month?: string; t
     },
     viz: {
       kind: 'trend',
-      label: `${m.label}, ${label}`,
-      value: round2(total),
+      // Over several months the headline is the usual month, not the sum.
+      label: inPeriod.length > 1 ? `${m.label}, ${label} · per month` : `${m.label}, ${label}`,
+      value: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : round2(total),
       average: previousAvg === null ? undefined : round2(previousAvg),
       points: monthly.map((x) => ({
         label: MONTH_SHORT[monthIndex(x.month)],
@@ -269,6 +270,12 @@ function spendingTotal(p: Persona, args: { what?: string; from_month?: string; t
       })),
     },
   };
+}
+
+/** Average of the full months in the period (the current, unfinished month left out). */
+function averageOfFullMonths(monthly: { month: string; total: number }[], inPeriod: string[], total: number): number {
+  const full = monthly.filter((x) => inPeriod.includes(x.month) && x.month !== TODAY_MONTH);
+  return full.length ? full.reduce((s, x) => s + x.total, 0) / full.length : total / inPeriod.length;
 }
 
 function safeToSpend(p: Persona): ToolResult {
@@ -478,12 +485,147 @@ function topCategories(p: Persona, args: { from_month?: string; to_month?: strin
 }
 
 // ---------------------------------------------------------------------------
+// Surprise fund: the mandatory but irregular basket made predictable.
+
+/** A single irregular cost this big is a surprise the normal budget cannot absorb. */
+const SURPRISE_MIN_EUR = 400;
+
+function nextPayday(p: Persona): string {
+  const days = p.tx.filter((t) => t.category === 'Salary' && t.month >= addMonths(TODAY_MONTH, -6)).map((t) => t.day);
+  const day = String(Math.min(mode(days) ?? 15, 28)).padStart(2, '0');
+  const thisMonth = `${TODAY_MONTH}-${day}`;
+  return thisMonth > TODAY ? thisMonth : `${addMonths(TODAY_MONTH, 1)}-${day}`;
+}
+
+type FundReplay = {
+  monthly: number;
+  surprises: { date: string; label: string; amount: number }[];
+  days: { date: string; actual: number; withFund: number }[];
+  worst: { date: string; label: string; amount: number; actualDays: number; fundDays: number } | null;
+  overdrawn: { actual: number; withFund: number };
+  fundNow: number;
+};
+
+/**
+ * Replays the last twelve months as if the customer had moved a fixed amount
+ * to a surprise fund on every payday, paid for it by spending the same amount
+ * less on everyday extras over the month, and paid big irregular costs from
+ * the fund instead of the account.
+ */
+function replayFund(p: Persona): FundReplay {
+  const from = `${addMonths(LAST_FULL_MONTH, -11)}-01`;
+  const surprises = p.tx
+    .filter((t) => t.date >= from && basketOf(t) === 'irregular' && spendOf(t) >= SURPRISE_MIN_EUR)
+    .map((t) => ({ date: t.date, label: LABEL_OF_CATEGORY[t.category], amount: round2(spendOf(t)) }));
+  const total = surprises.filter((x) => x.date.slice(0, 7) <= LAST_FULL_MONTH).reduce((s, x) => s + x.amount, 0);
+  const monthly = Math.max(10, Math.round(total / 12 / 5) * 5);
+
+  const days: FundReplay['days'] = [];
+  let i = 0;
+  let actual = p.tx[0].balance;
+  while (i < p.tx.length && p.tx[i].date < from) actual = p.tx[i++].balance;
+  let fund = 0;
+  let moved = 0;
+  let used = 0;
+  let day = 0;
+  for (let d = from; d <= TODAY; d = addDays(d, 1)) {
+    day += 1;
+    // What spending less on everyday extras has left in the account so far.
+    const trimmed = (monthly * day) / 30.44;
+    while (i < p.tx.length && p.tx[i].date === d) {
+      const t = p.tx[i++];
+      actual = t.balance;
+      if (t.category === 'Salary') {
+        fund += monthly;
+        moved += monthly;
+      }
+      if (basketOf(t) === 'irregular' && spendOf(t) >= SURPRISE_MIN_EUR) {
+        const take = Math.min(fund, spendOf(t));
+        fund -= take;
+        used += take;
+      }
+    }
+    days.push({ date: d, actual: round2(actual), withFund: round2(actual - moved + used + trimmed) });
+  }
+
+  const overdrawnAfter = (date: string, key: 'actual' | 'withFund') =>
+    days.filter((x) => x.date >= date && x.date < addDays(date, 30) && x[key] < 0).length;
+  let worst: FundReplay['worst'] = null;
+  for (const x of surprises) {
+    const actualDays = overdrawnAfter(x.date, 'actual');
+    const score = actualDays * 1000 + x.amount;
+    if (!worst || score > worst.actualDays * 1000 + worst.amount) {
+      worst = { ...x, actualDays, fundDays: overdrawnAfter(x.date, 'withFund') };
+    }
+  }
+  return {
+    monthly,
+    surprises,
+    days,
+    worst,
+    overdrawn: { actual: days.filter((x) => x.actual < 0).length, withFund: days.filter((x) => x.withFund < 0).length },
+    fundNow: round(fund),
+  };
+}
+
+function surpriseFund(p: Persona): ToolResult {
+  const r = replayFund(p);
+  const payday = nextPayday(p);
+  const facts = {
+    explanation: 'Mandatory but irregular costs (health, broken appliances) feel random one by one, but over a year they add up to a predictable amount.',
+    period: `${dayLabel(r.days[0].date)} ${r.days[0].date.slice(0, 4)} – ${dayLabel(TODAY)} ${TODAY.slice(0, 4)}`,
+    big_surprises_over_400_eur: r.surprises.map((x) => `${dayLabel(x.date)}: ${x.label} €${round(x.amount)}`),
+    suggested_set_aside_each_payday_eur: r.monthly,
+    how_the_plan_works: 'Move this amount to a separate surprise fund on every payday, spend the same amount less on everyday extras, and pay big surprises from the fund.',
+    everyday_extras_monthly_average_eur: round(everydayMonthly(p)),
+    worst_surprise: r.worst
+      ? {
+          date: dayLabel(r.worst.date),
+          what: r.worst.label,
+          amount_eur: round(r.worst.amount),
+          overdrawn_days_in_30_days_after_as_it_went: r.worst.actualDays,
+          overdrawn_days_in_30_days_after_with_fund: r.worst.fundDays,
+        }
+      : null,
+    overdrawn_days_whole_period: { as_it_went: r.overdrawn.actual, with_fund: r.overdrawn.withFund },
+    fund_balance_today_if_started_a_year_ago_eur: r.fundNow,
+    next_payday: dayLabel(payday),
+    pass_through: isPassThrough(p) || undefined,
+  };
+  if (!r.worst) return { facts };
+
+  // Chart: from three weeks before the worst surprise to six weeks after it.
+  const at = r.days.findIndex((x) => x.date === r.worst!.date);
+  const window = r.days.slice(Math.max(0, at - 21), Math.min(r.days.length, at + 43));
+  return {
+    facts,
+    viz: {
+      kind: 'replay',
+      label: 'Set aside each payday for surprises',
+      value: r.monthly,
+      points: window.map((x) => ({ label: dayLabel(x.date), title: dayTitle(x.date), actual: x.actual, withFund: x.withFund })),
+      event: { index: window.findIndex((x) => x.date === r.worst!.date), label: `${r.worst.label.toLowerCase()} €${formatThousands(round(r.worst.amount))}` },
+      overdrawnDays: { actual: r.worst.actualDays, withFund: r.worst.fundDays },
+      paydayLabel: dayLabel(payday),
+    },
+  };
+}
+
+/** Average monthly everyday-basket spending over the last three full months. */
+function everydayMonthly(p: Persona): number {
+  const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
+  return sumBy(p.tx, (t) => months.includes(t.month) && basketOf(t) === 'everyday') / months.length;
+}
+
+const formatThousands = (v: number) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+// ---------------------------------------------------------------------------
 // The start screen: a few facts at a glance, and questions that follow from them.
 
 export function summary(p: Persona): Summary {
   const month = LAST_FULL_MONTH;
   const monthName = MONTH_NAMES[monthIndex(month)];
-  const previousName = MONTH_SHORT[monthIndex(addMonths(month, -1))];
+
   const spend = (m: string, test: (t: Tx) => boolean = () => true) =>
     sumBy(p.tx, (t) => t.month === m && SPEND_CATEGORIES.has(t.category) && test(t));
 
@@ -493,8 +635,9 @@ export function summary(p: Persona): Summary {
   const last6 = monthsBetween(addMonths(month, -5), month);
   const totals = last6.map((m) => round(spend(m)));
   const total = totals[totals.length - 1];
-  const previous = totals[totals.length - 2] || 0;
-  const change = previous ? Math.round(((total - previous) / previous) * 100) : 0;
+  // Against the usual month (median of the five before), so one odd month does not swing it.
+  const usual = [...totals.slice(0, -1)].sort((a, b) => a - b)[2] || 0;
+  const change = usual ? Math.round(((total - usual) / usual) * 100) : 0;
 
   // The biggest everyday item last month (taxis count separately from transport).
   const everydayKey = (t: Tx) => (t.mcc === '4121' ? 'Taxis' : LABEL_OF_CATEGORY[t.category]);
@@ -532,7 +675,7 @@ export function summary(p: Persona): Summary {
       label: `Spent in ${monthName}`,
       value: total,
       unit: '€',
-      sub: change === 0 ? `same as ${previousName}` : `${change > 0 ? '↑' : '↓'} ${Math.abs(change)}% vs ${previousName}`,
+      sub: Math.abs(change) < 3 ? 'about usual' : `${change > 0 ? '↑' : '↓'} ${Math.abs(change)}% vs usual`,
       question: `Where did my money go in ${monthName}?`,
       spark: totals,
     },
@@ -559,7 +702,17 @@ export function summary(p: Persona): Summary {
     `How much did I spend on ${grew.label.toLowerCase()} in ${monthName}?`,
     'How has my spending changed over the year?',
   ];
-  return { tiles, suggestions };
+  // The coach speaks first: the surprise that hurt most, and the plan that would have prevented it.
+  const fund = replayFund(p);
+  let insight: Insight | undefined;
+  if (fund.worst && fund.worst.actualDays > 0) {
+    insight = {
+      text: `A €${formatThousands(round(fund.worst.amount))} ${fund.worst.label.toLowerCase()} cost on ${dayLabel(fund.worst.date)} left you ${fund.worst.actualDays} ${fund.worst.actualDays === 1 ? 'day' : 'days'} overdrawn.`,
+      question: 'How can I be ready for unexpected costs?',
+      action: 'See how to prevent it',
+    };
+  }
+  return { tiles, suggestions, insight, plan: { monthly: fund.monthly, nextPayday: dayLabel(nextPayday(p)) } };
 }
 
 export function runTool(p: Persona, name: string, args: Record<string, unknown>): ToolResult {
@@ -574,6 +727,8 @@ export function runTool(p: Persona, name: string, args: Record<string, unknown>)
       return whatIf(p, args);
     case 'top_categories':
       return topCategories(p, args);
+    case 'surprise_fund':
+      return surpriseFund(p);
     default:
       return { facts: { error: `Unknown tool ${name}` } };
   }
@@ -591,6 +746,15 @@ const whatArg = {
 };
 
 export const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'surprise_fund',
+      description:
+        "How unexpected but unavoidable costs (health, a broken appliance) have hit the customer over the last year, how much to set aside on every payday to cover them, and a replay of how the account would have gone with such a fund. Use for: unexpected costs, emergencies, a buffer, 'why was I overdrawn', 'how can I be ready', saving for surprises.",
+      parameters: { type: 'object', properties: {} },
+    },
+  },
   {
     type: 'function',
     function: {

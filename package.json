@@ -30,7 +30,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "server": "node --env-file=.env.local server/index.mts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p server"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p server",
+    "demo": "bash scripts/demo.sh"
   },
   "private": true
 }

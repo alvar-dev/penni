@@ -42,3 +42,9 @@ yarn-error.*
 
 # local speech-recognition environment
 /stt/.venv/
+
+# server answer cache
+/server/.cache/
+
+# demo recordings
+/demo/

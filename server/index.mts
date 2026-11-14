@@ -17,12 +17,13 @@
  * token, and asks are rate limited so the API budget cannot be drained.
  */
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createInterface } from 'node:readline';
 
 import type { AskRequest, HistoryItem } from '../src/shared/api.ts';
 import { personas, summary, TODAY } from './engine.mts';
+import type { Viz } from '../src/shared/api.ts';
 import { askModel, MODEL } from './llm.mts';
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -94,6 +95,51 @@ async function transcribe(body: unknown): Promise<{ status: number; body: unknow
     signal: AbortSignal.timeout(30_000),
   });
   return { status: response.status, body: await response.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Answer cache: a first question (no history) for the same customer gets the
+// same answer, so repeated demo questions are instant and cost nothing.
+// Delete server/.cache/answers.json to start fresh (e.g. after prompt changes).
+
+type Cached = { text: string; viz?: Viz };
+const CACHE_FILE = new URL('./.cache/answers.json', import.meta.url);
+const cache = new Map<string, Cached>();
+try {
+  for (const [k, v] of Object.entries(JSON.parse(readFileSync(CACHE_FILE, 'utf8')) as Record<string, Cached>)) cache.set(k, v);
+} catch {
+  // No cache yet.
+}
+const cacheKey = (personaId: string, question: string) => `${MODEL}|${TODAY}|${personaId}|${question.toLowerCase().replace(/[^a-z0-9€%]+/g, ' ').trim()}`;
+function remember(key: string, value: Cached) {
+  cache.set(key, value);
+  try {
+    mkdirSync(new URL('./.cache/', import.meta.url), { recursive: true });
+    writeFileSync(CACHE_FILE, JSON.stringify(Object.fromEntries(cache), null, 1));
+  } catch (error) {
+    console.error('[cache] could not save:', (error as Error).message);
+  }
+}
+
+/** With DEMO_PREWARM=1, answers the start screen's questions for the demo customer in the background. */
+async function prewarm(personaId: string) {
+  const persona = personas.get(personaId);
+  if (!persona) return;
+  const s = summary(persona);
+  const questions = [...s.tiles.map((t) => t.question), ...s.suggestions, ...(s.insight ? [s.insight.question] : [])];
+  for (const question of questions) {
+    const key = cacheKey(personaId, question);
+    if (cache.has(key)) continue;
+    try {
+      const answer = await askModel(persona, question, []);
+      spentUsd += answer.usage.usd ?? 0;
+      remember(key, { text: answer.text, viz: answer.viz });
+      console.log(`[prewarm] ${question} · $${(answer.usage.usd ?? 0).toFixed(4)}`);
+    } catch (error) {
+      console.error(`[prewarm] failed: ${question}:`, (error as Error).message);
+    }
+  }
+  console.log(`[prewarm] ready: ${questions.length} questions cached for ${personaId}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -189,6 +235,12 @@ const server = createServer(async (req, res) => {
     return send(res, 400, { error: 'Invalid JSON' });
   }
   if (typeof parsed === 'string') return send(res, 400, { error: parsed });
+  const key = parsed.history.length === 0 ? cacheKey(parsed.personaId, parsed.question) : null;
+  const hit = key ? cache.get(key) : undefined;
+  if (hit) {
+    console.log(`[ask] ${parsed.personaId} cached | ${parsed.question.slice(0, 80)}`);
+    return send(res, 200, hit);
+  }
   const limited = allowAsk();
   if (limited) return send(res, 429, { error: limited });
 
@@ -201,6 +253,7 @@ const server = createServer(async (req, res) => {
         `tokens=${answer.usage.input}/${answer.usage.output} ` +
         `cost=$${(answer.usage.usd ?? 0).toFixed(4)} total=$${spentUsd.toFixed(3)} | ${parsed.question.slice(0, 80)}`,
     );
+    if (key) remember(key, { text: answer.text, viz: answer.viz });
     return send(res, 200, { text: answer.text, viz: answer.viz });
   } catch (error) {
     console.error(`[ask] failed after ${((Date.now() - started) / 1000).toFixed(1)}s:`, (error as Error).message);
@@ -209,5 +262,6 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
+  if (process.env.DEMO_PREWARM === '1') void prewarm(process.env.DEMO_PERSONA ?? 'CUST03915');
   console.log(`API on http://${HOST}:${PORT} · model ${MODEL} · data up to ${TODAY} · limits ${MAX_PER_MINUTE}/min, ${MAX_PER_DAY}/day`);
 });

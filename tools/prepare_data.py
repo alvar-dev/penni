@@ -21,7 +21,7 @@ BENCH_FROM, BENCH_TO = '2025-09', '2026-08'
 BENCH_MONTHS = 12
 
 # Must match `personas` in src/content.ts.
-PERSONA_IDS = ['CUST04376', 'CUST04925', 'CUST00332', 'CUST04075', 'CUST00084', 'CUST03667']
+PERSONA_IDS = ['CUST03915', 'CUST04376', 'CUST04925', 'CUST00332', 'CUST04075', 'CUST00084', 'CUST03667']
 
 SPEND = ['Housing', 'Utilities', 'Groceries', 'Transportation', 'Health', 'Home & Tech',
          'Restaurants', 'Entertainment', 'Lifestyle', 'Travel']

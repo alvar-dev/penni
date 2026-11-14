@@ -6,6 +6,7 @@ import { BasketsChart } from './charts/BasketsChart';
 import { CountUp } from './charts/common';
 import { ProjectionChart } from './charts/ProjectionChart';
 import { RankingChart } from './charts/RankingChart';
+import { ReplayChart } from './charts/ReplayChart';
 import { RunwayChart } from './charts/RunwayChart';
 import { TrendChart } from './charts/TrendChart';
 
@@ -26,6 +27,7 @@ export function Viz({ viz, example }: { viz: VizData; example?: boolean }) {
         <ProjectionChart nowMonthly={viz.nowMonthly} afterMonthly={viz.afterMonthly} changeLabel={viz.changeLabel} yearly={viz.value} />
       ) : null}
       {viz.kind === 'ranking' ? <RankingChart rows={viz.rows} /> : null}
+      {viz.kind === 'replay' ? <ReplayChart points={viz.points} event={viz.event} overdrawnDays={viz.overdrawnDays} /> : null}
       {example ? <Text style={styles.example}>{strings.exampleTag}</Text> : null}
     </View>
   );

@@ -54,6 +54,18 @@ export type Viz =
       changeLabel: string;
     }
   | {
+      /** The balance as it went, and as it would have gone with a surprise fund. */
+      kind: 'replay';
+      label: string;
+      /** The monthly amount to set aside. */
+      value: number;
+      points: { label: string; title: string; actual: number; withFund: number }[];
+      /** Where the surprise that hurt most happened. */
+      event: { index: number; label: string };
+      overdrawnDays: { actual: number; withFund: number };
+      paydayLabel: string;
+    }
+  | {
       /** Spending by category, largest first, coloured by basket. */
       kind: 'ranking';
       label: string;
@@ -77,8 +89,14 @@ export type SummaryTile = {
   compare?: [number, number];
 };
 
+/** Something the coach notices on its own, shown under the greeting. */
+export type Insight = { text: string; question: string; action: string };
+
+/** A surprise-fund plan the customer can switch on from the coach's suggestion. */
+export type PlanSuggestion = { monthly: number; nextPayday: string };
+
 /** The start screen's overview of the customer's own money. Computed without the model. */
-export type Summary = { tiles: SummaryTile[]; suggestions: string[] };
+export type Summary = { tiles: SummaryTile[]; suggestions: string[]; insight?: Insight; plan?: PlanSuggestion };
 
 export type HistoryItem = { role: 'user' | 'assistant'; text: string };
 

@@ -15,7 +15,8 @@ export type Persona = { id: string; name: string; age: number; postalCode: strin
  * postal code come from the data; the dataset has no names, so these are made up.
  */
 export const personas: Persona[] = [
-  { id: 'CUST04376', name: 'Aino', age: 27, postalCode: '01800', tagline: 'Low income, lots of eating out' },
+  { id: 'CUST03915', name: 'Aino', age: 36, postalCode: '01510', tagline: 'Careful spender hit by surprise costs' },
+  { id: 'CUST04376', name: 'Noora', age: 27, postalCode: '01800', tagline: 'Low income, lots of eating out' },
   { id: 'CUST04925', name: 'Mikael', age: 45, postalCode: '02680', tagline: 'Good income, still sometimes overdrawn' },
   { id: 'CUST00332', name: 'Laura', age: 39, postalCode: '01400', tagline: 'Saves every month' },
   { id: 'CUST04075', name: 'Marja', age: 59, postalCode: '00730', tagline: 'Many unexpected costs' },
@@ -57,6 +58,11 @@ export const strings = {
   errorNetwork: "I couldn't reach the coach. Check that the server is running and try again.",
   errorBusy: 'Too many questions just now. Wait a moment and ask again.',
   errorModel: "The coach didn't answer in time. Please try again.",
+  thinkingSteps: ['Looking at your transactions…', 'Calculating…', 'Writing the answer…'],
+  planStart: 'Start: €{amount} every payday',
+  planOn: 'Surprise fund on · from {date}',
+  planHome: 'Surprise fund on · €{amount} every payday',
+  planStop: 'Stop plan',
 };
 
 export const suggestions = [

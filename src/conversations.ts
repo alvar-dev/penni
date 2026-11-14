@@ -11,11 +11,14 @@ export type Conversation = {
   messages: Message[];
 };
 
-const KEY = 'conversations.v1';
+const KEY = 'conversations.v2';
+/** Earlier test conversations (some in Finnish) are cleared once. */
+const OLD_KEYS = ['conversations.v1'];
 const MAX_SAVED = 50;
 
 export async function loadConversations(): Promise<Conversation[]> {
   try {
+    await AsyncStorage.multiRemove(OLD_KEYS);
     const raw = await AsyncStorage.getItem(KEY);
     const parsed = raw ? (JSON.parse(raw) as Conversation[]) : [];
     return Array.isArray(parsed) ? parsed.filter((c) => c && c.id && Array.isArray(c.messages)) : [];
