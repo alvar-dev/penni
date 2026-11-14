@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 
-import type { AskRequest, AskResponse, Summary, Viz } from './shared/api';
+import type { AskRequest, AskResponse, Summary, ToolCall, Viz } from './shared/api';
 
 const PORT = 8787;
 
@@ -25,7 +25,7 @@ export class AskError extends Error {
   }
 }
 
-export async function ask(request: AskRequest, signal: AbortSignal): Promise<{ text: string; viz?: Viz }> {
+export async function ask(request: AskRequest, signal: AbortSignal): Promise<{ text: string; viz?: Viz; call?: ToolCall }> {
   const response = await fetch(`${baseUrl()}/ask`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-App-Token': process.env.EXPO_PUBLIC_API_TOKEN ?? '' },

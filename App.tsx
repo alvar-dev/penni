@@ -317,7 +317,8 @@ function Screen() {
     (question: string) => {
       Keyboard.dismiss();
       setDraft('');
-      const history = messages.slice(-6).map((m) => ({ role: m.role, text: m.text }));
+      // Earlier answers carry the calculation behind their chart, so "another chart" can redraw it.
+      const history = messages.slice(-6).map((m) => ({ role: m.role, text: m.text, call: m.role === 'assistant' ? m.call : undefined }));
       let conversationId = currentId;
       if (!conversationId) {
         conversationId = `c${Date.now().toString(36)}`;
@@ -338,7 +339,7 @@ function Screen() {
       ask({ personaId, question, history }, controller.signal)
         .then((answer) => {
           if (seq !== requestSeq.current) return;
-          pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz });
+          pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call });
         })
         .catch((error: unknown) => {
           if (seq !== requestSeq.current) return;

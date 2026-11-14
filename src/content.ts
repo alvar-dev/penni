@@ -1,10 +1,10 @@
-import type { Viz } from './shared/api';
+import type { ToolCall, Viz } from './shared/api';
 
 export type { Viz };
 
 export type Message =
   | { id: string; role: 'user'; text: string }
-  | { id: string; role: 'assistant'; text: string; viz?: Viz; example?: boolean };
+  | { id: string; role: 'assistant'; text: string; viz?: Viz; call?: ToolCall; example?: boolean };
 
 export type Persona = { id: string; name: string; age: number; postalCode: string; tagline: string };
 

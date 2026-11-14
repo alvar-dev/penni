@@ -85,7 +85,7 @@ function CompareBar({ label, value, max, color, reveal, note }: { label: string;
           {label}
           {note ? <Text style={styles.compareNote}> · {note}</Text> : null}
         </Text>
-        <Text style={styles.compareValue}>{Math.round(value * 100)}\u00A0%</Text>
+        <Text style={styles.compareValue}>{Math.round(value * 100)} %</Text>
       </View>
       <View style={styles.track}>
         <Animated.View style={[styles.fill, { backgroundColor: color }, fill]} />

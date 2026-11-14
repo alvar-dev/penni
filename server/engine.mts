@@ -225,7 +225,7 @@ export type ToolResult = { facts: Record<string, unknown>; viz?: Viz };
 // ---------------------------------------------------------------------------
 // Tools
 
-function spendingTotal(p: Persona, args: { what?: string; from_month?: string; to_month?: string }): ToolResult {
+function spendingTotal(p: Persona, args: { what?: string; from_month?: string; to_month?: string; chart?: string }): ToolResult {
   const m = matcher(args.what ?? 'all_spending');
   if (!m) return { facts: { error: `Unknown "what". Use one of: ${WHAT_KEYS.join(', ')}` } };
   const period = resolvePeriod(args.from_month, args.to_month);
@@ -256,19 +256,33 @@ function spendingTotal(p: Persona, args: { what?: string; from_month?: string; t
       monthly_eur: Object.fromEntries(monthly.map((x) => [x.month, x.total])),
       pass_through: isPassThrough(p) || undefined,
     },
-    viz: {
-      kind: 'trend',
-      // Over several months the headline is the usual month, not the sum.
-      label: inPeriod.length > 1 ? `${m.label}, ${label} · kuukaudessa` : `${m.label}, ${label}`,
-      value: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : round2(total),
-      average: previousAvg === null ? undefined : round2(previousAvg),
-      points: monthly.map((x) => ({
-        label: MONTH_SHORT[monthIndex(x.month)],
-        title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? ' (tähän asti)' : ''}`,
-        value: x.total,
-        selected: inPeriod.includes(x.month),
-      })),
-    },
+    viz:
+      args.chart === 'columns'
+        ? {
+            kind: 'columns',
+            label: inPeriod.length > 1 ? `${m.label}, ${label} · kuukaudessa` : `${m.label}, ${label}`,
+            value: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : round2(total),
+            average: previousAvg === null ? undefined : round2(previousAvg),
+            bars: monthly.map((x) => ({
+              label: MONTH_SHORT[monthIndex(x.month)],
+              title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? ' (tähän asti)' : ''}`,
+              value: x.total,
+              selected: inPeriod.includes(x.month),
+            })),
+          }
+        : {
+            kind: 'trend',
+            // Over several months the headline is the usual month, not the sum.
+            label: inPeriod.length > 1 ? `${m.label}, ${label} · kuukaudessa` : `${m.label}, ${label}`,
+            value: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : round2(total),
+            average: previousAvg === null ? undefined : round2(previousAvg),
+            points: monthly.map((x) => ({
+              label: MONTH_SHORT[monthIndex(x.month)],
+              title: `${MONTH_NAMES[monthIndex(x.month)]} ${x.month.slice(0, 4)}${x.month === TODAY_MONTH ? ' (tähän asti)' : ''}`,
+              value: x.total,
+              selected: inPeriod.includes(x.month),
+            })),
+          },
   };
 }
 
@@ -453,7 +467,7 @@ function whatIf(p: Persona, args: { what?: string; change_pct?: number }): ToolR
   };
 }
 
-function topCategories(p: Persona, args: { from_month?: string; to_month?: string }): ToolResult {
+function topCategories(p: Persona, args: { from_month?: string; to_month?: string; chart?: string }): ToolResult {
   const period = resolvePeriod(args.from_month, args.to_month);
   if ('error' in period) return { facts: period };
   const inPeriod = monthsBetween(period.from, period.to);
@@ -475,12 +489,24 @@ function topCategories(p: Persona, args: { from_month?: string; to_month?: strin
       by_category_eur: Object.fromEntries(rows.map(([k, v]) => [k, round(v)])),
       pass_through: isPassThrough(p) || undefined,
     },
-    viz: {
-      kind: 'ranking',
-      label: `Mihin rahat menivät, ${label}`,
-      value: round(total),
-      rows: rows.slice(0, 8).map(([k, v]) => ({ label: k, value: round(v), basket: basketOfLabel.get(k) ?? 'everyday' })),
-    },
+    viz:
+      args.chart === 'donut'
+        ? {
+            kind: 'donut',
+            label: `Mihin rahat menivät, ${label}`,
+            value: round(total),
+            // The five largest, the rest together.
+            slices: [
+              ...rows.slice(0, 5).map(([k, v]) => ({ label: k, value: round(v) })),
+              ...(rows.length > 5 ? [{ label: 'Muut', value: round(rows.slice(5).reduce((s, [, v]) => s + v, 0)) }] : []),
+            ],
+          }
+        : {
+            kind: 'ranking',
+            label: `Mihin rahat menivät, ${label}`,
+            value: round(total),
+            rows: rows.slice(0, 8).map(([k, v]) => ({ label: k, value: round(v), basket: basketOfLabel.get(k) ?? 'everyday' })),
+          },
   };
 }
 
@@ -778,7 +804,12 @@ export const TOOLS = [
       description: 'How much the customer spent on something in a month or a range of months, with the months before it for comparison. Also use it for trends ("has X gone up?").',
       parameters: {
         type: 'object',
-        properties: { what: whatArg, from_month: monthArg('First'), to_month: monthArg('Last (inclusive)') },
+        properties: {
+          what: whatArg,
+          from_month: monthArg('First'),
+          to_month: monthArg('Last (inclusive)'),
+          chart: { type: 'string', enum: ['line', 'columns'], description: 'How to draw it: line (default) or columns. Use columns when the customer asks for another kind of chart or for bars.' },
+        },
         required: ['what', 'from_month', 'to_month'],
       },
     },
@@ -818,7 +849,11 @@ export const TOOLS = [
       description: 'Spending by category in a month or a range of months, largest first. Use for "what did I spend most on in July".',
       parameters: {
         type: 'object',
-        properties: { from_month: monthArg('First'), to_month: monthArg('Last (inclusive)') },
+        properties: {
+          from_month: monthArg('First'),
+          to_month: monthArg('Last (inclusive)'),
+          chart: { type: 'string', enum: ['bars', 'donut'], description: 'How to draw it: bars (default) or donut. Use donut for shares, a pie, or when the customer asks for another kind of chart.' },
+        },
         required: ['from_month', 'to_month'],
       },
     },

@@ -3,6 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { strings, type Viz as VizData } from '../content';
 import { colors, type } from '../theme';
 import { BasketsChart } from './charts/BasketsChart';
+import { ColumnsChart } from './charts/ColumnsChart';
+import { DonutChart } from './charts/DonutChart';
 import { CountUp } from './charts/common';
 import { ProjectionChart } from './charts/ProjectionChart';
 import { RankingChart } from './charts/RankingChart';
@@ -15,8 +17,10 @@ export function Viz({ viz, example }: { viz: VizData; example?: boolean }) {
   return (
     <View style={styles.card}>
       <Text style={styles.label}>{viz.label}</Text>
-      <CountUp value={viz.value} decimals={viz.kind === 'trend' ? 2 : 0} style={styles.figure} unitStyle={styles.figureUnit} />
+      <CountUp value={viz.value} decimals={viz.kind === 'trend' || viz.kind === 'columns' ? 2 : 0} style={styles.figure} unitStyle={styles.figureUnit} />
       {viz.kind === 'trend' ? <TrendChart points={viz.points} average={viz.average} /> : null}
+      {viz.kind === 'columns' ? <ColumnsChart bars={viz.bars} average={viz.average} /> : null}
+      {viz.kind === 'donut' ? <DonutChart slices={viz.slices} total={viz.value} /> : null}
       {viz.kind === 'runway' ? (
         <RunwayChart points={viz.points} value={viz.value} perDay={viz.perDay} days={viz.days} paydayLabel={viz.paydayLabel} parts={viz.parts} />
       ) : null}

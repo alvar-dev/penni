@@ -23,7 +23,7 @@ import { createInterface } from 'node:readline';
 
 import type { AskRequest, HistoryItem } from '../src/shared/api.ts';
 import { personas, summary, TODAY } from './engine.mts';
-import type { Viz } from '../src/shared/api.ts';
+import type { ToolCall, Viz } from '../src/shared/api.ts';
 import { askModel, MODEL, tidy } from './llm.mts';
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -102,7 +102,7 @@ async function transcribe(body: unknown): Promise<{ status: number; body: unknow
 // same answer, so repeated demo questions are instant and cost nothing.
 // Delete server/.cache/answers.json to start fresh (e.g. after prompt changes).
 
-type Cached = { text: string; viz?: Viz };
+type Cached = { text: string; viz?: Viz; call?: ToolCall };
 const CACHE_FILE = new URL('./.cache/answers.json', import.meta.url);
 const cache = new Map<string, Cached>();
 try {
@@ -133,7 +133,7 @@ async function prewarm(personaId: string) {
     try {
       const answer = await askModel(persona, question, []);
       spentUsd += answer.usage.usd ?? 0;
-      remember(key, { text: answer.text, viz: answer.viz });
+      remember(key, { text: answer.text, viz: answer.viz, call: answer.call });
       console.log(`[prewarm] ${question} · $${(answer.usage.usd ?? 0).toFixed(4)}`);
     } catch (error) {
       console.error(`[prewarm] failed: ${question}:`, (error as Error).message);
@@ -196,7 +196,12 @@ function parseAsk(body: unknown): AskRequest | string {
     for (const item of b.history.slice(-6)) {
       const h = item as Record<string, unknown>;
       if ((h.role === 'user' || h.role === 'assistant') && typeof h.text === 'string' && h.text.trim()) {
-        history.push({ role: h.role, text: h.text.slice(0, 1500) });
+        const c = h.call as Record<string, unknown> | undefined;
+        const call =
+          c && typeof c.name === 'string' && c.args && typeof c.args === 'object' && JSON.stringify(c.args).length < 500
+            ? { name: c.name, args: c.args as Record<string, unknown> }
+            : undefined;
+        history.push({ role: h.role, text: h.text.slice(0, 1500), call });
       }
     }
   }
@@ -253,8 +258,8 @@ const server = createServer(async (req, res) => {
         `tokens=${answer.usage.input}/${answer.usage.output} ` +
         `cost=$${(answer.usage.usd ?? 0).toFixed(4)} total=$${spentUsd.toFixed(3)} | ${parsed.question.slice(0, 80)}`,
     );
-    if (key) remember(key, { text: answer.text, viz: answer.viz });
-    return send(res, 200, { text: answer.text, viz: answer.viz });
+    if (key) remember(key, { text: answer.text, viz: answer.viz, call: answer.call });
+    return send(res, 200, { text: answer.text, viz: answer.viz, call: answer.call });
   } catch (error) {
     console.error(`[ask] failed after ${((Date.now() - started) / 1000).toFixed(1)}s:`, (error as Error).message);
     return send(res, 502, { error: 'The model did not answer' });

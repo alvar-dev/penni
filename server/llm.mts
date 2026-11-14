@@ -7,7 +7,7 @@
  *
  * The model never sees individual transactions, only the computed facts.
  */
-import type { HistoryItem, Viz } from '../src/shared/api.ts';
+import type { HistoryItem, ToolCall, Viz } from '../src/shared/api.ts';
 import { runTool, TODAY, TOOLS, type Persona } from './engine.mts';
 
 const API_URL = 'https://api.featherless.ai/v1/chat/completions';
@@ -24,15 +24,16 @@ const PRICES: Record<string, { input: number; output: number }> = {
 type Message = Record<string, unknown> & { role: string };
 type Usage = { prompt_tokens?: number; completion_tokens?: number };
 type Completion = {
-  choices: { message: { content?: string | null; reasoning_content?: string; tool_calls?: ToolCall[] }; finish_reason?: string }[];
+  choices: { message: { content?: string | null; reasoning_content?: string; tool_calls?: ModelToolCall[] }; finish_reason?: string }[];
   usage?: Usage;
 };
-type ToolCall = { id: string; type: 'function'; function: { name: string; arguments: string } };
+type ModelToolCall = { id: string; type: 'function'; function: { name: string; arguments: string } };
 
 export type Answer = {
   text: string;
   viz?: Viz;
   tool?: string;
+  call?: ToolCall;
   usage: { input: number; output: number; usd: number | null };
 };
 
@@ -49,7 +50,8 @@ Spending falls into three baskets:
 3. everyday spending that slips through your fingers: restaurants and cafés, entertainment, shopping and hobbies, travel, taxis
 
 How to work:
-- For any question about the customer's own money, call exactly one tool. Never compute, estimate or invent numbers yourself.
+- For any question about the customer's own money, call exactly one tool. Never compute, estimate or invent numbers yourself, and never say you are showing a chart or a view unless a tool in this turn produced it.
+- Requests to draw, show or change a chart ("piirrä toisenlainen kaavio", "näytä pylväinä", "piirakkana") are questions about their money: call the same tool as for the chart shown before, with the other chart option (spending_total: chart columns or line; top_categories: chart donut or bars). Earlier assistant turns end with a note of the chart that was shown.
 - "Last month" is ${TODAY.slice(0, 4)}-${String(m - 1).padStart(2, '0')}. "This year" is ${y}-01 to ${TODAY.slice(0, 7)}. If no period is given for a total, use the last full month.
 - The data has categories and merchant types but no merchant names, so it cannot show single subscriptions (such as Netflix), single shops or accounts in other banks. If asked about those, use the closest tool if it helps and say plainly what the data cannot show.
 - If the question is not about the customer's money, answer briefly without a tool and steer back to their spending.
@@ -101,6 +103,7 @@ function clean(text: string | null | undefined): string {
   return tidy(
     (text ?? '')
       .replace(/<think>[\s\S]*?<\/think>/g, '')
+      .replace(/\[(Näytetty|Edellinen) kaavio[^\]]*\]/g, '')
       .replace(/\*\*|__|`/g, '')
       .replace(/^\s*[-*•]\s+/gm, ''),
   );
@@ -109,9 +112,15 @@ function clean(text: string | null | undefined): string {
 export async function askModel(p: Persona, question: string, history: HistoryItem[]): Promise<Answer> {
   if (!KEY) throw new Error('FEATHERLESS_API_KEY is missing from .env.local');
 
+  // Which chart the latest answer showed, as a note for the model (not part of
+  // any message text, so it is not copied into answers).
+  const lastCall = [...history].reverse().find((h) => h.role === 'assistant' && h.call)?.call;
   const messages: Message[] = [
     { role: 'system', content: systemPrompt(p) },
     ...history.map((h) => ({ role: h.role, content: h.text })),
+    ...(lastCall
+      ? [{ role: 'system', content: `The previous answer's chart came from ${lastCall.name} with arguments ${JSON.stringify(lastCall.args)}.` }]
+      : []),
     { role: 'user', content: question },
   ];
   const usage = { input: 0, output: 0 };
@@ -128,10 +137,33 @@ export async function askModel(p: Persona, question: string, history: HistoryIte
   });
 
   // 1. Pick a calculation.
-  const first = await complete({ messages, tools: TOOLS, tool_choice: 'auto', max_tokens: 2000, temperature: 0.3 });
+  let first = await complete({ messages, tools: TOOLS, tool_choice: 'auto', max_tokens: 2000, temperature: 0.3 });
   count(first.usage);
-  const choice = first.choices[0];
-  const call = choice.message.tool_calls?.[0];
+  let choice = first.choices[0];
+  let call = choice.message.tool_calls?.[0];
+
+  // Guard: an answer with numbers (or a chart request) must come from a tool.
+  // If the model skipped the tool, ask again and insist; never pass on numbers
+  // it made up.
+  const wantsChart = /kaavio|kuvaaja|graafi|piirr|näytä|chart|graph|plot|draw|show/i.test(question);
+  if (!call && (/\d/.test(clean(choice.message.content)) || wantsChart)) {
+    const insist: Message = {
+      role: 'system',
+      content:
+        'You answered without a tool. Every number and every chart must come from a tool in this turn. Call the one tool that answers the question (for "another chart", call the same tool as before with a different chart option).',
+    };
+    first = await complete({ messages: [...messages, insist], tools: TOOLS, tool_choice: 'auto', max_tokens: 2000, temperature: 0.2 });
+    count(first.usage);
+    choice = first.choices[0];
+    call = choice.message.tool_calls?.[0];
+    // Still no tool for a chart request: redraw the previous chart the other way.
+    const other = lastCall && wantsChart ? otherChart(lastCall) : null;
+    if (!call && other) {
+      call = { id: 'switch-chart', type: 'function', function: { name: other.name, arguments: JSON.stringify(other.args) } };
+      choice = { ...choice, message: { ...choice.message, content: '', tool_calls: [call] } };
+    }
+    if (!call) return finish(NO_TOOL_ANSWER);
+  }
   if (!call) {
     const text = clean(choice.message.content);
     if (!text) throw new Error(`Model returned neither a tool call nor text (finish: ${choice.finish_reason})`);
@@ -158,8 +190,23 @@ export async function askModel(p: Persona, question: string, history: HistoryIte
   let text = clean(second.choices[0].message.content);
   if (second.choices[0].finish_reason === 'length') text = lastFullSentence(text);
   if (!text) throw new Error(`Model returned no answer text (finish: ${second.choices[0].finish_reason})`);
-  return finish(text, 'error' in result.facts ? undefined : result.viz, call.function.name);
+  const ok = !('error' in result.facts);
+  return {
+    ...finish(text, ok ? result.viz : undefined, call.function.name),
+    call: ok && result.viz ? { name: call.function.name, args } : undefined,
+  };
 }
+
+/** The same calculation drawn the other way, for tools that have two charts. */
+function otherChart(previous: ToolCall): ToolCall | null {
+  const chart = previous.args.chart;
+  if (previous.name === 'spending_total') return { name: previous.name, args: { ...previous.args, chart: chart === 'columns' ? 'line' : 'columns' } };
+  if (previous.name === 'top_categories') return { name: previous.name, args: { ...previous.args, chart: chart === 'donut' ? 'bars' : 'donut' } };
+  return null;
+}
+
+/** Shown instead of an answer whose numbers did not come from the data. */
+const NO_TOOL_ANSWER = 'En osannut laskea tähän vastausta tiedoistasi. Kokeile kysyä tarkemmin, esimerkiksi mistä kuukaudesta tai mistä menoista on kyse.';
 
 /** A cut-off answer is shown up to its last complete sentence, never mid-word. */
 function lastFullSentence(text: string): string {

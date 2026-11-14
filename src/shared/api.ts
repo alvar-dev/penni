@@ -23,6 +23,21 @@ export type Viz =
       points: { label: string; title: string; value: number; selected: boolean }[];
     }
   | {
+      /** The same month-by-month measure as columns. */
+      kind: 'columns';
+      label: string;
+      value: number;
+      average?: number;
+      bars: { label: string; title: string; value: number; selected: boolean }[];
+    }
+  | {
+      /** Shares of a whole (spending by category) as a ring. */
+      kind: 'donut';
+      label: string;
+      value: number;
+      slices: { label: string; value: number }[];
+    }
+  | {
       /** Balance so far and the expected path to payday if only necessities are paid. */
       kind: 'runway';
       label: string;
@@ -98,7 +113,10 @@ export type PlanSuggestion = { monthly: number; nextPayday: string };
 /** The start screen's overview of the customer's own money. Computed without the model. */
 export type Summary = { tiles: SummaryTile[]; suggestions: string[]; insight?: Insight; plan?: PlanSuggestion };
 
-export type HistoryItem = { role: 'user' | 'assistant'; text: string };
+/** The calculation behind an answer's chart, so a follow-up can redraw it differently. */
+export type ToolCall = { name: string; args: Record<string, unknown> };
+
+export type HistoryItem = { role: 'user' | 'assistant'; text: string; call?: ToolCall };
 
 export type AskRequest = {
   personaId: string;
@@ -107,4 +125,4 @@ export type AskRequest = {
   history: HistoryItem[];
 };
 
-export type AskResponse = { text: string; viz?: Viz } | { error: string };
+export type AskResponse = { text: string; viz?: Viz; call?: ToolCall } | { error: string };
