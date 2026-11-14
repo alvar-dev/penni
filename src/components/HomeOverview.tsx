@@ -29,14 +29,20 @@ export function HomeOverview({ summary, fallback, onAsk }: Props) {
           ))}
         </View>
       ) : null}
+      {/* Suggested questions as one card of rows, in the same style as the tiles. */}
       <View style={styles.questions}>
-        {questions.map((q) => (
+        {questions.map((q, i) => (
           <Pressable
             key={q}
             onPress={() => onAsk(q)}
             accessibilityRole="button"
-            style={({ pressed }) => [styles.chip, pressed && styles.pressed]}>
-            <Text style={styles.chipText}>{q}</Text>
+            style={({ pressed }) => [styles.question, pressed && styles.pressed]}>
+            <View style={[styles.questionInner, i > 0 && styles.questionLine]}>
+              <Text style={styles.questionText} numberOfLines={2}>
+                {q}
+              </Text>
+              <Text style={styles.chevron}>›</Text>
+            </View>
           </Pressable>
         ))}
       </View>
@@ -120,13 +126,10 @@ const styles = StyleSheet.create({
   compare: { width: 46, marginLeft: 'auto', gap: 4 },
   compareBar: { height: 5, borderTopRightRadius: 3, borderBottomRightRadius: 3 },
 
-  questions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
-  chip: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  chipText: { fontSize: 14, lineHeight: 19, color: colors.text },
+  questions: { marginTop: 10, borderRadius: 18, overflow: 'hidden', backgroundColor: colors.surfaceSoft },
+  question: { paddingHorizontal: 16 },
+  questionInner: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  questionLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  questionText: { flex: 1, fontSize: 14, lineHeight: 19, color: colors.text },
+  chevron: { fontSize: 20, lineHeight: 22, color: colors.green700, marginLeft: 10 },
 });
