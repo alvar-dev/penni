@@ -859,19 +859,6 @@ function Screen() {
                     </Text>
                     {phase === 'transcribing' || listening ? (
                       <Text style={styles.hint}>{phase === 'transcribing' ? strings.transcribingHint : (micNote ?? strings.listeningHint)}</Text>
-                    ) : summary?.insight && !(plan && summary.insight.kind === 'surprise') ? (
-                      // The coach's own observation: one line of advice; tapping it asks for the reasoning.
-                      // Advice about other banks wins over the plan note; the surprise advice gives way to it.
-                      <Pressable
-                        onPress={() => send(summary.insight!.question)}
-                        accessibilityRole="button"
-                        accessibilityHint={summary.insight.text}
-                        hitSlop={10}
-                        style={styles.insight}>
-                        <Text style={styles.insightTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-                          {summary.insight.title ?? summary.insight.action} ›
-                        </Text>
-                      </Pressable>
                     ) : plan && summary?.plan ? (
                       <View style={styles.planPill}>
                         <Text style={styles.planPillText}>
@@ -1013,8 +1000,6 @@ const styles = StyleSheet.create({
   planOn: { flexShrink: 1, backgroundColor: colors.greenTint, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10 },
   planOnText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700 },
   planStop: { fontSize: 14, color: colors.textSecondary },
-  insight: { marginTop: 6, maxWidth: '100%' },
-  insightTitle: { ...type.label, fontWeight: '600', color: colors.green700, textAlign: 'center' },
   planPill: { marginTop: 8, backgroundColor: colors.greenTint, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 7 },
   planPillText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700, textAlign: 'center' },
   thinking: { ...type.label, color: colors.textTertiary, paddingHorizontal: 2 },
