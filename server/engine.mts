@@ -866,7 +866,7 @@ export function summary(p: Persona): Summary {
     const ofMonthWorst = `${MONTH_NAMES[monthIndex(fund.worst.date.slice(0, 7))]}n`; // heinäkuun
     insight = {
       kind: 'surprise',
-      title: 'Varaudu yllätysmenoihin',
+      title: `Vältä miinuspäivät: ${formatThousands(fund.monthly)} € joka palkkapäivä`,
       text:
         fund.worst.fundDays === 0
           ? `${formatThousands(fund.monthly)} € joka palkkapäivä olisi estänyt ${ofMonthWorst} ${fund.worst.actualDays} miinuspäivää.`
@@ -879,11 +879,9 @@ export function summary(p: Persona): Summary {
   if (others.length) {
     const payoff = cardPayoff(others);
     if (payoff.pay > 0) {
-      const several = payoff.cards.length > 1;
-      const all = payoff.left > 0 || payoff.pay >= payoff.debt;
       insight = {
         kind: 'banks',
-        title: all ? `Maksa ${several ? 'luottokortit' : 'luottokortti'} säästöillä` : `Lyhennä ${several ? 'luottokortteja' : 'luottokorttia'} säästöillä`,
+        title: `Säästä ${formatThousands(round(payoff.interestSaved))} € vuodessa korttikoroissa`,
         text: `Säästät noin ${formatThousands(round(payoff.interestSaved))} € korkoja vuodessa${payoff.left > 0 ? `, ja puskuria jää ${formatThousands(round(payoff.left))} €` : ''}.`,
         question: 'Kannattaako maksaa luottokortti säästöillä?',
         action: 'Katso laskelma',
@@ -895,7 +893,7 @@ export function summary(p: Persona): Summary {
       const alone = spendingProfile({ ...p, others: undefined, spendTx: undefined }).facts as { everyday_share_of_spending_pct: number };
       insight = {
         kind: 'banks',
-        title: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} ${formatThousands(Math.round(cardMonthly / 10) * 10)} € kuussa`,
+        title: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} menee ${formatThousands(Math.round(cardMonthly / 10) * 10)} € kuussa`,
         text: `Vapaavalintaisten menojen osuus nousee ${alone.everyday_share_of_spending_pct}\u00A0%:sta ${profile.everyday_share_of_spending_pct}\u00A0%:iin.`,
         question: 'Millainen kuluttaja olen?',
         action: 'Katso koko kuva',

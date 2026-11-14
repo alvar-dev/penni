@@ -117,7 +117,11 @@ export type SummaryTile = {
 };
 
 /** Something the coach notices on its own, shown under the greeting. */
-/** The coach's own observation on the start screen: one piece of advice and the question that explains it. */
+/**
+ * The coach's own observation on the start screen: `title` is the one line shown
+ * under the greeting (advice with its value), `text` the longer version, and
+ * `question` what tapping it asks.
+ */
 export type Insight = { kind: 'surprise' | 'banks'; title: string; text: string; question: string; action: string };
 
 /** A surprise-fund plan the customer can switch on from the coach's suggestion. */
