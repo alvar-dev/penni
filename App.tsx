@@ -35,7 +35,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Drawer, DRAWER_TIMING } from './src/components/Drawer';
-import { ComposeIcon, PersonIcon } from './src/components/Icon';
+import { NewChatIcon, PersonIcon } from './src/components/Icon';
 import { Orb, ORB_CANVAS, ORB_DIAMETER } from './src/components/Orb';
 
 import { ask, AskError, getSummary, transcribe } from './src/api';
@@ -917,7 +917,7 @@ function Screen() {
                   accessibilityLabel={strings.newChat}
                   hitSlop={10}
                   style={({ pressed }) => [styles.profileButton, pressed && styles.headerPressed]}>
-                  <ComposeIcon size={21} color={colors.green700} />
+                  <NewChatIcon size={23} color={colors.green700} />
                 </Pressable>
               </Animated.View>
             )}

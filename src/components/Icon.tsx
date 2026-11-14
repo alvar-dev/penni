@@ -20,27 +20,20 @@ export function PersonIcon({ size, color }: Props) {
   );
 }
 
-/** "Write new": an open square with a pencil, as in iOS, for starting a new conversation. */
-export function ComposeIcon({ size, color }: Props) {
+/** New conversation: a speech bubble with a plus, in the same thin-line style. */
+export function NewChatIcon({ size, color }: Props) {
   return (
     <Canvas style={{ width: size, height: size }} pointerEvents="none">
       <Group transform={[{ scale: size / 24 }]}>
         <Path
-          path="M11 4.6H7.2A2.6 2.6 0 0 0 4.6 7.2v9.6a2.6 2.6 0 0 0 2.6 2.6h9.6a2.6 2.6 0 0 0 2.6-2.6V13"
+          path="M12 4.8c4.3 0 7.4 2.7 7.4 6.2s-3.1 6.2-7.4 6.2c-1 0-1.9-.1-2.8-.4l-3.6 1.8.8-3.2c-1.1-1.1-1.8-2.6-1.8-4.4 0-3.5 3.1-6.2 7.4-6.2z"
           style="stroke"
           strokeWidth={1.7}
           strokeCap="round"
           strokeJoin="round"
           color={color}
         />
-        <Path
-          path="M17.4 3.9a1.9 1.9 0 0 1 2.7 2.7l-7.6 7.6-3.4.8.8-3.4z"
-          style="stroke"
-          strokeWidth={1.7}
-          strokeCap="round"
-          strokeJoin="round"
-          color={color}
-        />
+        <Path path="M12 8.6v4.8M9.6 11h4.8" style="stroke" strokeWidth={1.7} strokeCap="round" color={color} />
       </Group>
     </Canvas>
   );
