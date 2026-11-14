@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 
 import { tr } from '../../lang';
-import { colors, formatEur } from '../../theme';
+import { colors, formatEur, formatPercent } from '../../theme';
 import { useReveal } from './common';
 
 type Slice = { label: string; value: number };
@@ -35,7 +35,7 @@ export function DonutChart({ slices, total }: { slices: Slice[]; total: number }
     });
   }, [slices, sum]);
 
-  const pct = (v: number) => `${Math.round((Math.max(0, v) / sum) * 100)} %`;
+  const pct = (v: number) => formatPercent(Math.round((Math.max(0, v) / sum) * 100));
 
   return (
     <View style={styles.row}>

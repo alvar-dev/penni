@@ -60,6 +60,11 @@ export function formatNumber(value: number, decimals = 2): string {
     : `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')}${fraction ? ',' + fraction : ''}`;
 }
 
+/** 34 -> "34%" (English) or "34 %" (Finnish). */
+export function formatPercent(value: number): string {
+  return EN ? `${value}%` : `${value}\u00A0%`;
+}
+
 /** 1234.5 -> "1 234,50 €", -67 -> "−67 €" (Finnish formatting). */
 export function formatEur(value: number, decimals = 2): string {
   const sign = value < 0 ? '\u2212' : '';

@@ -88,6 +88,9 @@ const fi = {
   planOn: 'Yllätysrahasto päällä · alkaen {date}',
   planHome: 'Yllätysrahasto päällä · {amount} € joka palkkapäivä',
   planStop: 'Lopeta',
+  listen: 'Kuuntele',
+  listenStop: 'Lopeta',
+  voiceLabel: 'Lue vastaukset ääneen',
 };
 
 const en: typeof fi = {
@@ -150,6 +153,9 @@ const en: typeof fi = {
   planOn: 'Surprise fund on · from {date}',
   planHome: 'Surprise fund on · €{amount} every payday',
   planStop: 'Stop',
+  listen: 'Listen',
+  listenStop: 'Stop',
+  voiceLabel: 'Read answers aloud',
 };
 
 /** The app's texts in its language (see lang.ts). */

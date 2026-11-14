@@ -3,7 +3,7 @@ import { tr } from '../../lang';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import type { Basket } from '../../shared/api';
-import { basketColors, colors, formatEur } from '../../theme';
+import { basketColors, colors, formatEur, formatPercent } from '../../theme';
 import { LegendItem, useReveal } from './common';
 
 type Row = { label: string; value: number; basket: Basket };
@@ -49,7 +49,7 @@ function RankRow({ row, max, total, reveal, order }: { row: Row; max: number; to
         <Text style={styles.name} numberOfLines={1}>
           {row.label}
         </Text>
-        <Text style={styles.share}>{Math.round((row.value / total) * 100)} %</Text>
+        <Text style={styles.share}>{formatPercent(Math.round((row.value / total) * 100))}</Text>
         <Text style={styles.value}>{formatEur(row.value, 0)}</Text>
       </View>
       <View style={styles.track}>

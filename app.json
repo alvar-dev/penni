@@ -39,7 +39,10 @@
             "com.google.android.as"
           ]
         }
-      ]
+      ],
+      "react-native-blob-util",
+      "@kesha-antonov/react-native-background-downloader",
+      "react-native-audio-api"
     ],
     "backgroundColor": "#FFFFFF"
   }

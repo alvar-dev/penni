@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useDerivedValue, type SharedValue } from 'react-native-reanimated';
 
 import type { BasketPart } from '../../shared/api';
-import { basketColors, colors, formatEur, type } from '../../theme';
+import { basketColors, colors, formatEur, type, formatPercent } from '../../theme';
 import { useReveal } from './common';
 
 type Props = { parts: BasketPart[]; share: number; peerShare: number; peerLabel: string; peerNote?: string };
@@ -32,7 +32,7 @@ export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = 'm
     });
   }, [parts, total]);
 
-  const pct = (v: number) => `${Math.round(v * 100)}\u00A0%`;
+  const pct = (v: number) => formatPercent(Math.round(v * 100));
 
   return (
     <View>

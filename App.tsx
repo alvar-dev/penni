@@ -34,7 +34,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Drawer, DRAWER_TIMING } from './src/components/Drawer';
-import { NewChatIcon, PersonIcon } from './src/components/Icon';
+import { NewChatIcon, PersonIcon, SpeakerIcon } from './src/components/Icon';
+import { KokoroEngine, useSpeaker } from './src/tts/useSpeaker';
 import { Orb, ORB_CANVAS, ORB_DIAMETER } from './src/components/Orb';
 
 import { ask, AskError, getSummary, transcribe } from './src/api';
@@ -170,6 +171,8 @@ function Screen() {
   const finishRef = useRef<() => void>(() => {});
   const onAutoStop = useCallback(() => finishRef.current(), []);
   const mic = useVoiceInput(level, onAutoStop);
+  // Answers are always shown as text; the voice reads them unless muted.
+  const speaker = useSpeaker();
   const waveHistory = mic.history;
   const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -220,12 +223,16 @@ function Screen() {
       ));
     } else if (phase === 'listening') {
       energy.set(withTiming(1, { duration: 300 }));
+    } else if (speaker.speakingId) {
+      // Speaking: the orb pulses softly with the voice.
+      energy.set(withTiming(0.8, { duration: 300 }));
+      level.set(withRepeat(withSequence(withTiming(0.24, { duration: 360 }), withTiming(0.08, { duration: 420 })), -1));
     } else {
       cancelAnimation(level);
       level.set(withTiming(0, { duration: 350 }));
       energy.set(withTiming(0, { duration: 600 }));
     }
-  }, [phase, energy, level]);
+  }, [phase, energy, level, speaker.speakingId]);
 
   useEffect(() => {
     const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () =>
@@ -407,7 +414,9 @@ function Screen() {
       ask({ personaId, question, history, banks: options.banks ?? bankIds }, controller.signal)
         .then((answer) => {
           if (seq !== requestSeq.current) return;
-          pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
+          const id = newId();
+          pushMessage(target, { id, role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
+          if (speaker.voiceOn) speaker.speak(id, answer.text);
         })
         .catch((error: unknown) => {
           if (seq !== requestSeq.current) return;
@@ -423,7 +432,7 @@ function Screen() {
           setPhase('idle');
         });
     },
-    [messages, personaId, currentId, cancelRequest, pushMessage, bankIds],
+    [messages, personaId, currentId, cancelRequest, pushMessage, bankIds, speaker],
   );
 
   /**
@@ -506,6 +515,7 @@ function Screen() {
       return;
     }
     Keyboard.dismiss();
+    speaker.stop();
     setMicNote(null);
     setNotice(null);
     setPhase('listening');
@@ -518,7 +528,7 @@ function Screen() {
         setPhase('idle');
       }
     }
-  }, [phase, mic, finishListening, empty]);
+  }, [phase, mic, finishListening, empty, speaker]);
 
   const settleDrawer = useCallback(
     (open: boolean) => {
@@ -531,19 +541,21 @@ function Screen() {
 
   const newChat = useCallback(() => {
     cancelRequest();
+    speaker.stop();
     void mic.stop();
     setDraft('');
     setMessages([]);
     setCurrentId(null);
     setPhase('idle');
     settleDrawer(false);
-  }, [mic, settleDrawer, cancelRequest]);
+  }, [mic, settleDrawer, cancelRequest, speaker]);
 
   const openConversation = useCallback(
     (id: string) => {
       const conversation = conversations.find((c) => c.id === id);
       if (!conversation) return;
       cancelRequest();
+      speaker.stop();
       void mic.stop();
       setDraft('');
       setMessages(conversation.messages);
@@ -551,7 +563,7 @@ function Screen() {
       setPhase('idle');
       settleDrawer(false);
     },
-    [conversations, cancelRequest, mic, settleDrawer],
+    [conversations, cancelRequest, mic, settleDrawer, speaker],
   );
 
   const deleteConversation = useCallback(
@@ -743,6 +755,15 @@ function Screen() {
                   <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
                     {message.viz ? <Viz viz={message.viz} onConnect={canConnectMore ? () => setConnectOpen(true) : undefined} /> : null}
                     <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
+                    {/* Listen to this answer (also when the voice is muted). */}
+                    <Pressable
+                      onPress={() => (speaker.speakingId === message.id ? speaker.stop() : speaker.speak(message.id, message.text))}
+                      accessibilityRole="button"
+                      hitSlop={8}
+                      style={({ pressed }) => [styles.listen, pressed && styles.headerPressed]}>
+                      <SpeakerIcon size={16} color={colors.green700} />
+                      <Text style={styles.listenText}>{speaker.speakingId === message.id ? strings.listenStop : strings.listen}</Text>
+                    </Pressable>
                     {message.sources?.length ? (
                       <Text style={styles.answerSource}>
                         {strings.source} {message.sources.map((s) => s.replace(/^(Tilastokeskus|Statistics Finland), /, '')).join(' · ')}
@@ -931,6 +952,16 @@ function Screen() {
               <PersonIcon size={22} color={colors.green700} />
             </Pressable>
             <View style={styles.flex} pointerEvents="none" />
+            {/* Read answers aloud, or mute; the text always shows. */}
+            <Pressable
+              onPress={speaker.toggleVoice}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: speaker.voiceOn }}
+              accessibilityLabel={strings.voiceLabel}
+              hitSlop={10}
+              style={({ pressed }) => [styles.profileButton, !empty && styles.headerGap, pressed && styles.headerPressed]}>
+              <SpeakerIcon size={22} color={colors.green700} muted={!speaker.voiceOn} />
+            </Pressable>
             {/* A new conversation; on the start screen one is already open. */}
             {empty ? null : (
               <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
@@ -967,6 +998,8 @@ function Screen() {
         }}
         onDisconnectBank={(id) => changeBanks({ remove: id })}
       />
+      {/* The on-device Kokoro voice (installed app only). */}
+      {KokoroEngine ? <KokoroEngine onApi={speaker.onKokoro} /> : null}
       <ConnectSheet visible={connectOpen} connectedIds={bankIds} onClose={() => setConnectOpen(false)} onConnected={onBankConnected} />
     </View>
   );
@@ -988,6 +1021,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerPressed: { opacity: 0.6 },
+  headerGap: { marginRight: 10 },
+  listen: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: 10, paddingVertical: 4, paddingHorizontal: 2 },
+  listenText: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.green700 },
 
   list: { paddingHorizontal: 20, paddingBottom: DOCK_SHEET + 32 },
   userBubble: {

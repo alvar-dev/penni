@@ -3,8 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Summary, SummaryTile } from '../shared/api';
-import { EN } from '../lang';
-import { colors, formatEur } from '../theme';
+import { colors, formatEur, formatPercent } from '../theme';
 import { smoothPath } from './charts/common';
 
 type Props = {
@@ -46,7 +45,7 @@ export function HomeOverview({ summary, fallback, onAsk }: Props) {
 }
 
 function Tile({ tile, onPress }: { tile: SummaryTile; onPress: () => void }) {
-  const value = tile.unit === '%' ? (EN ? `${tile.value}%` : `${tile.value}\u00A0%`) : formatEur(tile.value, 0);
+  const value = tile.unit === '%' ? formatPercent(tile.value) : formatEur(tile.value, 0);
   return (
     <Pressable
       onPress={onPress}

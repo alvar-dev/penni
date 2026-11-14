@@ -30,3 +30,19 @@ export function NewChatIcon({ size, color }: Props) {
     </Canvas>
   );
 }
+
+/** Speaker with sound waves, or with a slash when muted, for the answer voice. */
+export function SpeakerIcon({ size, color, muted = false }: Props & { muted?: boolean }) {
+  return (
+    <Canvas style={{ width: size, height: size }} pointerEvents="none">
+      <Group transform={[{ scale: size / 24 }]}>
+        <Path path="M4.5 9.5h3l4-3.5v12l-4-3.5h-3z" style="stroke" strokeWidth={1.7} strokeJoin="round" color={color} />
+        {muted ? (
+          <Path path="M15.5 9.5l5 5M20.5 9.5l-5 5" style="stroke" strokeWidth={1.7} strokeCap="round" color={color} />
+        ) : (
+          <Path path="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.4 7.4 0 0 1 0 10.4" style="stroke" strokeWidth={1.7} strokeCap="round" color={color} />
+        )}
+      </Group>
+    </Canvas>
+  );
+}
