@@ -50,18 +50,24 @@ const STT_PORT = 8788;
 const STT_PYTHON = new URL('../stt/.venv/bin/python', import.meta.url).pathname;
 const STT_SCRIPT = new URL('../stt/server.py', import.meta.url).pathname;
 let speechReady = false;
+/** Kokoro reads answers aloud for Expo Go (the installed app runs Kokoro on the phone). */
+let voiceReady = false;
 let stt: ChildProcess | null = null;
 
 if (existsSync(STT_PYTHON)) {
   stt = spawn(STT_PYTHON, [STT_SCRIPT], { env: { ...process.env, STT_PORT: String(STT_PORT), STT_LANGUAGE: LANG }, stdio: ['ignore', 'pipe', 'pipe'] });
   for (const stream of [stt.stdout!, stt.stderr!]) {
     createInterface({ input: stream }).on('line', (line) => {
-      if (line.includes('[stt] ready')) speechReady = true;
-      if (line.startsWith('[stt]') || /error|traceback/i.test(line)) console.log(line);
+      if (line.includes('[stt] ready')) {
+        speechReady = true;
+        voiceReady = !line.includes('voice off');
+      }
+      if (line.startsWith('[stt]') || line.startsWith('[tts]') || /error|traceback/i.test(line)) console.log(line);
     });
   }
   stt.on('exit', (code) => {
     speechReady = false;
+    voiceReady = false;
     console.error(`[stt] stopped (exit ${code}); voice questions are unavailable`);
   });
   const stop = () => stt?.kill();
@@ -77,6 +83,31 @@ if (existsSync(STT_PYTHON)) {
 }
 
 const recentTranscriptions: number[] = [];
+const recentSpeech: number[] = [];
+/** Recently spoken answers (the player asks for the same audio in several ranges). */
+const speechCache = new Map<string, Promise<Buffer>>();
+
+function spoken(text: string): Promise<Buffer> {
+  const hit = speechCache.get(text);
+  if (hit) return hit;
+  const now = Date.now();
+  while (recentSpeech.length && now - recentSpeech[0] > 60_000) recentSpeech.shift();
+  if (recentSpeech.length >= 30) return Promise.reject(new Error('busy'));
+  recentSpeech.push(now);
+  const job = fetch(`http://127.0.0.1:${STT_PORT}/speak`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+    signal: AbortSignal.timeout(30_000),
+  }).then(async (response) => {
+    if (!response.ok) throw new Error(`speech service ${response.status}`);
+    return Buffer.from(await response.arrayBuffer());
+  });
+  speechCache.set(text, job);
+  job.catch(() => speechCache.delete(text));
+  while (speechCache.size > 12) speechCache.delete(speechCache.keys().next().value!);
+  return job;
+}
 
 async function transcribe(body: unknown): Promise<{ status: number; body: unknown }> {
   if (!speechReady) return { status: 503, body: { error: 'Speech recognition is still starting' } };
@@ -240,13 +271,48 @@ function parseAsk(body: unknown): AskRequest | string {
 const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (req.method === 'GET' && req.url === '/health') {
-    return send(res, 200, { ok: true, model: MODEL, today: TODAY, asksToday, speech: speechReady });
+    return send(res, 200, { ok: true, model: MODEL, today: TODAY, asksToday, speech: speechReady, voice: voiceReady });
   }
   if (req.method === 'GET' && req.url?.startsWith('/summary')) {
     if (req.headers['x-app-token'] !== TOKEN) return send(res, 401, { error: 'Unauthorized' });
     const params = new URL(req.url, 'http://localhost').searchParams;
     const persona = customer(params.get('personaId') ?? '', bankList(params.get('banks')));
     return persona ? send(res, 200, summary(persona)) : send(res, 404, { error: 'Unknown personaId' });
+  }
+  // GET /speak?text=…&token=… -> audio/wav, so the app's audio player can stream it from a URL.
+  // iOS's player fetches media in byte ranges, so ranges are served from a short cache.
+  if (req.method === 'GET' && req.url?.startsWith('/speak')) {
+    const params = new URL(req.url, 'http://localhost').searchParams;
+    if ((req.headers['x-app-token'] ?? params.get('token')) !== TOKEN) return send(res, 401, { error: 'Unauthorized' });
+    if (!voiceReady) return send(res, 503, { error: 'No voice on this server' });
+    const text = (params.get('text') ?? '').trim().slice(0, 1500);
+    if (!text) return send(res, 400, { error: 'text is required' });
+    let audio: Buffer;
+    try {
+      audio = await spoken(text);
+    } catch (error) {
+      console.error('[tts] request failed:', (error as Error).message);
+      return send(res, (error as Error).message === 'busy' ? 429 : 502, { error: 'Speech synthesis failed' });
+    }
+    const range = /bytes=(\d*)-(\d*)/.exec(String(req.headers.range ?? ''));
+    console.log(`[tts] GET ${req.headers.range ?? 'whole'} of ${audio.length} bytes (${req.headers['user-agent']?.slice(0, 40) ?? '-'})`);
+    if (range) {
+      const start = range[1] ? Number(range[1]) : 0;
+      const end = range[2] ? Math.min(Number(range[2]), audio.length - 1) : audio.length - 1;
+      if (start >= audio.length || start > end) {
+        res.writeHead(416, { 'Content-Range': `bytes */${audio.length}` });
+        return res.end();
+      }
+      res.writeHead(206, {
+        'Content-Type': 'audio/wav',
+        'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${start}-${end}/${audio.length}`,
+        'Content-Length': end - start + 1,
+      });
+      return res.end(audio.subarray(start, end + 1));
+    }
+    res.writeHead(200, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': audio.length });
+    return res.end(audio);
   }
   if (req.method !== 'POST' || (req.url !== '/ask' && req.url !== '/transcribe')) return send(res, 404, { error: 'Not found' });
   if (req.headers['x-app-token'] !== TOKEN) return send(res, 401, { error: 'Unauthorized' });

@@ -1,4 +1,4 @@
-"""Local speech-to-text for the app (Finnish): Whisper large-v3-turbo on Apple Silicon (MLX).
+"""Local speech for the app: Whisper large-v3-turbo (MLX) to hear questions, Kokoro to read answers.
 
 Started by the API server (server/index.mts); it is not meant to be reached
 from the network, so it listens on 127.0.0.1 only.
@@ -6,15 +6,20 @@ from the network, so it listens on 127.0.0.1 only.
     POST /transcribe   body: raw 16-bit little-endian mono PCM
                        header X-Sample-Rate (default 16000)
                        -> {"text": "..."}
-    GET  /health       -> {"ok": true}
+    POST /speak        body: {"text": "..."} -> audio/wav (Kokoro, af_heart, 24 kHz)
+                       only when stt/models holds the Kokoro files (for Expo Go;
+                       the installed app runs Kokoro on the phone itself)
+    GET  /health       -> {"ok": true, "tts": bool}
 
 Audio never leaves this computer. The model loads once and stays in memory.
 """
+import io
 import json
 import os
 import re
 import sys
 import time
+import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Lock
 
@@ -32,6 +37,32 @@ JUNK = {'', '.', '..', '...', 'kiitos', 'kiitos.', 'kiitos!', 'hyvää', 'teksti
         'you', 'you.', 'thank you.', 'thank you', 'thanks for watching!', 'thanks for watching.', 'bye.', 'bye!'}
 
 lock = Lock()  # one transcription at a time; MLX work is not worth interleaving
+
+# Kokoro, if its model files are present (same quantized model the phone uses).
+MODELS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
+VOICE = os.environ.get('TTS_VOICE', 'af_heart')
+kokoro = None
+try:
+    from kokoro_onnx import Kokoro
+    if os.path.exists(os.path.join(MODELS, 'kokoro-v1.0.int8.onnx')):
+        kokoro = Kokoro(os.path.join(MODELS, 'kokoro-v1.0.int8.onnx'), os.path.join(MODELS, 'voices-v1.0.bin'))
+except Exception as error:  # the app falls back to the phone's own voice
+    print(f'[stt] Kokoro unavailable: {error}', flush=True)
+speak_lock = Lock()
+
+
+def speak(text: str) -> bytes:
+    """Reads the text with Kokoro and returns a 16-bit mono WAV."""
+    with speak_lock:
+        samples, rate = kokoro.create(text, voice=VOICE, speed=1.0, lang='en-us' if LANGUAGE == 'en' else 'fi')
+    pcm = (np.clip(samples, -1, 1) * 32767).astype('<i2').tobytes()
+    out = io.BytesIO()
+    with wave.open(out, 'wb') as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(pcm)
+    return out.getvalue()
 
 
 def to_float(pcm: bytes, rate: int) -> np.ndarray:
@@ -69,10 +100,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == '/health':
-            return self._send(200, {'ok': True, 'model': MODEL})
+            return self._send(200, {'ok': True, 'model': MODEL, 'tts': kokoro is not None})
         self._send(404, {'error': 'Not found'})
 
     def do_POST(self):
+        if self.path == '/speak':
+            return self._speak()
         if self.path != '/transcribe':
             return self._send(404, {'error': 'Not found'})
         length = int(self.headers.get('Content-Length') or 0)
@@ -84,6 +117,24 @@ class Handler(BaseHTTPRequestHandler):
         print(f'[stt] {length / 2 / rate:.1f}s audio -> {time.time() - started:.2f}s: {text[:80]!r}', flush=True)
         self._send(200, {'text': text})
 
+    def _speak(self):
+        if kokoro is None:
+            return self._send(503, {'error': 'No voice model'})
+        length = int(self.headers.get('Content-Length') or 0)
+        if not 0 < length <= 20000:
+            return self._send(413, {'error': 'Text too long'})
+        text = (json.loads(self.rfile.read(length) or b'{}').get('text') or '').strip()[:1500]
+        if not text:
+            return self._send(400, {'error': 'text is required'})
+        started = time.time()
+        data = speak(text)
+        print(f'[tts] {len(text)} chars -> {time.time() - started:.2f}s', flush=True)
+        self.send_response(200)
+        self.send_header('Content-Type', 'audio/wav')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def log_message(self, *args):
         pass
 
@@ -91,6 +142,6 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     started = time.time()
     transcribe(np.zeros(16000, dtype=np.float32))  # loads the model before the first real question
-    print(f'[stt] ready on 127.0.0.1:{PORT} · {MODEL} · warm-up {time.time() - started:.1f}s', flush=True)
+    print(f'[stt] ready on 127.0.0.1:{PORT} · {MODEL} · voice {VOICE if kokoro else "off"} · warm-up {time.time() - started:.1f}s', flush=True)
     sys.stdout.flush()
     ThreadingHTTPServer(('127.0.0.1', PORT), Handler).serve_forever()

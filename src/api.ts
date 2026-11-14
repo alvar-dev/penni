@@ -52,6 +52,24 @@ export async function transcribe(audio: string, sampleRate: number, signal: Abor
   return (body.text ?? '').trim();
 }
 
+/** Whether the server can read answers aloud (Kokoro on the Mac; checked once). */
+let voiceCheck: Promise<boolean> | null = null;
+export function serverHasVoice(): Promise<boolean> {
+  voiceCheck ??= fetch(`${baseUrl()}/health`)
+    .then((r) => r.json() as Promise<{ voice?: boolean }>)
+    .then((h) => h.voice === true)
+    .catch(() => {
+      voiceCheck = null; // try again next time
+      return false;
+    });
+  return voiceCheck;
+}
+
+/** A URL the audio player can stream the spoken answer from. */
+export function speechUrl(text: string): string {
+  return `${baseUrl()}/speak?token=${encodeURIComponent(process.env.EXPO_PUBLIC_API_TOKEN ?? '')}&text=${encodeURIComponent(text)}`;
+}
+
 /** The start screen's overview (computed on the server, no model involved). */
 export async function getSummary(personaId: string, banks: string[], signal: AbortSignal): Promise<Summary> {
   const response = await fetch(`${baseUrl()}/summary?personaId=${encodeURIComponent(personaId)}${banks.length ? `&banks=${banks.map(encodeURIComponent).join(',')}` : ''}`, {
