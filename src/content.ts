@@ -4,7 +4,7 @@ export type { Viz };
 
 export type Message =
   | { id: string; role: 'user'; text: string }
-  | { id: string; role: 'assistant'; text: string; viz?: Viz; call?: ToolCall; example?: boolean };
+  | { id: string; role: 'assistant'; text: string; viz?: Viz; call?: ToolCall; sources?: string[]; example?: boolean };
 
 export type Persona = { id: string; name: string; age: number; postalCode: string; tagline: string };
 
@@ -45,6 +45,8 @@ export const strings = {
   orbStart: 'Kysy puhumalla',
   orbStop: 'Lopeta kuuntelu',
   send: 'Lähetä',
+  /** Before the Statistics Finland source under an answer. */
+  source: 'Lähde: Tilastokeskus,',
   menuOpen: 'Avaa valikko',
   menuClose: 'Sulje valikko',
   newChat: 'Uusi keskustelu',

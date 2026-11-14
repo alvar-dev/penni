@@ -346,7 +346,7 @@ function Screen() {
       ask({ personaId, question, history }, controller.signal)
         .then((answer) => {
           if (seq !== requestSeq.current) return;
-          pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call });
+          pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
         })
         .catch((error: unknown) => {
           if (seq !== requestSeq.current) return;
@@ -640,6 +640,11 @@ function Screen() {
                   <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
                     {message.viz ? <Viz viz={message.viz} example={message.example} /> : null}
                     <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
+                    {message.sources?.length ? (
+                      <Text style={styles.answerSource}>
+                        {strings.source} {message.sources.map((s) => s.replace(/^Tilastokeskus, /, '')).join(' · ')}
+                      </Text>
+                    ) : null}
                     {message.viz?.kind === 'replay' ? (
                       <PlanButton
                         monthly={plan?.monthly ?? message.viz.value}
@@ -878,6 +883,7 @@ const styles = StyleSheet.create({
   answer: { marginBottom: 28 },
   answerText: { ...type.body, color: colors.text, marginTop: 14, paddingHorizontal: 2 },
   answerTextAlone: { marginTop: 0 },
+  answerSource: { ...type.caption, color: colors.textTertiary, marginTop: 8, paddingHorizontal: 2 },
   planButton: { alignSelf: 'flex-start', marginTop: 14, backgroundColor: colors.green700, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 11 },
   planButtonPressed: { backgroundColor: colors.green900 },
   planButtonText: { fontSize: 15, lineHeight: 20, fontWeight: '600', color: '#FFFFFF' },

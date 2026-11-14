@@ -58,6 +58,8 @@ export type Viz =
       share: number;
       peerShare: number;
       peerLabel: string;
+      /** Under the comparison bar, e.g. its source. */
+      peerNote?: string;
     }
   | {
       /** Cumulative spending over a year at today's pace and after a change. */
@@ -125,4 +127,4 @@ export type AskRequest = {
   history: HistoryItem[];
 };
 
-export type AskResponse = { text: string; viz?: Viz; call?: ToolCall } | { error: string };
+export type AskResponse = { text: string; viz?: Viz; call?: ToolCall; sources?: string[] } | { error: string };

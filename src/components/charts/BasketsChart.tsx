@@ -7,14 +7,14 @@ import type { BasketPart } from '../../shared/api';
 import { basketColors, colors, formatEur, type } from '../../theme';
 import { useReveal } from './common';
 
-type Props = { parts: BasketPart[]; share: number; peerShare: number; peerLabel: string };
+type Props = { parts: BasketPart[]; share: number; peerShare: number; peerLabel: string; peerNote?: string };
 
 const SIZE = 132;
 const STROKE = 16;
 const GAP_DEG = 3;
 
 /** The three baskets as a ring, and the everyday share against people of the same age. */
-export function BasketsChart({ parts, share, peerShare, peerLabel }: Props) {
+export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = 'mediaani' }: Props) {
   const reveal = useReveal(0, 1100);
   const total = parts.reduce((s, p) => s + Math.max(0, p.value), 0) || 1;
 
@@ -65,7 +65,7 @@ export function BasketsChart({ parts, share, peerShare, peerLabel }: Props) {
 
       <Text style={styles.compareTitle}>Sormien läpi menevä osuus</Text>
       <CompareBar label="Sinä" value={share} max={Math.max(share, peerShare, 0.01)} color={colors.green700} reveal={reveal} />
-      <CompareBar label={peerLabel} value={peerShare} max={Math.max(share, peerShare, 0.01)} color="#C7C7C7" reveal={reveal} note="mediaani" />
+      <CompareBar label={peerLabel} value={peerShare} max={Math.max(share, peerShare, 0.01)} color="#C7C7C7" reveal={reveal} note={peerNote} />
     </View>
   );
 }

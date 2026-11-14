@@ -25,7 +25,7 @@ export class AskError extends Error {
   }
 }
 
-export async function ask(request: AskRequest, signal: AbortSignal): Promise<{ text: string; viz?: Viz; call?: ToolCall }> {
+export async function ask(request: AskRequest, signal: AbortSignal): Promise<{ text: string; viz?: Viz; call?: ToolCall; sources?: string[] }> {
   const response = await fetch(`${baseUrl()}/ask`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-App-Token': process.env.EXPO_PUBLIC_API_TOKEN ?? '' },

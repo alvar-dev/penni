@@ -7,18 +7,15 @@
 import { readFileSync } from 'node:fs';
 
 import type { Basket, Insight, Summary, SummaryTile, Viz } from '../src/shared/api.ts';
+import { everydayShareFinland, forBuffer, forCategories, forProfile, forSaving, forSpending, forSurprises, type Comparison } from './finland.mts';
 
 type Tx = { date: string; month: string; day: number; category: string; amount: number; balance: number; mcc: string };
 export type Persona = { id: string; age: number; postalCode: string; tx: Tx[] };
-type PeerGroup = { n: number; monthlyMedian: Record<string, number> };
 
 const dataDir = new URL('./data/', import.meta.url);
 const raw = JSON.parse(readFileSync(new URL('personas.json', dataDir), 'utf8')) as {
   today: string;
   personas: { id: string; age: number; postalCode: string; tx: [string, string, string, number, number, string][] }[];
-};
-const benchmarks = JSON.parse(readFileSync(new URL('benchmarks.json', dataDir), 'utf8')) as {
-  groups: Record<string, PeerGroup>;
 };
 
 export const TODAY = raw.today;
@@ -203,17 +200,6 @@ function mode(values: number[]): number | null {
   return best;
 }
 
-function ageBand(age: number): string {
-  return age < 30 ? '18-29' : age < 45 ? '30-44' : age < 65 ? '45-64' : '65+';
-}
-
-const PEER_LABELS: Record<string, string> = {
-  '18-29': '18–29-vuotiaat',
-  '30-44': '30–44-vuotiaat',
-  '45-64': '45–64-vuotiaat',
-  '65+': 'Yli 65-vuotiaat',
-};
-
 const BASKET_NAMES: Record<Basket, string> = {
   regular: 'Pakolliset, säännölliset',
   irregular: 'Pakolliset, yllättävät',
@@ -251,7 +237,8 @@ function spendingTotal(p: Persona, args: { what?: string; from_month?: string; t
       period: label,
       total_eur: round2(total),
       purchases: count,
-      monthly_average_in_period_eur: inPeriod.length > 1 ? round2(total / inPeriod.length) : undefined,
+      // The same average as the chart headline: full months only, not the month still under way.
+      monthly_average_in_period_eur: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : undefined,
       average_of_previous_months_eur: previousAvg === null ? undefined : round2(previousAvg),
       monthly_eur: Object.fromEntries(monthly.map((x) => [x.month, x.total])),
       pass_through: isPassThrough(p) || undefined,
@@ -393,8 +380,8 @@ function spendingProfile(p: Persona): ToolResult {
   const year = monthsBetween(addMonths(LAST_FULL_MONTH, -11), LAST_FULL_MONTH);
   const negativeMonths = year.filter((month) => p.tx.some((t) => t.month === month && t.balance < 0)).length;
 
-  const band = ageBand(p.age);
-  const peers = benchmarks.groups[band];
+  // Compared with Finland: the same basket's share in Statistics Finland's household budget survey.
+  const finland = everydayShareFinland(p.age);
   const label = periodLabel(months[0], months[months.length - 1]);
 
   return {
@@ -412,13 +399,7 @@ function spendingProfile(p: Persona): ToolResult {
       ),
       monthly_income_eur: round(perMonth(income)),
       months_with_negative_balance_last_12: negativeMonths,
-      peers: {
-        age_group: band,
-        customers: peers.n,
-        median_everyday_share_pct: round(peers.monthlyMedian.everydayShare * 100),
-        median_everyday_monthly_eur: round(peers.monthlyMedian['basket:everyday']),
-        median_monthly_spending_eur: round(peers.monthlyMedian.spend),
-      },
+      finland_everyday_share_pct: round(finland.share * 100),
       pass_through: isPassThrough(p) || undefined,
     },
     viz: {
@@ -431,8 +412,9 @@ function spendingProfile(p: Persona): ToolResult {
         value: round(perMonth(baskets[b])),
       })),
       share: spend ? baskets.everyday / spend : 0,
-      peerShare: peers.monthlyMedian.everydayShare,
-      peerLabel: PEER_LABELS[band] ?? band,
+      peerShare: finland.share,
+      peerLabel: finland.label,
+      peerNote: finland.source.replace('Tilastokeskus, kulutustutkimus', 'Tilastokeskus'),
     },
   };
 }
@@ -672,7 +654,7 @@ export function summary(p: Persona): Summary {
     sumBy(p.tx, (t) => t.month === m && SPEND_CATEGORIES.has(t.category) && test(t));
 
   const safe = safeToSpend(p).facts as { free_to_spend_until_payday_eur: number; free_per_day_eur: number; days_until_payday: number };
-  const profile = spendingProfile(p).facts as { everyday_share_of_spending_pct: number; peers: { median_everyday_share_pct: number } };
+  const profile = spendingProfile(p).facts as { everyday_share_of_spending_pct: number; finland_everyday_share_pct: number };
 
   const last6 = monthsBetween(addMonths(month, -5), month);
   const totals = last6.map((m) => round(spend(m)));
@@ -726,9 +708,9 @@ export function summary(p: Persona): Summary {
       label: 'Sormien läpi',
       value: profile.everyday_share_of_spending_pct,
       unit: '%',
-      sub: `ikäisilläsi ${profile.peers.median_everyday_share_pct} %`,
+      sub: `Suomessa ikäisilläsi ${profile.finland_everyday_share_pct} %`,
       question: 'Millainen kuluttaja olen?',
-      compare: [profile.everyday_share_of_spending_pct / 100, profile.peers.median_everyday_share_pct / 100],
+      compare: [profile.everyday_share_of_spending_pct / 100, profile.finland_everyday_share_pct / 100],
     },
     {
       id: 'top',
@@ -758,6 +740,35 @@ export function summary(p: Persona): Summary {
 }
 
 export function runTool(p: Persona, name: string, args: Record<string, unknown>): ToolResult {
+  const result = calculate(p, name, args);
+  if ('error' in result.facts) return result;
+  // Official figures the answer may compare with; the model decides whether one helps.
+  const comparisons = officialComparisons(p, name, args);
+  if (comparisons.length) result.facts.official_comparisons = comparisons;
+  return result;
+}
+
+function officialComparisons(p: Persona, name: string, args: Record<string, unknown>): Comparison[] {
+  switch (name) {
+    case 'spending_total':
+    case 'what_if': {
+      const what = typeof args.what === 'string' ? args.what : 'all_spending';
+      return [...forSpending(what, p.age, p.postalCode), ...(name === 'what_if' ? forSaving(p.age) : [])];
+    }
+    case 'top_categories':
+      return forCategories(p.age);
+    case 'spending_profile':
+      return forProfile(p.age);
+    case 'safe_to_spend':
+      return forBuffer(p.age);
+    case 'surprise_fund':
+      return forSurprises(p.age);
+    default:
+      return [];
+  }
+}
+
+function calculate(p: Persona, name: string, args: Record<string, unknown>): ToolResult {
   switch (name) {
     case 'spending_total':
       return spendingTotal(p, args);

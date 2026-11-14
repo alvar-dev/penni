@@ -1,0 +1,730 @@
+{
+ "asOf": "2026-08",
+ "consumption": {
+  "year": 2022,
+  "unit": "euroa kuukaudessa kulutusyksikköä kohden",
+  "groups": {
+   "SSS": {
+    "0": 2363,
+    "01": 329,
+    "011": 301,
+    "02": 46,
+    "03": 97,
+    "04": 795,
+    "041": 202,
+    "042": 360,
+    "045": 87,
+    "05": 96,
+    "053": 17,
+    "06": 86,
+    "07": 313,
+    "072": 147,
+    "073": 32,
+    "08": 94,
+    "081": 34,
+    "09": 149,
+    "094": 39,
+    "096": 9,
+    "098": 18,
+    "11": 91,
+    "111": 79,
+    "112": 11,
+    "13": 109,
+    "131": 39
+   },
+   "17-24": {
+    "0": 1535,
+    "01": 210,
+    "011": 181,
+    "02": 25,
+    "03": 110,
+    "04": 540,
+    "041": 442,
+    "042": 45,
+    "045": 23,
+    "05": 55,
+    "053": 11,
+    "06": 45,
+    "07": 185,
+    "072": 69,
+    "073": 27,
+    "08": 80,
+    "081": 38,
+    "09": 81,
+    "094": 26,
+    "096": 4,
+    "098": 16,
+    "11": 75,
+    "111": 67,
+    "112": 7,
+    "13": 41,
+    "131": 23
+   },
+   "25-34": {
+    "0": 2209,
+    "01": 292,
+    "011": 261,
+    "02": 32,
+    "03": 125,
+    "04": 664,
+    "041": 364,
+    "042": 160,
+    "045": 43,
+    "05": 94,
+    "053": 17,
+    "06": 46,
+    "07": 301,
+    "072": 128,
+    "073": 43,
+    "08": 116,
+    "081": 58,
+    "09": 143,
+    "094": 34,
+    "096": 8,
+    "098": 12,
+    "11": 120,
+    "111": 112,
+    "112": 7,
+    "13": 111,
+    "131": 42
+   },
+   "35-44": {
+    "0": 2362,
+    "01": 332,
+    "011": 300,
+    "02": 47,
+    "03": 111,
+    "04": 713,
+    "041": 221,
+    "042": 278,
+    "045": 75,
+    "05": 116,
+    "053": 19,
+    "06": 59,
+    "07": 326,
+    "072": 145,
+    "073": 40,
+    "08": 108,
+    "081": 47,
+    "09": 139,
+    "094": 37,
+    "096": 14,
+    "098": 14,
+    "11": 127,
+    "111": 110,
+    "112": 17,
+    "13": 112,
+    "131": 36
+   },
+   "45-54": {
+    "0": 2657,
+    "01": 346,
+    "011": 315,
+    "02": 65,
+    "03": 118,
+    "04": 802,
+    "041": 134,
+    "042": 405,
+    "045": 96,
+    "05": 108,
+    "053": 20,
+    "06": 83,
+    "07": 419,
+    "072": 197,
+    "073": 38,
+    "08": 101,
+    "081": 33,
+    "09": 185,
+    "094": 50,
+    "096": 9,
+    "098": 25,
+    "11": 104,
+    "111": 87,
+    "112": 18,
+    "13": 125,
+    "131": 42
+   },
+   "55-64": {
+    "0": 2712,
+    "01": 360,
+    "011": 333,
+    "02": 64,
+    "03": 100,
+    "04": 875,
+    "041": 158,
+    "042": 440,
+    "045": 108,
+    "05": 104,
+    "053": 15,
+    "06": 100,
+    "07": 401,
+    "072": 190,
+    "073": 35,
+    "08": 100,
+    "081": 31,
+    "09": 177,
+    "094": 49,
+    "096": 11,
+    "098": 22,
+    "11": 100,
+    "111": 86,
+    "112": 14,
+    "13": 140,
+    "131": 47
+   },
+   "65-74": {
+    "0": 2347,
+    "01": 362,
+    "011": 337,
+    "02": 54,
+    "03": 71,
+    "04": 872,
+    "041": 129,
+    "042": 456,
+    "045": 122,
+    "05": 92,
+    "053": 15,
+    "06": 105,
+    "07": 281,
+    "072": 152,
+    "073": 22,
+    "08": 80,
+    "081": 19,
+    "09": 135,
+    "094": 37,
+    "096": 5,
+    "098": 18,
+    "11": 59,
+    "111": 51,
+    "112": 8,
+    "13": 93,
+    "131": 37
+   },
+   "75-84": {
+    "0": 2251,
+    "01": 337,
+    "011": 317,
+    "02": 21,
+    "03": 53,
+    "04": 937,
+    "041": 119,
+    "042": 536,
+    "045": 104,
+    "05": 77,
+    "053": 16,
+    "06": 146,
+    "07": 221,
+    "072": 109,
+    "073": 19,
+    "08": 69,
+    "081": 13,
+    "09": 148,
+    "094": 35,
+    "096": 8,
+    "098": 24,
+    "11": 42,
+    "111": 38,
+    "112": 4,
+    "13": 97,
+    "131": 33
+   },
+   "85-": {
+    "0": 1898,
+    "01": 276,
+    "011": 257,
+    "02": 22,
+    "03": 37,
+    "04": 960,
+    "041": 71,
+    "042": 559,
+    "045": 98,
+    "05": 78,
+    "053": 11,
+    "06": 126,
+    "07": 69,
+    "072": 49,
+    "073": 13,
+    "08": 55,
+    "081": 8,
+    "09": 84,
+    "094": 14,
+    "096": 4,
+    "098": 5,
+    "11": 34,
+    "111": 25,
+    "112": null,
+    "13": 83,
+    "131": 32
+   }
+  }
+ },
+ "prices": {
+  "month": "2026-08",
+  "yearChangePct": {
+   "SSS": 2.2,
+   "01": 1.6,
+   "011": 0.8,
+   "03": -1.4,
+   "041": -0.2,
+   "045": 2.2,
+   "0451": -1.9,
+   "05": 4.7,
+   "06": 3,
+   "07": 7.3,
+   "0722": 27.6,
+   "073": 1.5,
+   "08": 3.1,
+   "09": 1.9,
+   "098": 6.2,
+   "11": 1.4,
+   "111": 1.9,
+   "112": -3.9
+  }
+ },
+ "priceLevelEU": {
+  "year": 2025,
+  "index": {
+   "01": 107.5,
+   "011": 105.7,
+   "02": 174.1,
+   "031": 121.3,
+   "045": 82,
+   "053": 110.1,
+   "071": 104.5,
+   "073": 147.3,
+   "08": 108.4,
+   "11": 121.7
+  }
+ },
+ "coping": {
+  "year": 2025,
+  "groups": {
+   "SS": {
+    "savesPct": 55.9,
+    "cannotSavePct": 44.1,
+    "copesPct": 68.9,
+    "cannotCopePct": 31.1
+   },
+   "1": {
+    "savesPct": 46.8,
+    "cannotSavePct": 53.2,
+    "copesPct": 59.6,
+    "cannotCopePct": 40.4
+   },
+   "10": {
+    "savesPct": 39.8,
+    "cannotSavePct": 60.2,
+    "copesPct": 48.9,
+    "cannotCopePct": 51.1
+   },
+   "11": {
+    "savesPct": 44.9,
+    "cannotSavePct": 55.1,
+    "copesPct": 53.4,
+    "cannotCopePct": 46.6
+   },
+   "12": {
+    "savesPct": 53.9,
+    "cannotSavePct": 46.1,
+    "copesPct": 73.6,
+    "cannotCopePct": 26.4
+   },
+   "2": {
+    "savesPct": 70,
+    "cannotSavePct": 30,
+    "copesPct": 85,
+    "cannotCopePct": 15
+   },
+   "21": {
+    "savesPct": 70.3,
+    "cannotSavePct": 29.7,
+    "copesPct": 73.8,
+    "cannotCopePct": 26.2
+   },
+   "22": {
+    "savesPct": 72.6,
+    "cannotSavePct": 27.4,
+    "copesPct": 83.8,
+    "cannotCopePct": 16.2
+   },
+   "23": {
+    "savesPct": 67.5,
+    "cannotSavePct": 32.5,
+    "copesPct": 91.4,
+    "cannotCopePct": 8.6
+   },
+   "3": {
+    "savesPct": 58.3,
+    "cannotSavePct": 41.7,
+    "copesPct": 67.8,
+    "cannotCopePct": 32.2
+   },
+   "31": {
+    "savesPct": 63.4,
+    "cannotSavePct": 36.6,
+    "copesPct": 75.7,
+    "cannotCopePct": 24.3
+   },
+   "32": {
+    "savesPct": 42.7,
+    "cannotSavePct": 57.3,
+    "copesPct": 43.5,
+    "cannotCopePct": 56.5
+   }
+  }
+ },
+ "deposits": {
+  "year": 2025,
+  "groups": {
+   "18-": {
+    "depositsMedian": 4963,
+    "depositOwnersPct": 99.4,
+    "investmentsMedian": 7397,
+    "investorsPct": 40.6
+   },
+   "18-24": {
+    "depositsMedian": 1239,
+    "depositOwnersPct": 99.1,
+    "investmentsMedian": 2638,
+    "investorsPct": 36.4
+   },
+   "25-29": {
+    "depositsMedian": 2054,
+    "depositOwnersPct": 98.8,
+    "investmentsMedian": 2907,
+    "investorsPct": 41.3
+   },
+   "30-34": {
+    "depositsMedian": 2521,
+    "depositOwnersPct": 98.8,
+    "investmentsMedian": 3920,
+    "investorsPct": 43.6
+   },
+   "35-39": {
+    "depositsMedian": 2622,
+    "depositOwnersPct": 98.7,
+    "investmentsMedian": 4662,
+    "investorsPct": 43.8
+   },
+   "40-44": {
+    "depositsMedian": 2811,
+    "depositOwnersPct": 99.1,
+    "investmentsMedian": 5080,
+    "investorsPct": 43.4
+   },
+   "45-49": {
+    "depositsMedian": 3297,
+    "depositOwnersPct": 99.3,
+    "investmentsMedian": 6179,
+    "investorsPct": 43.2
+   },
+   "50-54": {
+    "depositsMedian": 4048,
+    "depositOwnersPct": 99.5,
+    "investmentsMedian": 7426,
+    "investorsPct": 42.4
+   },
+   "55-59": {
+    "depositsMedian": 5658,
+    "depositOwnersPct": 99.6,
+    "investmentsMedian": 9058,
+    "investorsPct": 40.9
+   },
+   "60-64": {
+    "depositsMedian": 9122,
+    "depositOwnersPct": 99.7,
+    "investmentsMedian": 11727,
+    "investorsPct": 39.8
+   },
+   "65-69": {
+    "depositsMedian": 11952,
+    "depositOwnersPct": 99.7,
+    "investmentsMedian": 14711,
+    "investorsPct": 38.6
+   },
+   "70-74": {
+    "depositsMedian": 13137,
+    "depositOwnersPct": 99.8,
+    "investmentsMedian": 16660,
+    "investorsPct": 38.4
+   },
+   "75-79": {
+    "depositsMedian": 17803,
+    "depositOwnersPct": 99.8,
+    "investmentsMedian": 20661,
+    "investorsPct": 39.7
+   },
+   "80-84": {
+    "depositsMedian": 24279,
+    "depositOwnersPct": 99.8,
+    "investmentsMedian": 24456,
+    "investorsPct": 39.4
+   },
+   "85-": {
+    "depositsMedian": 31458,
+    "depositOwnersPct": 99.8,
+    "investmentsMedian": 25748,
+    "investorsPct": 32.6
+   }
+  }
+ },
+ "debt": {
+  "year": 2025,
+  "groups": {
+   "SSS": {
+    "housing": {
+     "sharePct": 25.2,
+     "median": 64599
+    },
+    "consumer": {
+     "sharePct": 30.2,
+     "median": 12839
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   },
+   "15-24": {
+    "housing": {
+     "sharePct": 1.7,
+     "median": 75084
+    },
+    "consumer": {
+     "sharePct": 22.4,
+     "median": 10060
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   },
+   "25-34": {
+    "housing": {
+     "sharePct": 29.4,
+     "median": 94099
+    },
+    "consumer": {
+     "sharePct": 53.4,
+     "median": 14570
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   },
+   "35-44": {
+    "housing": {
+     "sharePct": 50.6,
+     "median": 81915
+    },
+    "consumer": {
+     "sharePct": 40.2,
+     "median": 12213
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   },
+   "45-54": {
+    "housing": {
+     "sharePct": 46.8,
+     "median": 56548
+    },
+    "consumer": {
+     "sharePct": 37.4,
+     "median": 14830
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   },
+   "55-64": {
+    "housing": {
+     "sharePct": 26.4,
+     "median": 34168
+    },
+    "consumer": {
+     "sharePct": 29.3,
+     "median": 13686
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   },
+   "65-74": {
+    "housing": {
+     "sharePct": 11.3,
+     "median": 21865
+    },
+    "consumer": {
+     "sharePct": 17.2,
+     "median": 9730
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   },
+   "75-": {
+    "housing": {
+     "sharePct": 4.8,
+     "median": 16688
+    },
+    "consumer": {
+     "sharePct": 7.8,
+     "median": 8877
+    },
+    "student": {
+     "sharePct": null,
+     "median": null
+    }
+   }
+  }
+ },
+ "enforcement": {
+  "year": 2025,
+  "people": {
+   "SSS": 484675,
+   "15-24": 41601,
+   "25-34": 108138,
+   "35-44": 113060,
+   "45-54": 94932,
+   "55-64": 74602,
+   "65-74": 35686,
+   "75-": 16024
+  }
+ },
+ "income": {
+  "year": 2024,
+  "unit": "euroa vuodessa",
+  "medians": {
+   "18-": 26605,
+   "18-24": 13182,
+   "25-34": 27197,
+   "35-49": 33214,
+   "50-64": 31694,
+   "65-74": 22451,
+   "75-": 21681
+  }
+ },
+ "rent": {
+  "quarter": "2026Q2",
+  "areas": {
+   "Koko maa": {
+    "eurPerM2": {
+     "all": 15.9,
+     "studio": 20.5,
+     "oneBedroom": 15.0
+    },
+    "yearChangePct": 0.1
+   },
+   "Pääkaupunkiseutu": {
+    "eurPerM2": {
+     "all": 20.1,
+     "studio": 25.5,
+     "oneBedroom": 19.3
+    },
+    "yearChangePct": -0.3
+   },
+   "Muu Suomi": {
+    "eurPerM2": {
+     "all": 13.9,
+     "studio": 17.9,
+     "oneBedroom": 13.2
+    },
+    "yearChangePct": 0.4
+   },
+   "Helsinki": {
+    "eurPerM2": {
+     "all": 21.3,
+     "studio": 26.7,
+     "oneBedroom": 20.4
+    },
+    "yearChangePct": -0.2
+   },
+   "Espoo ja Kauniainen": {
+    "eurPerM2": {
+     "all": 18.8,
+     "studio": 23.8,
+     "oneBedroom": 18.3
+    },
+    "yearChangePct": 0
+   },
+   "Vantaa": {
+    "eurPerM2": {
+     "all": 17.8,
+     "studio": 23.0,
+     "oneBedroom": 17.0
+    },
+    "yearChangePct": -1.2
+   }
+  }
+ },
+ "fuel": {
+  "month": "2026-06",
+  "petrol95": {
+   "centsPerLitre": 209,
+   "yearChangePct": 20.1
+  },
+  "diesel": {
+   "centsPerLitre": 215,
+   "yearChangePct": 31.9
+  }
+ },
+ "electricity": {
+  "month": "2026-06",
+  "centsPerKwh": 17.9,
+  "yearChangePct": 8.7,
+  "note": "kokonaishinta veroineen, kotitalous 5 000–15 000 kWh vuodessa"
+ },
+ "sources": {
+  "consumption": {
+   "name": "Tilastokeskus, kulutustutkimus 2022",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__ktutk/statfin_ktutk_pxt_14q4.px/"
+  },
+  "prices": {
+   "name": "Tilastokeskus, kuluttajahintaindeksi 8/2026",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__khi/statfin_khi_pxt_15b5.px/"
+  },
+  "priceLevelEU": {
+   "name": "Tilastokeskus, kansainvälinen hintavertailu 2025",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__kvhv/statfin_kvhv_pxt_15cs.px/"
+  },
+  "coping": {
+   "name": "Tilastokeskus, tulo- ja elinolotilasto 2025",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__eot/statfin_eot_pxt_132d.px/"
+  },
+  "deposits": {
+   "name": "Tilastokeskus, varallisuustilasto 2025",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__vtutk/statfin_vtutk_pxt_15j6.px/"
+  },
+  "debt": {
+   "name": "Tilastokeskus, velkaantumistilasto 2025",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__velk/statfin_velk_pxt_158a.px/"
+  },
+  "enforcement": {
+   "name": "Tilastokeskus, ulosottovelalliset 2025",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__uloa/statfin_uloa_pxt_11q7.px/"
+  },
+  "income": {
+   "name": "Tilastokeskus, tulonjakotilasto 2024",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__tjt/statfin_tjt_pxt_11py.px/"
+  },
+  "rent": {
+   "name": "Tilastokeskus, asuntojen vuokrat 2/2026",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__asvu/statfin_asvu_pxt_15fa.px/"
+  },
+  "fuel": {
+   "name": "Tilastokeskus, energian hinnat 6/2026",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__ehi/statfin_ehi_pxt_12ge.px/"
+  },
+  "electricity": {
+   "name": "Tilastokeskus, energian hinnat 6/2026",
+   "url": "https://pxdata.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__ehi/statfin_ehi_pxt_13rb.px/"
+  }
+ }
+}

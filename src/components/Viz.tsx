@@ -25,7 +25,7 @@ export function Viz({ viz, example }: { viz: VizData; example?: boolean }) {
         <RunwayChart points={viz.points} value={viz.value} perDay={viz.perDay} days={viz.days} paydayLabel={viz.paydayLabel} parts={viz.parts} />
       ) : null}
       {viz.kind === 'baskets' ? (
-        <BasketsChart parts={viz.parts} share={viz.share} peerShare={viz.peerShare} peerLabel={viz.peerLabel} />
+        <BasketsChart parts={viz.parts} share={viz.share} peerShare={viz.peerShare} peerLabel={viz.peerLabel} peerNote={viz.peerNote} />
       ) : null}
       {viz.kind === 'projection' ? (
         <ProjectionChart nowMonthly={viz.nowMonthly} afterMonthly={viz.afterMonthly} changeLabel={viz.changeLabel} yearly={viz.value} />
