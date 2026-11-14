@@ -658,6 +658,31 @@ function otherBankFacts(p: Persona) {
   }));
 }
 
+/**
+ * Every connected bank's accounts summed up, and paying the dearest card first
+ * from savings (cards cost far more interest than savings earn).
+ */
+function cardPayoff(others: OtherBank[]) {
+  const all = others.flatMap((o) => o.accounts.map((a) => ({ ...a, bank: o.name })));
+  const sum = (kind: string) => all.filter((a) => a.kind === kind).reduce((s, a) => s + a.balance, 0);
+  const elsewhere = sum('current');
+  const saved = sum('savings');
+  const cards = all.filter((a) => a.kind === 'credit' && a.balance < 0).sort((a, b) => (b.ratePct ?? 0) - (a.ratePct ?? 0));
+  const debt = cards.reduce((s, a) => s - a.balance, 0);
+  const cardCost = cards.reduce((s, a) => s + (-a.balance * (a.ratePct ?? 0)) / 100, 0);
+  const savingsEarn = all.filter((a) => a.kind === 'savings').reduce((s, a) => s + (a.balance * (a.ratePct ?? 0)) / 100, 0);
+  const savingsRate = saved ? (savingsEarn / saved) * 100 : 0;
+  let left = saved;
+  let interestSaved = 0;
+  const payments = cards.map((c) => {
+    const amount = Math.min(-c.balance, left);
+    left -= amount;
+    interestSaved += (amount * ((c.ratePct ?? 0) - savingsRate)) / 100;
+    return { bank: c.bank, card_interest_pct: c.ratePct, pay_eur: round(amount) };
+  });
+  return { all, elsewhere, saved, cards, debt, cardCost, savingsEarn, payments, pay: saved - left, left, interestSaved };
+}
+
 function allAccounts(p: Persona): ToolResult {
   const balance = round2(p.tx[p.tx.length - 1].balance);
   const own = { bank: 'S-Pankki', name: 'Käyttötili', balance_eur: balance };
@@ -674,25 +699,7 @@ function allAccounts(p: Persona): ToolResult {
       viz: { kind: 'accounts', label: 'Tilisi S-Pankissa', value: round(balance), banks: [ownBank], connectable: true },
     };
   }
-  const all = others.flatMap((o) => o.accounts.map((a) => ({ ...a, bank: o.name })));
-  const sum = (kind: string) => all.filter((a) => a.kind === kind).reduce((s, a) => s + a.balance, 0);
-  const elsewhere = sum('current');
-  const saved = sum('savings');
-  const cards = all.filter((a) => a.kind === 'credit' && a.balance < 0).sort((a, b) => (b.ratePct ?? 0) - (a.ratePct ?? 0));
-  const debt = cards.reduce((s, a) => s - a.balance, 0);
-  const cardCost = cards.reduce((s, a) => s + (-a.balance * (a.ratePct ?? 0)) / 100, 0);
-  const savingsEarn = all.filter((a) => a.kind === 'savings').reduce((s, a) => s + (a.balance * (a.ratePct ?? 0)) / 100, 0);
-  const savingsRate = saved ? (savingsEarn / saved) * 100 : 0;
-  // Pay the dearest card first from savings: cards cost far more than savings earn.
-  let left = saved;
-  let interestSaved = 0;
-  const payments = cards.map((c) => {
-    const amount = Math.min(-c.balance, left);
-    left -= amount;
-    interestSaved += (amount * ((c.ratePct ?? 0) - savingsRate)) / 100;
-    return { bank: c.bank, card_interest_pct: c.ratePct, pay_eur: round(amount) };
-  });
-  const pay = saved - left;
+  const { all, elsewhere, saved, cards, debt, cardCost, savingsEarn, payments, pay, left, interestSaved } = cardPayoff(others);
   const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
   const cardMonthly = sumBy(others.flatMap((o) => o.tx), (t) => months.includes(t.month)) / months.length;
   const pctText = (v: number) => `${String(v).replace('.', ',')}\u00A0%`;
@@ -852,29 +859,34 @@ export function summary(p: Persona): Summary {
     `Paljonko käytin ${FORMS[grew.label]?.illative ?? grew.label.toLowerCase()} ${inMonth}?`,
     'Miten kulutukseni on muuttunut vuodessa?',
   ];
-  // The coach speaks first: the surprise that hurt most, and the plan that would have prevented it.
+  // The coach speaks first, as one piece of advice: what to do, and what it is worth.
   const fund = replayFund(p);
   let insight: Insight | undefined;
   if (fund.worst && fund.worst.actualDays > 0) {
+    const ofMonthWorst = `${MONTH_NAMES[monthIndex(fund.worst.date.slice(0, 7))]}n`; // heinäkuun
     insight = {
-      text: `${dayLabel(fund.worst.date)} tullut ${formatThousands(round(fund.worst.amount))} euron yllätysmeno (${fund.worst.label.toLowerCase()}) vei tilisi ${fund.worst.actualDays} päiväksi miinukselle.`,
+      kind: 'surprise',
+      title: 'Varaudu yllätysmenoihin',
+      text:
+        fund.worst.fundDays === 0
+          ? `${formatThousands(fund.monthly)} € joka palkkapäivä olisi estänyt ${ofMonthWorst} ${fund.worst.actualDays} miinuspäivää.`
+          : `${formatThousands(fund.monthly)} € joka palkkapäivä olisi vähentänyt ${ofMonthWorst} miinuspäiviä ${fund.worst.actualDays}:stä ${fund.worst.fundDays}:een.`,
       question: 'Miten varaudun yllättäviin menoihin?',
-      action: 'Katso, miten sen voi estää',
+      action: 'Katso, miten se toimii',
     };
   }
   const others = p.others ?? [];
   if (others.length) {
-    const all = others.flatMap((o) => o.accounts);
-    const saved = all.filter((a) => a.kind === 'savings').reduce((s, a) => s + a.balance, 0);
-    const cards = all.filter((a) => a.kind === 'credit' && a.balance < 0);
-    const debt = cards.reduce((s, a) => s - a.balance, 0);
-    const where = others.length === 1 ? others[0].inessive : 'Muissa pankeissasi';
-    if (saved > 0 && debt > 0) {
-      const dearest = Math.max(...cards.map((a) => a.ratePct ?? 0));
+    const payoff = cardPayoff(others);
+    if (payoff.pay > 0) {
+      const several = payoff.cards.length > 1;
+      const all = payoff.left > 0 || payoff.pay >= payoff.debt;
       insight = {
-        text: `${where} on ${formatThousands(saved)} euroa säästöjä, mutta ${cards.length > 1 ? 'luottokorteilla' : 'luottokortilla'} ${formatThousands(debt)} euroa velkaa ${cards.length > 1 ? 'jopa ' : ''}${String(dearest).replace('.', ',')}\u00A0%:n korolla.`,
+        kind: 'banks',
+        title: all ? `Maksa ${several ? 'luottokortit' : 'luottokortti'} säästöillä` : `Lyhennä ${several ? 'luottokortteja' : 'luottokorttia'} säästöillä`,
+        text: `Säästät noin ${formatThousands(round(payoff.interestSaved))} € korkoja vuodessa${payoff.left > 0 ? `, ja puskuria jää ${formatThousands(round(payoff.left))} €` : ''}.`,
         question: 'Kannattaako maksaa luottokortti säästöillä?',
-        action: 'Katso, kumpi kannattaa',
+        action: 'Katso laskelma',
       };
     } else {
       // No card debt there: what the other cards add to everyday spending.
@@ -882,7 +894,9 @@ export function summary(p: Persona): Summary {
       const cardMonthly = sumBy(others.flatMap((o) => o.tx), (t) => months.includes(t.month)) / months.length;
       const alone = spendingProfile({ ...p, others: undefined, spendTx: undefined }).facts as { everyday_share_of_spending_pct: number };
       insight = {
-        text: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} menee noin ${formatThousands(Math.round(cardMonthly / 10) * 10)} euroa kuussa, joten vapaavalintaisiin menoihin menee ${profile.everyday_share_of_spending_pct}\u00A0% kulutuksestasi eikä ${alone.everyday_share_of_spending_pct}\u00A0%.`,
+        kind: 'banks',
+        title: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} ${formatThousands(Math.round(cardMonthly / 10) * 10)} € kuussa`,
+        text: `Vapaavalintaisten menojen osuus nousee ${alone.everyday_share_of_spending_pct}\u00A0%:sta ${profile.everyday_share_of_spending_pct}\u00A0%:iin.`,
         question: 'Millainen kuluttaja olen?',
         action: 'Katso koko kuva',
       };

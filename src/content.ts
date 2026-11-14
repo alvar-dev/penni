@@ -49,6 +49,8 @@ export const strings = {
   menuOpen: 'Avaa valikko',
   menuClose: 'Sulje valikko',
   newChat: 'Uusi keskustelu',
+  /** Above the coach's own observation on the start screen. */
+  coachLabel: 'Valmentajan huomio',
   historyTitle: 'Keskustelut',
   historyEmpty: 'Aiemmat keskustelusi näkyvät täällä.',
   noAnswer: 'Ei vastausta',

@@ -865,12 +865,7 @@ function Screen() {
                           {fill(strings.planHome, { amount: plan.monthly, date: summary.plan.nextPayday })}
                         </Text>
                       </View>
-                    ) : summary?.insight ? (
-                      <Pressable onPress={() => send(summary.insight!.question)} accessibilityRole="button" style={styles.insight}>
-                        <Text style={styles.insightText}>{summary.insight.text}</Text>
-                        <Text style={styles.insightAction}>{summary.insight.action} ›</Text>
-                      </Pressable>
-                    ) : (
+                    ) : summary?.insight ? null : (
                       <Text style={styles.hint}>{strings.heroHint}</Text>
                     )}
                   </Animated.View>
@@ -879,6 +874,21 @@ function Screen() {
 
               {mode === 'hero' ? (
                 <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(150)} style={styles.overview}>
+                  {/* The coach's own observation, as one piece of advice (hidden once the plan it suggests is on). */}
+                  {summary?.insight && !(plan && summary.insight.kind === 'surprise') ? (
+                    <Pressable
+                      onPress={() => send(summary.insight!.question)}
+                      accessibilityRole="button"
+                      accessibilityHint={summary.insight.action}
+                      style={({ pressed }) => [styles.coach, pressed && styles.coachPressed]}>
+                      <View style={styles.flex}>
+                        <Text style={styles.coachLabel}>{strings.coachLabel}</Text>
+                        <Text style={styles.coachTitle}>{summary.insight.title}</Text>
+                        <Text style={styles.coachText}>{summary.insight.text}</Text>
+                      </View>
+                      <Text style={styles.coachChevron}>›</Text>
+                    </Pressable>
+                  ) : null}
                   <HomeOverview summary={summary} fallback={suggestions} onAsk={send} />
                 </Animated.View>
               ) : null}
@@ -1005,9 +1015,22 @@ const styles = StyleSheet.create({
   planOn: { flexShrink: 1, backgroundColor: colors.greenTint, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10 },
   planOnText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700 },
   planStop: { fontSize: 14, color: colors.textSecondary },
-  insight: { alignItems: 'center', marginTop: 6, paddingHorizontal: 8 },
-  insightText: { ...type.label, fontWeight: '400', color: colors.textSecondary, textAlign: 'center' },
-  insightAction: { ...type.label, fontWeight: '600', color: colors.green700, marginTop: 4 },
+  coach: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 12,
+    paddingVertical: 14,
+    paddingLeft: 16,
+    paddingRight: 12,
+    borderRadius: 18,
+    backgroundColor: colors.greenTint,
+  },
+  coachPressed: { backgroundColor: colors.green100 },
+  coachLabel: { ...type.caption, fontWeight: '600', color: colors.green700 },
+  coachTitle: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: colors.text, marginTop: 2 },
+  coachText: { fontSize: 14, lineHeight: 19, color: colors.textSecondary, marginTop: 2 },
+  coachChevron: { fontSize: 24, lineHeight: 28, color: colors.green700, marginLeft: 10 },
   planPill: { marginTop: 8, backgroundColor: colors.greenTint, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 7 },
   planPillText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700, textAlign: 'center' },
   thinking: { ...type.label, color: colors.textTertiary, paddingHorizontal: 2 },
