@@ -178,12 +178,12 @@ export function LegendItem({ color, label, dashed, swatch }: { color: string; la
   );
 }
 
-/** Axis labels stay short: 500 €, 2 t€, 7,5 t€. */
+/** Axis labels stay short: €500, €2k, €7,5k (English) or 500 €, 2 t€, 7,5 t€. */
 export function formatAxis(v: number): string {
   if (Math.abs(v) < 1000) return formatEur(v, 0);
   const k = Math.abs(v) / 1000;
   const n = Number.isInteger(k) ? k.toFixed(0) : k.toFixed(1);
-  return EN ? `${v < 0 ? '\u2212' : ''}€${n}k` : `${v < 0 ? '\u2212' : ''}${n.replace('.', ',')}\u00A0t€`;
+  return EN ? `${v < 0 ? '\u2212' : ''}€${n.replace('.', ',')}k` : `${v < 0 ? '\u2212' : ''}${n.replace('.', ',')}\u00A0t€`;
 }
 
 export const axisText = { fontSize: 11, lineHeight: 14, color: colors.textTertiary, fontVariant: ['tabular-nums' as const] };

@@ -112,7 +112,7 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
                 <Tooltip
                   x={active.x}
                   width={width}
-                  title={`${points[picked].title}${points[picked].projected ? ' · arvio' : ''}`}
+                  title={`${points[picked].title}${points[picked].projected ? tr(' · arvio', ' · forecast') : ''}`}
                   value={formatEur(points[picked].balance, 0)}
                 />
               ) : null}

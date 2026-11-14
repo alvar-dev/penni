@@ -15,7 +15,7 @@ const STROKE = 16;
 const GAP_DEG = 3;
 
 /** The three baskets as a ring, and the everyday share against people of the same age. */
-export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = 'mediaani' }: Props) {
+export function BasketsChart({ parts, share, peerShare, peerLabel, peerNote = tr('mediaani', 'median') }: Props) {
   const reveal = useReveal(0, 1100);
   const total = parts.reduce((s, p) => s + Math.max(0, p.value), 0) || 1;
 
@@ -86,7 +86,7 @@ function CompareBar({ label, value, max, color, reveal, note }: { label: string;
           {label}
           {note ? <Text style={styles.compareNote}> · {note}</Text> : null}
         </Text>
-        <Text style={styles.compareValue}>{Math.round(value * 100)} %</Text>
+        <Text style={styles.compareValue}>{formatPercent(Math.round(value * 100))}</Text>
       </View>
       <View style={styles.track}>
         <Animated.View style={[styles.fill, { backgroundColor: color }, fill]} />

@@ -714,7 +714,7 @@ function allAccounts(p: Persona): ToolResult {
   const { all, elsewhere, saved, cards, debt, cardCost, savingsEarn, payments, pay, left, interestSaved } = cardPayoff(others);
   const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
   const cardMonthly = sumBy(others.flatMap((o) => o.tx), (t) => months.includes(t.month)) / months.length;
-  const pctText = (v: number) => (EN ? `${v}%` : `${String(v).replace('.', ',')}\u00A0%`);
+  const pctText = (v: number) => (EN ? `${String(v).replace('.', ',')}%` : `${String(v).replace('.', ',')}\u00A0%`);
   const net = balance + elsewhere + saved - debt;
 
   return {

@@ -27,13 +27,11 @@ export type Comparison = { text: string; source: string };
 
 const stats = JSON.parse(readFileSync(new URL('./data/finland.json', import.meta.url), 'utf8')) as Stats;
 
-/** 1 234 / 1,6 (Finnish) or 1,234 / 1.6 (English). */
+/** 1 234 / 1,6 (Finnish) or 1,234 / 1,6 (English: decimals take a comma too, whole units from 1,000 up). */
 function num(v: number, decimals = 0): string {
-  const [int, frac] = Math.abs(v).toFixed(decimals).split('.');
+  const [int, frac] = Math.abs(v).toFixed(EN && Math.abs(v) >= 1000 ? 0 : decimals).split('.');
   const sign = v < 0 ? '−' : '';
-  return EN
-    ? `${sign}${int.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${frac ? `.${frac}` : ''}`
-    : `${sign}${int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}${frac ? `,${frac}` : ''}`;
+  return `${sign}${int.replace(/\B(?=(\d{3})+(?!\d))/g, EN ? ',' : ' ')}${frac ? `,${frac}` : ''}`;
 }
 const eur = (v: number, decimals = 0) => (EN ? `€${num(decimals ? v : Math.round(v), decimals)}` : `${num(decimals ? v : Math.round(v), decimals)} €`);
 const pct = (v: number) => (EN ? `${num(v, Number.isInteger(v) ? 0 : 1)}%` : `${num(v, Number.isInteger(v) ? 0 : 1)} %`);

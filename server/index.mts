@@ -29,7 +29,7 @@ import { speakable } from '../src/shared/speakable.ts';
 import { personas, summary, TODAY, withOtherBanks, type Persona } from './engine.mts';
 import type { ToolCall, Viz } from '../src/shared/api.ts';
 import { askModel, MODEL, tidy } from './llm.mts';
-import { EN, LANG } from './lang.mts';
+import { EN, LANG, tr } from './lang.mts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? '0.0.0.0';
@@ -237,7 +237,7 @@ async function prewarmFor(personaId: string, banks: string[]) {
       ...s.suggestions,
       ...(s.insight ? [s.insight.question] : []),
       // The question that leads to (and, once connected, shows) the multi-bank view.
-      'Paljonko minulla on rahaa yhteensä?',
+      tr('Paljonko minulla on rahaa yhteensä?', 'How much money do I have in total?'),
     ]),
   ];
   for (const question of questions) {

@@ -2,7 +2,7 @@
 export function speakable(text: string, en = true): string {
   const euros = en ? 'euros' : 'euroa';
   const percent = en ? 'percent' : 'prosenttia';
-  return text
+  return (en ? text.replace(/(\d),(\d{1,2})(?!\d)/g, '$1.$2') : text)
     .replace(/−/g, en ? 'minus ' : 'miinus ')
     .replace(/€\s?(\d[\d,. ]*\d|\d)/g, (_, n: string) => `${n} ${euros}`)
     .replace(/(\d)[\s ]?€/g, `$1 ${euros}`)

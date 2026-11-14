@@ -10,7 +10,7 @@
 import type { HistoryItem, ToolCall, Viz } from '../src/shared/api.ts';
 import { sourcesUsed, type Comparison } from './finland.mts';
 import { runTool, summary, TODAY, TOOLS, type Persona } from './engine.mts';
-import { tr } from './lang.mts';
+import { EN, tr } from './lang.mts';
 
 const API_URL = 'https://api.featherless.ai/v1/chat/completions';
 const KEY = process.env.FEATHERLESS_API_KEY ?? '';
@@ -109,6 +109,9 @@ async function complete(body: Record<string, unknown>): Promise<Completion> {
  */
 export function tidy(text: string): string {
   return text
+    // Decimals take a comma, like everywhere in the app: 15.9% -> 15,9%, €12.50 -> €12,50
+    // (English only: Finnish text has decimal commas already, and dates like 15.9.).
+    .replace(/(\d)\.(\d{1,2})(?!\d)/g, EN ? '$1,$2' : '$1.$2')
     .replace(/\s+[—–-]\s+/g, ', ')
     .replace(/\s*—\s*/g, ', ')
     .replace(/,\s*,/g, ',')

@@ -80,7 +80,7 @@ export function ProjectionChart({ nowMonthly, afterMonthly, changeLabel, yearly 
               ))}
               {[0, 3, 6, 9, 12].map((m) => (
                 <Text key={m} style={[axisText, styles.xLabel, { left: g.x(m) - 20 }]}>
-                  {m === 0 ? 'nyt' : `${m} kk`}
+                  {m === 0 ? tr('nyt', 'now') : tr(`${m} kk`, `${m} mo`)}
                 </Text>
               ))}
               <Tooltip
@@ -96,8 +96,8 @@ export function ProjectionChart({ nowMonthly, afterMonthly, changeLabel, yearly 
         )}
       </View>
       <View style={styles.legend}>
-        <LegendItem color={NOW} label={`Nyt ${formatEur(nowMonthly, 0)}/kk`} />
-        <LegendItem color={colors.green700} label={`${changeLabel}: ${formatEur(afterMonthly, 0)}/kk`} />
+        <LegendItem color={NOW} label={`${tr('Nyt', 'Now')} ${formatEur(nowMonthly, 0)}${tr('/kk', '/mo')}`} />
+        <LegendItem color={colors.green700} label={`${changeLabel}: ${formatEur(afterMonthly, 0)}${tr('/kk', '/mo')}`} />
       </View>
     </View>
   );

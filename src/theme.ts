@@ -51,18 +51,20 @@ export const type = {
   caption: { fontSize: 13, lineHeight: 18, fontWeight: '400' as const },
 };
 
-/** 1234.5 -> "1 234,50" (no sign; non-breaking spaces). */
+/**
+ * No sign. Decimals always take a comma. English: 1,234 and 12,50 (from 1,000
+ * up in whole units, so a number never has two commas); Finnish: 1 234,50.
+ */
 export function formatNumber(value: number, decimals = 2): string {
-  const [whole, fraction] = Math.abs(value).toFixed(decimals).split('.');
-  // English: 1,234.50; Finnish: 1 234,50.
-  return EN
-    ? `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${fraction ? '.' + fraction : ''}`
-    : `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')}${fraction ? ',' + fraction : ''}`;
+  const places = EN && Math.abs(value) >= 1000 ? 0 : decimals;
+  const [whole, fraction] = Math.abs(value).toFixed(places).split('.');
+  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, EN ? ',' : '\u00A0')}${fraction ? ',' + fraction : ''}`;
 }
 
-/** 34 -> "34%" (English) or "34 %" (Finnish). */
+/** 34 -> "34%", 1.25 -> "1,25%" (English) or "34 %" (Finnish). */
 export function formatPercent(value: number): string {
-  return EN ? `${value}%` : `${value}\u00A0%`;
+  const n = String(value).replace('.', ',');
+  return EN ? `${n}%` : `${n}\u00A0%`;
 }
 
 /** 1234.5 -> "1 234,50 €", -67 -> "−67 €" (Finnish formatting). */
