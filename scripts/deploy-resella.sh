@@ -18,7 +18,7 @@ trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/server/data" "$STAGE/src/shared"
 cp server/*.mts "$STAGE/server/"
 cp server/data/*.json "$STAGE/server/data/"
-cp src/shared/api.ts src/shared/banks.ts src/shared/package.json "$STAGE/src/shared/"
+cp src/shared/*.ts src/shared/package.json "$STAGE/src/shared/"
 rsync -a "$STAGE/" "$HOST:valmentaja/"
 
 if [ -f server/.cache/answers.json ]; then
