@@ -25,7 +25,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "The microphone lets you ask about your money by voice."
+          "microphonePermission": "Mikrofonia käytetään, jotta voit kysyä puhumalla."
         }
       ]
     ],

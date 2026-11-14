@@ -43,6 +43,6 @@ const styles = StyleSheet.create({
   },
   label: { ...type.caption, color: colors.textSecondary },
   figure: { ...type.hero, color: colors.green700, marginTop: 2, marginBottom: 6 },
-  figureUnit: { fontSize: 30, fontWeight: '600', letterSpacing: 0 },
+  figureUnit: { fontSize: 28, fontWeight: '600', letterSpacing: 0 },
   example: { ...type.caption, fontSize: 12, color: colors.textTertiary, marginTop: 14 },
 });

@@ -52,10 +52,10 @@ export function groupByDay(conversations: Conversation[], now = Date.now()): { t
   const today = startOfDay(now);
   const day = 86_400_000;
   const groups: { title: string; items: Conversation[] }[] = [
-    { title: 'Today', items: [] },
-    { title: 'Yesterday', items: [] },
-    { title: 'Previous 7 days', items: [] },
-    { title: 'Earlier', items: [] },
+    { title: 'Tänään', items: [] },
+    { title: 'Eilen', items: [] },
+    { title: 'Edelliset 7 päivää', items: [] },
+    { title: 'Aiemmin', items: [] },
   ];
   for (const c of [...conversations].sort((a, b) => b.updatedAt - a.updatedAt)) {
     const at = startOfDay(c.updatedAt);
@@ -65,11 +65,9 @@ export function groupByDay(conversations: Conversation[], now = Date.now()): { t
   return groups.filter((g) => g.items.length > 0);
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/** 15:46 for today, otherwise Nov 12. */
+/** 15.46 for today, otherwise 12.11. */
 export function shortTime(t: number, now = Date.now()): string {
   const d = new Date(t);
   const sameDay = new Date(now).toDateString() === d.toDateString();
-  return sameDay ? `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}` : `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  return sameDay ? `${d.getHours()}.${String(d.getMinutes()).padStart(2, '0')}` : `${d.getDate()}.${d.getMonth() + 1}.`;
 }

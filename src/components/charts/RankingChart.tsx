@@ -8,9 +8,9 @@ import { LegendItem, useReveal } from './common';
 type Row = { label: string; value: number; basket: Basket };
 
 const BASKET_LABELS: Record<Basket, string> = {
-  regular: 'Essentials, regular',
-  irregular: 'Essentials, irregular',
-  everyday: 'Slips through',
+  regular: 'Pakolliset, säännölliset',
+  irregular: 'Pakolliset, yllättävät',
+  everyday: 'Sormien läpi',
 };
 
 /** Spending by category, largest first, each bar in its basket's colour. */
@@ -48,7 +48,7 @@ function RankRow({ row, max, total, reveal, order }: { row: Row; max: number; to
         <Text style={styles.name} numberOfLines={1}>
           {row.label}
         </Text>
-        <Text style={styles.share}>{Math.round((row.value / total) * 100)}%</Text>
+        <Text style={styles.share}>{Math.round((row.value / total) * 100)}\u00A0%</Text>
         <Text style={styles.value}>{formatEur(row.value, 0)}</Text>
       </View>
       <View style={styles.track}>

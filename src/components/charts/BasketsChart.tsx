@@ -31,7 +31,7 @@ export function BasketsChart({ parts, share, peerShare, peerLabel }: Props) {
     });
   }, [parts, total]);
 
-  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  const pct = (v: number) => `${Math.round(v * 100)}\u00A0%`;
 
   return (
     <View>
@@ -44,7 +44,7 @@ export function BasketsChart({ parts, share, peerShare, peerLabel }: Props) {
           </Canvas>
           <View style={styles.center} pointerEvents="none">
             <Text style={styles.centerValue}>{pct(share)}</Text>
-            <Text style={styles.centerLabel}>slips through</Text>
+            <Text style={styles.centerLabel}>sormien läpi</Text>
           </View>
         </View>
 
@@ -63,9 +63,9 @@ export function BasketsChart({ parts, share, peerShare, peerLabel }: Props) {
         </View>
       </View>
 
-      <Text style={styles.compareTitle}>Share that slips through</Text>
-      <CompareBar label="You" value={share} max={Math.max(share, peerShare, 0.01)} color={colors.green700} reveal={reveal} />
-      <CompareBar label={peerLabel} value={peerShare} max={Math.max(share, peerShare, 0.01)} color="#C7C7C7" reveal={reveal} note="median" />
+      <Text style={styles.compareTitle}>Sormien läpi menevä osuus</Text>
+      <CompareBar label="Sinä" value={share} max={Math.max(share, peerShare, 0.01)} color={colors.green700} reveal={reveal} />
+      <CompareBar label={peerLabel} value={peerShare} max={Math.max(share, peerShare, 0.01)} color="#C7C7C7" reveal={reveal} note="mediaani" />
     </View>
   );
 }
@@ -85,7 +85,7 @@ function CompareBar({ label, value, max, color, reveal, note }: { label: string;
           {label}
           {note ? <Text style={styles.compareNote}> · {note}</Text> : null}
         </Text>
-        <Text style={styles.compareValue}>{Math.round(value * 100)}%</Text>
+        <Text style={styles.compareValue}>{Math.round(value * 100)}\u00A0%</Text>
       </View>
       <View style={styles.track}>
         <Animated.View style={[styles.fill, { backgroundColor: color }, fill]} />

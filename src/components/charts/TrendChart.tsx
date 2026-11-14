@@ -72,7 +72,7 @@ export function TrendChart({ points, average }: { points: Point[]; average?: num
               </Text>
             ))}
             {average !== undefined ? (
-              <Text style={[axisText, styles.avgLabel, { top: geometry.y(average) - 16 }]}>avg {formatEur(average, average < 10 ? 2 : 0)}</Text>
+              <Text style={[axisText, styles.avgLabel, { top: geometry.y(average) - 16 }]}>ka. {formatEur(average, average < 10 ? 2 : 0)}</Text>
             ) : null}
             {points.map((p, i) =>
               i % step === (points.length - 1) % step ? (

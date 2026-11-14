@@ -64,7 +64,7 @@ export function ReplayChart({ points, event, overdrawnDays }: Props) {
       <View
         onLayout={onLayout}
         accessible
-        accessibilityLabel={`After ${event.label}: ${overdrawnDays.actual} days overdrawn as it went, ${overdrawnDays.withFund} with a surprise fund`}>
+        accessibilityLabel={`Menon ${event.label} jälkeen ${overdrawnDays.actual} päivää miinuksella, yllätysrahaston kanssa ${overdrawnDays.withFund}`}>
         {width > 0 ? (
           <GestureDetector gesture={scrub}>
             <View style={{ height: HEIGHT }}>
@@ -127,19 +127,19 @@ export function ReplayChart({ points, event, overdrawnDays }: Props) {
       </View>
 
       <View style={styles.legend}>
-        <LegendItem color={AS_IT_WENT} label="As it went" />
-        <LegendItem color={colors.green700} label="With a surprise fund" />
+        <LegendItem color={AS_IT_WENT} label="Toteutunut" />
+        <LegendItem color={colors.green700} label="Yllätysrahaston kanssa" />
       </View>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
           <Text style={[styles.statValue, overdrawnDays.actual > 0 && styles.statBad]}>{overdrawnDays.actual}</Text>
-          <Text style={styles.statLabel}>days overdrawn in{'\n'}the month after</Text>
+          <Text style={styles.statLabel}>päivää miinuksella{'\n'}kuukauden aikana</Text>
         </View>
         <Text style={styles.statArrow}>→</Text>
         <View style={styles.stat}>
           <Text style={[styles.statValue, styles.statGood]}>{overdrawnDays.withFund}</Text>
-          <Text style={styles.statLabel}>with a surprise{'\n'}fund</Text>
+          <Text style={styles.statLabel}>yllätysrahaston{'\n'}kanssa</Text>
         </View>
       </View>
     </View>

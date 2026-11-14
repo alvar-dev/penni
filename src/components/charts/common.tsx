@@ -135,8 +135,8 @@ export function CountUp({ value, decimals = 0, style, unitStyle }: { value: numb
   return (
     <Text style={style} accessibilityLabel={final}>
       {value < 0 ? '\u2212' : ''}
-      <Text style={unitStyle}>€</Text>
       {formatNumber(shown, decimals)}
+      <Text style={unitStyle}>{'\u00A0€'}</Text>
     </Text>
   );
 }
@@ -177,11 +177,11 @@ export function LegendItem({ color, label, dashed, swatch }: { color: string; la
   );
 }
 
-/** Axis labels stay short: €500, €2k, €7.5k. */
+/** Axis labels stay short: 500 €, 2 t€, 7,5 t€. */
 export function formatAxis(v: number): string {
   if (Math.abs(v) < 1000) return formatEur(v, 0);
   const k = Math.abs(v) / 1000;
-  return `${v < 0 ? '\u2212' : ''}€${Number.isInteger(k) ? k.toFixed(0) : k.toFixed(1)}k`;
+  return `${v < 0 ? '\u2212' : ''}${(Number.isInteger(k) ? k.toFixed(0) : k.toFixed(1)).replace('.', ',')}\u00A0t€`;
 }
 
 export const axisText = { fontSize: 11, lineHeight: 14, color: colors.textTertiary, fontVariant: ['tabular-nums' as const] };

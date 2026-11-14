@@ -69,7 +69,7 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
 
   return (
     <View>
-      <View onLayout={onLayout} accessible accessibilityLabel={`Balance now ${formatEur(points[todayIndex].balance, 0)}, expected on payday ${formatEur(value, 0)}`}>
+      <View onLayout={onLayout} accessible accessibilityLabel={`Saldo nyt ${formatEur(points[todayIndex].balance, 0)}, arvio palkkapäivänä ${formatEur(value, 0)}`}>
         {width > 0 ? (
           <GestureDetector gesture={scrub}>
             <View style={{ height: HEIGHT }}>
@@ -105,13 +105,13 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
                 </Text>
               ))}
               <Text style={[axisText, styles.xLabel, { left: LEFT }]}>{points[0].label}</Text>
-              <Text style={[axisText, styles.xLabel, styles.today, { left: g.pts[todayIndex].x - 30 }]}>today</Text>
+              <Text style={[axisText, styles.xLabel, styles.today, { left: g.pts[todayIndex].x - 30 }]}>tänään</Text>
               <Text style={[axisText, styles.xLabel, styles.payday]}>{paydayLabel}</Text>
               {active ? (
                 <Tooltip
                   x={active.x}
                   width={width}
-                  title={`${points[picked].title}${points[picked].projected ? ' · expected' : ''}`}
+                  title={`${points[picked].title}${points[picked].projected ? ' · arvio' : ''}`}
                   value={formatEur(points[picked].balance, 0)}
                 />
               ) : null}
@@ -123,8 +123,8 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
       </View>
 
       <View style={styles.legend}>
-        <LegendItem color={colors.green700} label="Balance" />
-        <LegendItem color={aheadColor} label="Expected if you pay only essentials" dashed />
+        <LegendItem color={colors.green700} label="Saldo" />
+        <LegendItem color={aheadColor} label="Arvio, jos maksat vain pakolliset" dashed />
       </View>
 
       <View style={styles.rows}>
@@ -139,7 +139,7 @@ export function RunwayChart({ points, value, perDay, days, paydayLabel, parts }:
       {value > 0 ? (
         <View style={styles.pill}>
           <Text style={styles.pillText}>
-            ≈ {formatEur(perDay, 0)} a day · {days} {days === 1 ? 'day' : 'days'} to payday
+            ≈ {formatEur(perDay, 0)} päivässä · {days} {days === 1 ? 'päivä' : 'päivää'} palkkaan
           </Text>
         </View>
       ) : null}

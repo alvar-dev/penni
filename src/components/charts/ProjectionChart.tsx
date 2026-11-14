@@ -50,7 +50,7 @@ export function ProjectionChart({ nowMonthly, afterMonthly, changeLabel, yearly 
 
   return (
     <View>
-      <View onLayout={onLayout} accessible accessibilityLabel={`In a year at today's pace ${formatEur(nowMonthly * 12, 0)}, after the change ${formatEur(afterMonthly * 12, 0)}`}>
+      <View onLayout={onLayout} accessible accessibilityLabel={`Vuodessa nykyisellä tahdilla ${formatEur(nowMonthly * 12, 0)}, muutoksen jälkeen ${formatEur(afterMonthly * 12, 0)}`}>
         {width > 0 ? (
           <GestureDetector gesture={scrub}>
             <View style={{ height: HEIGHT }}>
@@ -79,14 +79,14 @@ export function ProjectionChart({ nowMonthly, afterMonthly, changeLabel, yearly 
               ))}
               {[0, 3, 6, 9, 12].map((m) => (
                 <Text key={m} style={[axisText, styles.xLabel, { left: g.x(m) - 20 }]}>
-                  {m === 0 ? 'now' : `${m} mo`}
+                  {m === 0 ? 'nyt' : `${m} kk`}
                 </Text>
               ))}
               <Tooltip
                 x={g.now[picked].x}
                 width={width}
-                title={picked === 0 ? 'Now' : `In ${picked} ${picked === 1 ? 'month' : 'months'}`}
-                value={`${saving ? 'saved' : 'extra'} ${formatEur(difference, 0)}`}
+                title={picked === 0 ? 'Nyt' : `${picked} kk päästä`}
+                value={`${saving ? 'säästö' : 'lisäkulu'} ${formatEur(difference, 0)}`}
               />
             </View>
           </GestureDetector>
@@ -95,8 +95,8 @@ export function ProjectionChart({ nowMonthly, afterMonthly, changeLabel, yearly 
         )}
       </View>
       <View style={styles.legend}>
-        <LegendItem color={NOW} label={`Now ${formatEur(nowMonthly, 0)}/mo`} />
-        <LegendItem color={colors.green700} label={`${changeLabel}: ${formatEur(afterMonthly, 0)}/mo`} />
+        <LegendItem color={NOW} label={`Nyt ${formatEur(nowMonthly, 0)}/kk`} />
+        <LegendItem color={colors.green700} label={`${changeLabel}: ${formatEur(afterMonthly, 0)}/kk`} />
       </View>
     </View>
   );

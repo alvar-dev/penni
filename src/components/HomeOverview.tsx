@@ -45,7 +45,7 @@ export function HomeOverview({ summary, fallback, onAsk }: Props) {
 }
 
 function Tile({ tile, onPress }: { tile: SummaryTile; onPress: () => void }) {
-  const value = tile.unit === '%' ? `${tile.value}%` : formatEur(tile.value, 0);
+  const value = tile.unit === '%' ? `${tile.value}\u00A0%` : formatEur(tile.value, 0);
   return (
     <Pressable
       onPress={onPress}

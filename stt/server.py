@@ -1,4 +1,4 @@
-"""Local speech-to-text for the app (English): Whisper large-v3-turbo on Apple Silicon (MLX).
+"""Local speech-to-text for the app (Finnish): Whisper large-v3-turbo on Apple Silicon (MLX).
 
 Started by the API server (server/index.mts); it is not meant to be reached
 from the network, so it listens on 127.0.0.1 only.
@@ -22,12 +22,12 @@ import mlx_whisper
 import numpy as np
 
 MODEL = os.environ.get('STT_MODEL', 'mlx-community/whisper-large-v3-turbo')
-LANGUAGE = os.environ.get('STT_LANGUAGE', 'en')
+LANGUAGE = os.environ.get('STT_LANGUAGE', 'fi')
 PORT = int(os.environ.get('STT_PORT', '8788'))
 MAX_BYTES = 16000 * 2 * 60  # one minute of 16 kHz audio
 
 # Whisper's well-known inventions on near-silent input (cf. ~/Programming/jari).
-JUNK = {'', '.', '..', '...', 'you', 'you.', 'thank you.', 'thank you!', 'thanks for watching!', 'thank you for watching.', 'bye.'}
+JUNK = {'', '.', '..', '...', 'kiitos', 'kiitos.', 'kiitos!', 'hyvää', 'tekstitys yle', 'yle', 'kiitos katsomisesta.', 'kiitos kun katsoit.'}
 
 lock = Lock()  # one transcription at a time; MLX work is not worth interleaving
 
