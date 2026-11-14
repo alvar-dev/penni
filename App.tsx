@@ -59,6 +59,9 @@ const DOCK_SHEET = INPUT_ROW;
 /** The orb's place at the right end of the input field. */
 const SLOT = 40;
 const FIELD_PAD_RIGHT = 4;
+const FIELD_HEIGHT = 48;
+/** The field grows to five lines of 22 pt text, then scrolls. */
+const INPUT_MAX = SLOT + 4 * 22;
 const FADE = 36;
 const HEADER = 52;
 /** How far below the header the conversation fades out as it scrolls up. */
@@ -142,6 +145,10 @@ function Screen() {
   const orbY = useSharedValue(0);
   const expand = useSharedValue(1);
   const areaHeight = useSharedValue(0);
+  // How much taller than one line the input field has grown; long questions wrap upwards.
+  const [inputExtra, setInputExtra] = useState(0);
+  const [inputHeight, setInputHeight] = useState(SLOT);
+  const inputExtraSV = useSharedValue(0);
   const drawer = useSharedValue(0);
 
   // Set below; the voice hook calls it when it hears the end of a question.
@@ -186,8 +193,8 @@ function Screen() {
     expand.set(withTiming(expanded ? 1 : 0, { duration: 420, easing: Easing.bezier(0.2, 0.8, 0.2, 1) }));
     // Docked: from the middle of the (now zero-height) stage into the field's right end.
     orbX.set(withSpring(docked ? width / 2 - (16 + FIELD_PAD_RIGHT + SLOT / 2) : 0, ORB_SPRING));
-    orbY.set(withSpring(docked ? INPUT_ROW / 2 : 0, ORB_SPRING));
-  }, [mode, expanded, docked, maxScale, width, scale, expand, orbX, orbY]);
+    orbY.set(withSpring(docked ? INPUT_ROW / 2 + inputExtra : 0, ORB_SPRING));
+  }, [mode, expanded, docked, maxScale, width, scale, expand, orbX, orbY, inputExtra]);
 
   useEffect(() => {
     if (phase === 'thinking' || phase === 'transcribing') {
@@ -553,6 +560,15 @@ function Screen() {
       } else if (name === 'mic') {
         actions.current.onOrbPress();
       } else if (name === 'keyboard') {
+        // ?preview=keyboard&q=... also puts text in the field (to check long questions wrap).
+        const q = url?.match(/[?&]q=([^&]+)/)?.[1]?.replace(/\+/g, ' ');
+        if (q) {
+          try {
+            setDraft(decodeURIComponent(q));
+          } catch {
+            setDraft(q);
+          }
+        }
         inputRef.current?.focus();
       } else if (name === 'reset') {
         // A clean start for a demo: no saved conversations, no plan.
@@ -580,7 +596,7 @@ function Screen() {
   }, [level, waveHistory]);
 
   const sheetStyle = useAnimatedStyle(() => ({
-    height: interpolate(expand.value, [0, 1], [DOCK_SHEET, Math.max(areaHeight.value, DOCK_SHEET)]),
+    height: interpolate(expand.value, [0, 1], [DOCK_SHEET + inputExtraSV.value, Math.max(areaHeight.value, DOCK_SHEET + inputExtraSV.value)]),
   }));
   const orbStyle = useAnimatedStyle(() => ({
     margin: -(ORB_CANVAS * (1 - FOOTPRINT * scale.value)) / 2,
@@ -607,7 +623,7 @@ function Screen() {
             <ScrollView
               ref={listRef}
               style={[StyleSheet.absoluteFill, { top: -(insets.top + HEADER) }]}
-              contentContainerStyle={[styles.list, { paddingTop: insets.top + HEADER + 8 }]}
+              contentContainerStyle={[styles.list, { paddingTop: insets.top + HEADER + 8, paddingBottom: DOCK_SHEET + 32 + inputExtra }]}
               scrollIndicatorInsets={{ top: insets.top + HEADER }}
               // It reaches under the status bar on purpose; iOS must not add its own inset on top.
               contentInsetAdjustmentBehavior="never"
@@ -654,7 +670,13 @@ function Screen() {
 
               {voiceActive && !docked ? null : (
                 <Animated.View entering={FadeIn.duration(250)} style={[styles.inputRow, styles.inputRowPinned]}>
-                  <View style={styles.field}>
+                  <View
+                    style={styles.field}
+                    onLayout={(event) => {
+                      const extra = Math.max(0, Math.round(event.nativeEvent.layout.height - FIELD_HEIGHT));
+                      setInputExtra(extra);
+                      inputExtraSV.set(extra);
+                    }}>
                     {listening ? (
                       <View style={styles.listeningRow} accessibilityLabel={strings.listeningTitle}>
                         <ListeningTime />
@@ -665,17 +687,30 @@ function Screen() {
                         {strings.transcribingInline}
                       </Text>
                     ) : (
-                      <TextInput
-                        ref={inputRef}
-                        style={styles.input}
-                        value={draft}
-                        onChangeText={setDraft}
-                        placeholder={strings.inputPlaceholder}
-                        placeholderTextColor={colors.textTertiary}
-                        returnKeyType="send"
-                        onSubmitEditing={() => send(draft)}
-                        selectionColor={colors.green700}
-                      />
+                      <View style={styles.inputWrap}>
+                        {/* An invisible copy of the text measures how many lines it needs; the text view
+                            itself only reports its size reliably while typing, not when the text is set. */}
+                        <Text
+                          style={[styles.input, styles.inputMeasure]}
+                          onLayout={(e) => setInputHeight(Math.min(INPUT_MAX, Math.max(SLOT, Math.ceil(e.nativeEvent.layout.height))))}
+                          accessibilityElementsHidden
+                          importantForAccessibility="no-hide-descendants">
+                          {draft || ' '}
+                        </Text>
+                        <TextInput
+                          ref={inputRef}
+                          style={[styles.input, { height: inputHeight }]}
+                          value={draft}
+                          onChangeText={setDraft}
+                          placeholder={strings.inputPlaceholder}
+                          placeholderTextColor={colors.textTertiary}
+                          multiline
+                          submitBehavior="blurAndSubmit"
+                          returnKeyType="send"
+                          onSubmitEditing={() => send(draft)}
+                          selectionColor={colors.green700}
+                        />
+                      </View>
                     )}
                     {/* On the start screen the send button is always there; in a conversation the orb holds its place until you type. */}
                     {(draft.trim() || !docked) && !voiceActive ? (
@@ -743,7 +778,7 @@ function Screen() {
                 <Animated.View
                   entering={FadeInDown.springify().damping(18).stiffness(220)}
                   exiting={FadeOut.duration(160)}
-                  style={styles.notice}
+                  style={[styles.notice, { bottom: INPUT_ROW + 10 + inputExtra }]}
                   pointerEvents="box-none"
                   accessibilityLiveRegion="polite">
                   <View style={styles.noticePill}>
@@ -766,7 +801,7 @@ function Screen() {
               ) : null}
 
               {/* The input row itself is drawn earlier (pinned to the bottom) so the orb can sit on top of it. */}
-              <View style={styles.inputSpacer} />
+              <View style={{ height: INPUT_ROW + inputExtra }} />
             </Animated.View>
           </View>
           {/* Drawn after the conversation so it sits above it; the conversation scrolls up underneath and fades out. */}
@@ -877,13 +912,11 @@ const styles = StyleSheet.create({
 
   overview: { paddingBottom: 16 },
 
-  inputSpacer: { height: INPUT_ROW },
   inputRowPinned: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   notice: {
     position: 'absolute',
     left: 20,
     right: 20,
-    bottom: INPUT_ROW + 10,
     alignItems: 'center',
   },
   noticePill: {
@@ -905,20 +938,26 @@ const styles = StyleSheet.create({
   },
   noticeText: { flexShrink: 1, fontSize: 15, lineHeight: 20, color: colors.text },
   noticeAction: { fontSize: 15, lineHeight: 20, fontWeight: '600', color: colors.green700, marginLeft: 14 },
-  inputRow: { height: INPUT_ROW, paddingHorizontal: 16, justifyContent: 'center' },
+  // Pinned to the bottom, so a taller field grows upwards; the button and the orb stay on the last line.
+  inputRow: { minHeight: INPUT_ROW, paddingHorizontal: 16, paddingVertical: (INPUT_ROW - FIELD_HEIGHT) / 2, justifyContent: 'flex-end' },
   field: {
-    height: 48,
+    minHeight: FIELD_HEIGHT,
     borderRadius: 24,
     backgroundColor: colors.surface,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    paddingVertical: (FIELD_HEIGHT - SLOT) / 2,
     paddingLeft: 18,
     paddingRight: FIELD_PAD_RIGHT,
   },
-  input: { flex: 1, fontSize: 17, color: colors.text, paddingVertical: 0 },
+  inputWrap: { flex: 1 },
+  inputMeasure: { position: 'absolute', left: 0, right: 0, top: 0, opacity: 0 },
+  // One line is as tall as the orb slot, so single-line text sits centred.
+  input: { fontSize: 17, lineHeight: 22, color: colors.text, paddingTop: (SLOT - 22) / 2, paddingBottom: (SLOT - 22) / 2 },
   sendButton: {
     width: 36,
     height: 36,
+    marginBottom: (SLOT - 36) / 2,
     borderRadius: 18,
     backgroundColor: colors.green200,
     alignItems: 'center',
