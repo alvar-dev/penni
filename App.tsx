@@ -35,6 +35,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { Drawer, DRAWER_TIMING } from './src/components/Drawer';
 import { NewChatIcon, PersonIcon, SpeakerIcon } from './src/components/Icon';
+import { sentences } from './src/tts/sentences';
 import { KokoroEngine, useSpeaker } from './src/tts/useSpeaker';
 import { Orb, ORB_CANVAS, ORB_DIAMETER } from './src/components/Orb';
 
@@ -754,7 +755,17 @@ function Screen() {
                 ) : (
                   <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
                     {message.viz ? <Viz viz={message.viz} onConnect={canConnectMore ? () => setConnectOpen(true) : undefined} /> : null}
-                    <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
+                    <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>
+                      {speaker.speakingId === message.id
+                        ? // While the coach reads, the sentence being read is highlighted.
+                          sentences(message.text).map((s, i, all) => (
+                            <Text key={i} style={i === speaker.sentence ? styles.reading : undefined}>
+                              {s}
+                              {i < all.length - 1 ? ' ' : ''}
+                            </Text>
+                          ))
+                        : message.text}
+                    </Text>
                     {/* Listen to this answer (also when the voice is muted). */}
                     <Pressable
                       onPress={() => (speaker.speakingId === message.id ? speaker.stop() : speaker.speak(message.id, message.text))}
@@ -1040,6 +1051,7 @@ const styles = StyleSheet.create({
   answer: { marginBottom: 28 },
   answerText: { ...type.body, color: colors.text, marginTop: 14, paddingHorizontal: 2 },
   answerTextAlone: { marginTop: 0 },
+  reading: { backgroundColor: colors.greenTint, color: colors.green900 },
   event: { alignSelf: 'center', backgroundColor: colors.greenTint, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 18 },
   eventText: { fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.green700 },
   answerSource: { ...type.caption, color: colors.textTertiary, marginTop: 8, paddingHorizontal: 2 },

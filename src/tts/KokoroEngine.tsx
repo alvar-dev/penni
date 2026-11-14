@@ -2,8 +2,12 @@ import { Component, useEffect, useRef, type ReactNode } from 'react';
 import { AudioContext, type AudioBufferSourceNode } from 'react-native-audio-api';
 import { KOKORO_SAMPLE_RATE, models, setTelemetryEnabled, useTextToSpeech } from 'react-native-executorch';
 
-/** What the app can ask of the on-device voice. `speak` resolves with the seconds still to play. */
-export type KokoroApi = { speak: (text: string) => Promise<number>; stop: () => void };
+/**
+ * What the app can ask of the on-device voice: `speak` reads the sentences in
+ * turn, calls `onSentence` as each starts to play, and resolves with the
+ * seconds still to play once all are queued.
+ */
+export type KokoroApi = { speak: (sentences: string[], onSentence: (index: number) => void) => Promise<number>; stop: () => void };
 
 // No anonymous download events from the model downloads.
 setTelemetryEnabled(false);
@@ -51,8 +55,11 @@ function Engine({ onApi }: { onApi: (api: KokoroApi | null) => void }) {
     }
     const context = new AudioContext({ sampleRate: KOKORO_SAMPLE_RATE });
     let sources: AudioBufferSourceNode[] = [];
+    let timers: ReturnType<typeof setTimeout>[] = [];
     let turn = 0;
     const silence = () => {
+      timers.forEach(clearTimeout);
+      timers = [];
       for (const source of sources) {
         try {
           source.stop();
@@ -63,33 +70,41 @@ function Engine({ onApi }: { onApi: (api: KokoroApi | null) => void }) {
       sources = [];
     };
     const api: KokoroApi = {
-      async speak(text) {
+      async speak(parts, onSentence) {
         const mine = ++turn;
         synthesizeStop();
         silence();
         let at = context.currentTime + 0.05;
-        // The pipeline may still be finishing a cancelled sentence; try again briefly.
-        for (let attempt = 0; attempt < 5; attempt++) {
-          try {
-            for await (const chunk of synthesize(text, { voice: 'af_heart' })) {
-              if (mine !== turn) return 0;
-              const buffer = context.createBuffer(1, chunk.audio.length, chunk.sampleRate);
-              buffer.copyToChannel(chunk.audio as Float32Array<ArrayBuffer>, 0);
-              const source = context.createBufferSource();
-              source.buffer = buffer;
-              source.connect(context.destination);
-              at = Math.max(at, context.currentTime + 0.02);
-              source.start(at);
-              at += buffer.duration;
-              sources.push(source);
+        for (let index = 0; index < parts.length; index++) {
+          // The pipeline may still be finishing a cancelled sentence; try again briefly.
+          for (let attempt = 0; attempt < 5; attempt++) {
+            try {
+              let first = true;
+              for await (const chunk of synthesize(parts[index], { voice: 'af_heart' })) {
+                if (mine !== turn) return 0;
+                const buffer = context.createBuffer(1, chunk.audio.length, chunk.sampleRate);
+                buffer.copyToChannel(chunk.audio as Float32Array<ArrayBuffer>, 0);
+                const source = context.createBufferSource();
+                source.buffer = buffer;
+                source.connect(context.destination);
+                at = Math.max(at, context.currentTime + 0.02);
+                if (first) {
+                  first = false;
+                  const i = index;
+                  timers.push(setTimeout(() => mine === turn && onSentence(i), Math.max(0, (at - context.currentTime) * 1000)));
+                }
+                source.start(at);
+                at += buffer.duration;
+                sources.push(source);
+              }
+              break;
+            } catch (error) {
+              if (mine !== turn || attempt === 4) throw error;
+              await new Promise((resolve) => setTimeout(resolve, 150));
             }
-            return Math.max(0, at - context.currentTime);
-          } catch (error) {
-            if (mine !== turn || attempt === 4) throw error;
-            await new Promise((resolve) => setTimeout(resolve, 150));
           }
         }
-        return 0;
+        return Math.max(0, at - context.currentTime);
       },
       stop() {
         turn++;

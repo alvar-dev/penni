@@ -386,7 +386,7 @@ function safeToSpend(p: Persona): ToolResult {
       value: free,
       perDay: round(free / days),
       days,
-      paydayLabel: `palkka ${dayLabel(payday)}`,
+      paydayLabel: `${tr('palkka', 'payday')} ${dayLabel(payday)}`,
       points,
       parts: [
         { basket: 'regular', name: tr('Pakolliset tulossa', 'Essentials still to pay'), value: upcoming },
