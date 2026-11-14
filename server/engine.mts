@@ -865,7 +865,7 @@ export function summary(p: Persona): Summary {
       label: topLabel,
       value: round(topValue),
       unit: '€',
-      sub: tr(`${ofMonth} suurin arkimeno`, `Biggest everyday cost, ${ofMonth}`),
+      sub: tr(`${ofMonth} suurin arkimeno`, `Top everyday cost, ${MONTH_SHORT[monthIndex(month)]}`),
       question: tr(
         `Paljonko säästäisin, jos vähentäisin ${FORMS[topLabel]?.partitive ?? topLabel.toLowerCase()} 20 %?`,
         `How much would I save if I cut ${topLabel.toLowerCase()} by 20%?`,
