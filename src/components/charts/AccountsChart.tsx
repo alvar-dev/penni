@@ -38,11 +38,11 @@ export function AccountsChart({ banks, connectable, footnote, onConnect }: Props
         <Pressable
           onPress={onConnect}
           accessibilityRole="button"
-          accessibilityLabel={strings.accountsConnect}
+          accessibilityLabel={banks.length > 1 ? strings.accountsConnectMore : strings.accountsConnect}
           style={({ pressed }) => [styles.connect, pressed && styles.connectPressed]}>
           <Text style={styles.connectPlus}>+</Text>
           <View style={styles.rowBody}>
-            <Text style={styles.connectText}>{strings.accountsConnect}</Text>
+            <Text style={styles.connectText}>{banks.length > 1 ? strings.accountsConnectMore : strings.accountsConnect}</Text>
             <Text style={styles.note}>{strings.accountsConnectNote}</Text>
           </View>
           <Text style={styles.chevron}>›</Text>

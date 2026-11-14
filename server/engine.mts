@@ -12,8 +12,8 @@ import { buildOtherBank, type OtherBank } from './otherbank.mts';
 import { everydayShareFinland, forBuffer, forCategories, forProfile, forSaving, forSpending, forSurprises, type Comparison } from './finland.mts';
 
 type Tx = { date: string; month: string; day: number; category: string; amount: number; balance: number; mcc: string; bank?: 'other' };
-/** `tx` is the S-Pankki account; with another bank connected, `spendTx` adds that bank's card purchases. */
-export type Persona = { id: string; age: number; postalCode: string; tx: Tx[]; other?: OtherBank; spendTx?: Tx[] };
+/** `tx` is the S-Pankki account; with other banks connected, `spendTx` adds their card purchases. */
+export type Persona = { id: string; age: number; postalCode: string; tx: Tx[]; others?: OtherBank[]; spendTx?: Tx[] };
 
 const dataDir = new URL('./data/', import.meta.url);
 const raw = JSON.parse(readFileSync(new URL('personas.json', dataDir), 'utf8')) as {
@@ -47,22 +47,23 @@ export const personas = new Map<string, Persona>(
 const FIRST_MONTH = [...personas.values()].reduce((m, p) => (p.tx[0].month < m ? p.tx[0].month : m), TODAY_MONTH);
 
 /**
- * The customer with a second bank connected under PSD2. Its card purchases
+ * The customer with other banks connected under PSD2. Their card purchases
  * count as spending everywhere; balances stay per account, so the S-Pankki
  * balance, payday and overdraft calculations are unchanged.
  */
 const connected = new Map<string, Persona>();
-export function withOtherBank(p: Persona, bankId: string): Persona {
-  const bank = bankById(bankId);
-  if (!bank) return p;
-  let c = connected.get(`${p.id}|${bank.id}`);
+export function withOtherBanks(p: Persona, bankIds: string[]): Persona {
+  const banks = [...new Set(bankIds)].map(bankById).filter((b) => b !== undefined);
+  if (banks.length === 0) return p;
+  const key = `${p.id}|${banks.map((b) => b.id).join(',')}`;
+  let c = connected.get(key);
   if (!c) {
     const from = `${addMonths(LAST_FULL_MONTH, -11)}-01`;
     const income =
       p.tx.filter((t) => t.date >= from && t.month <= LAST_FULL_MONTH && (t.category === 'Salary' || t.category === 'Other Income')).reduce((s, t) => s + t.amount, 0) / 12;
-    const other = buildOtherBank(p.id, bank, FIRST_MONTH, TODAY, income);
-    c = { ...p, other, spendTx: [...p.tx, ...other.tx] };
-    connected.set(`${p.id}|${bank.id}`, c);
+    const others = banks.map((bank) => buildOtherBank(p.id, bank, FIRST_MONTH, TODAY, income));
+    c = { ...p, others, spendTx: [...p.tx, ...others.flatMap((o) => o.tx)] };
+    connected.set(key, c);
   }
   return c;
 }
@@ -267,7 +268,7 @@ function spendingTotal(p: Persona, args: { what?: string; from_month?: string; t
       monthly_average_in_period_eur: inPeriod.length > 1 ? round2(averageOfFullMonths(monthly, inPeriod, total)) : undefined,
       average_of_previous_months_eur: previousAvg === null ? undefined : round2(previousAvg),
       monthly_eur: Object.fromEntries(monthly.map((x) => [x.month, x.total])),
-      of_which_other_bank_card_eur: p.other ? round2(sumBy(p.other.tx, (t) => inPeriod.includes(t.month) && m.test(t))) : undefined,
+      of_which_other_banks_cards_eur: p.others ? round2(sumBy(p.others.flatMap((o) => o.tx), (t) => inPeriod.includes(t.month) && m.test(t))) : undefined,
       pass_through: isPassThrough(p) || undefined,
     },
     viz:
@@ -648,77 +649,82 @@ function surpriseFund(p: Persona): ToolResult {
   };
 }
 
-/** A connected bank's savings and card debt, for tools whose advice changes with them. */
+/** Connected banks' accounts and card debt, for tools whose advice changes with them. */
 function otherBankFacts(p: Persona) {
-  if (!p.other) return undefined;
-  const savings = p.other.accounts.find((a) => a.kind === 'savings');
-  const card = p.other.accounts.find((a) => a.kind === 'credit');
-  const current = p.other.accounts.find((a) => a.kind === 'current');
-  return {
-    bank: p.other.name,
-    account_eur: current?.balance,
-    savings_eur: savings?.balance ?? 0,
-    credit_card_debt_eur: card ? -card.balance : 0,
-    credit_card_interest_pct: card?.ratePct,
-  };
+  if (!p.others?.length) return undefined;
+  return p.others.map((o) => ({
+    bank: o.name,
+    accounts: o.accounts.map((a) => ({ name: a.name, balance_eur: a.balance, interest_pct: a.ratePct })),
+  }));
 }
 
 function allAccounts(p: Persona): ToolResult {
   const balance = round2(p.tx[p.tx.length - 1].balance);
   const own = { bank: 'S-Pankki', name: 'Käyttötili', balance_eur: balance };
-  if (!p.other) {
+  const ownBank = { id: 'spankki', name: 'S-Pankki', accounts: [{ name: own.name, balance }] };
+  const others = p.others ?? [];
+  if (others.length === 0) {
     return {
       facts: {
         connected_banks: ['S-Pankki'],
         accounts: [own],
         not_connected:
-          'Only S-Pankki accounts are visible. Under the account list there is a button to connect another bank (PSD2, read-only access). Suggest it in one short sentence, for example "Jos sinulla on tilejä muissa pankeissa, yhdistä ne alta, niin näen koko tilanteen." Do not call it a card (that could mean a credit card) and do not guess what they have elsewhere.',
+          'Only S-Pankki accounts are visible. Under the account list there is a button to connect other banks (PSD2, read-only access). Suggest it in one short sentence, for example "Jos sinulla on tilejä muissa pankeissa, yhdistä ne alta, niin näen koko tilanteen." Do not call it a card (that could mean a credit card) and do not guess what they have elsewhere.',
       },
-      viz: { kind: 'accounts', label: 'Tilisi S-Pankissa', value: round(balance), banks: [{ id: 'spankki', name: 'S-Pankki', accounts: [{ name: own.name, balance }] }], connectable: true },
+      viz: { kind: 'accounts', label: 'Tilisi S-Pankissa', value: round(balance), banks: [ownBank], connectable: true },
     };
   }
-  const o = p.other;
-  const savings = o.accounts.find((a) => a.kind === 'savings');
-  const card = o.accounts.find((a) => a.kind === 'credit');
-  const elsewhere = o.accounts.find((a) => a.kind === 'current')?.balance ?? 0;
-  const saved = savings?.balance ?? 0;
-  const debt = card ? -card.balance : 0;
-  const cardCost = card ? (debt * (card.ratePct ?? 0)) / 100 : 0;
-  const savingsEarn = savings ? (saved * (savings.ratePct ?? 0)) / 100 : 0;
-  // Paying the card from savings: the card costs far more than savings earn.
-  const pay = Math.min(debt, saved);
-  const interestSaved = card && savings ? (pay * ((card.ratePct ?? 0) - (savings.ratePct ?? 0))) / 100 : 0;
+  const all = others.flatMap((o) => o.accounts.map((a) => ({ ...a, bank: o.name })));
+  const sum = (kind: string) => all.filter((a) => a.kind === kind).reduce((s, a) => s + a.balance, 0);
+  const elsewhere = sum('current');
+  const saved = sum('savings');
+  const cards = all.filter((a) => a.kind === 'credit' && a.balance < 0).sort((a, b) => (b.ratePct ?? 0) - (a.ratePct ?? 0));
+  const debt = cards.reduce((s, a) => s - a.balance, 0);
+  const cardCost = cards.reduce((s, a) => s + (-a.balance * (a.ratePct ?? 0)) / 100, 0);
+  const savingsEarn = all.filter((a) => a.kind === 'savings').reduce((s, a) => s + (a.balance * (a.ratePct ?? 0)) / 100, 0);
+  const savingsRate = saved ? (savingsEarn / saved) * 100 : 0;
+  // Pay the dearest card first from savings: cards cost far more than savings earn.
+  let left = saved;
+  let interestSaved = 0;
+  const payments = cards.map((c) => {
+    const amount = Math.min(-c.balance, left);
+    left -= amount;
+    interestSaved += (amount * ((c.ratePct ?? 0) - savingsRate)) / 100;
+    return { bank: c.bank, card_interest_pct: c.ratePct, pay_eur: round(amount) };
+  });
+  const pay = saved - left;
   const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
-  const cardMonthly = sumBy(o.tx, (t) => months.includes(t.month)) / months.length;
+  const cardMonthly = sumBy(others.flatMap((o) => o.tx), (t) => months.includes(t.month)) / months.length;
   const pctText = (v: number) => `${String(v).replace('.', ',')}\u00A0%`;
+  const net = balance + elsewhere + saved - debt;
 
   return {
     facts: {
-      connected_banks: ['S-Pankki', `${o.name} (PSD2)`],
-      accounts: [own, ...o.accounts.map((a) => ({ bank: o.name, name: a.name, balance_eur: a.balance, interest_pct: a.ratePct, limit_eur: a.limit }))],
+      connected_banks: ['S-Pankki', ...others.map((o) => `${o.name} (PSD2)`)],
+      accounts: [own, ...all.map((a) => ({ bank: a.bank, name: a.name, balance_eur: a.balance, interest_pct: a.ratePct, limit_eur: a.limit }))],
       cash_and_savings_eur: round(balance + elsewhere + saved),
       credit_card_debt_eur: debt,
       credit_card_interest_cost_per_year_eur: round(cardCost),
       savings_interest_per_year_eur: round(savingsEarn),
-      net_eur: round(balance + elsewhere + saved - debt),
-      other_bank_card_purchases_monthly_eur: round(cardMonthly),
+      net_eur: round(net),
+      other_banks_card_purchases_monthly_eur: round(cardMonthly),
       suggestion:
         pay > 0
           ? {
-              pay_card_from_savings_eur: round(pay),
-              savings_left_eur: round(saved - pay),
+              pay_cards_from_savings: payments.filter((x) => x.pay_eur > 0),
+              savings_left_eur: round(left),
               interest_saved_per_year_eur: round(interestSaved),
-              why: `The card costs ${card?.ratePct} % a year while savings earn ${savings?.ratePct} %, so paying the card first is the cheapest move; the rest stays as a buffer, and the surprise fund rebuilds it.`,
+              why: 'Credit cards cost far more interest than savings earn, so paying the dearest card first is the cheapest move; the rest stays as a buffer, and the surprise fund rebuilds it.',
             }
           : undefined,
     },
     viz: {
       kind: 'accounts',
       label: 'Kaikki tilisi yhteensä',
-      value: round(balance + elsewhere + saved - debt),
+      value: round(net),
       banks: [
-        { id: 'spankki', name: 'S-Pankki', accounts: [{ name: own.name, balance }] },
-        {
+        ownBank,
+        ...others.map((o) => ({
           id: o.id,
           name: o.name,
           example: true,
@@ -732,10 +738,10 @@ function allAccounts(p: Persona): ToolResult {
                   ? `korko ${pctText(a.ratePct)}`
                   : undefined,
           })),
-        },
+        })),
       ],
-      connectable: false,
-      footnote: card ? `Kortin korot noin ${formatThousands(round(cardCost))}\u00A0€ vuodessa` : undefined,
+      connectable: true,
+      footnote: cards.length ? `${cards.length > 1 ? 'Korttien' : 'Kortin'} korot noin ${formatThousands(round(cardCost))}\u00A0€ vuodessa` : undefined,
     },
   };
 }
@@ -857,24 +863,31 @@ export function summary(p: Persona): Summary {
       action: 'Katso, miten sen voi estää',
     };
   }
-  const savings = p.other?.accounts.find((a) => a.kind === 'savings');
-  const card = p.other?.accounts.find((a) => a.kind === 'credit');
-  if (p.other && savings && card && card.balance < 0) {
-    insight = {
-      text: `${p.other.inessive} on ${formatThousands(savings.balance)} euroa säästöjä, mutta luottokortilla ${formatThousands(-card.balance)} euroa velkaa ${String(card.ratePct ?? 0).replace('.', ',')}\u00A0%:n korolla.`,
-      question: 'Kannattaako maksaa luottokortti säästöillä?',
-      action: 'Katso, kumpi kannattaa',
-    };
-  } else if (p.other) {
-    // No debt there: what the other card adds to everyday spending.
-    const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
-    const cardMonthly = sumBy(p.other.tx, (t) => months.includes(t.month)) / months.length;
-    const alone = spendingProfile({ ...p, other: undefined, spendTx: undefined }).facts as { everyday_share_of_spending_pct: number };
-    insight = {
-      text: `${p.other.name}-kortilla menee noin ${formatThousands(Math.round(cardMonthly / 10) * 10)} euroa kuussa, joten sormien läpi menee ${profile.everyday_share_of_spending_pct}\u00A0% kulutuksestasi eikä ${alone.everyday_share_of_spending_pct}\u00A0%.`,
-      question: 'Millainen kuluttaja olen?',
-      action: 'Katso koko kuva',
-    };
+  const others = p.others ?? [];
+  if (others.length) {
+    const all = others.flatMap((o) => o.accounts);
+    const saved = all.filter((a) => a.kind === 'savings').reduce((s, a) => s + a.balance, 0);
+    const cards = all.filter((a) => a.kind === 'credit' && a.balance < 0);
+    const debt = cards.reduce((s, a) => s - a.balance, 0);
+    const where = others.length === 1 ? others[0].inessive : 'Muissa pankeissasi';
+    if (saved > 0 && debt > 0) {
+      const dearest = Math.max(...cards.map((a) => a.ratePct ?? 0));
+      insight = {
+        text: `${where} on ${formatThousands(saved)} euroa säästöjä, mutta ${cards.length > 1 ? 'luottokorteilla' : 'luottokortilla'} ${formatThousands(debt)} euroa velkaa ${cards.length > 1 ? 'jopa ' : ''}${String(dearest).replace('.', ',')}\u00A0%:n korolla.`,
+        question: 'Kannattaako maksaa luottokortti säästöillä?',
+        action: 'Katso, kumpi kannattaa',
+      };
+    } else {
+      // No card debt there: what the other cards add to everyday spending.
+      const months = monthsBetween(addMonths(LAST_FULL_MONTH, -2), LAST_FULL_MONTH);
+      const cardMonthly = sumBy(others.flatMap((o) => o.tx), (t) => months.includes(t.month)) / months.length;
+      const alone = spendingProfile({ ...p, others: undefined, spendTx: undefined }).facts as { everyday_share_of_spending_pct: number };
+      insight = {
+        text: `${others.length === 1 ? `${others[0].name}-kortilla` : 'Muiden pankkiesi korteilla'} menee noin ${formatThousands(Math.round(cardMonthly / 10) * 10)} euroa kuussa, joten sormien läpi menee ${profile.everyday_share_of_spending_pct}\u00A0% kulutuksestasi eikä ${alone.everyday_share_of_spending_pct}\u00A0%.`,
+        question: 'Millainen kuluttaja olen?',
+        action: 'Katso koko kuva',
+      };
+    }
   }
   return { tiles, suggestions, insight, plan: { monthly: fund.monthly, nextPayday: dayLabel(nextPayday(p)) } };
 }

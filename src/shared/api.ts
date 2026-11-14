@@ -135,8 +135,8 @@ export type AskRequest = {
   question: string;
   /** The last few turns, oldest first, so follow-up questions make sense. */
   history: HistoryItem[];
-  /** The other bank connected under PSD2 (see shared/banks.ts), so the coach sees its accounts too. */
-  bank?: string;
+  /** Other banks connected under PSD2 (ids from shared/banks.ts), so the coach sees their accounts too. */
+  banks?: string[];
 };
 
 export type AskResponse = { text: string; viz?: Viz; call?: ToolCall; sources?: string[] } | { error: string };

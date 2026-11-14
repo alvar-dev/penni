@@ -32,40 +32,49 @@ function nextMonth(month: string): string {
 }
 
 export function buildOtherBank(customerId: string, bank: OtherBankInfo, fromMonth: string, today: string, monthlyIncome: number): OtherBank {
-  const r = random(customerId);
+  // Seeded per customer and bank, so two connected banks never show the same purchases.
+  const r = random(`${customerId}|${bank.id}`);
   const tx: OtherTx[] = [];
   const todayMonth = today.slice(0, 7);
   const add = (date: string, category: string, amount: number, mcc: string) => {
     if (date > today) return;
     tx.push({ date, month: date.slice(0, 7), day: Number(date.slice(8, 10)), category, amount: -round2(amount), balance: 0, mcc, bank: 'other' });
   };
+  const neobank = bank.kind === 'neobank';
+  const subscriptions = neobank ? [] : [[12.99, 9.99], [14.99], [7.99, 11.99], [9.99]][Math.floor(r() * 4)];
   for (let month = fromMonth; month <= todayMonth; month = nextMonth(month)) {
-    // Two streaming subscriptions on the card.
-    add(`${month}-03`, 'Entertainment', 12.99, '4899');
-    add(`${month}-18`, 'Entertainment', 9.99, '4899');
-    // Online shopping now and then.
-    for (let i = 0, n = 1 + Math.floor(r() * 3); i < n; i++) {
+    // A bank's card carries subscriptions and some shopping; Revolut's also food delivery.
+    subscriptions.forEach((amount, i) => add(`${month}-${pad(3 + i * 12)}`, 'Entertainment', amount, '4899'));
+    for (let i = 0, n = (neobank ? 1 : 0) + Math.floor(r() * 3); i < n; i++) {
       add(`${month}-${pad(2 + Math.floor(r() * 26))}`, 'Lifestyle', 24 + r() * 65, r() < 0.6 ? '5651' : '5942');
     }
-    // Food delivery.
-    for (let i = 0, n = 2 + Math.floor(r() * 3); i < n; i++) {
-      add(`${month}-${pad(1 + Math.floor(r() * 27))}`, 'Restaurants', 17 + r() * 17, '5814');
+    if (neobank) {
+      for (let i = 0, n = 2 + Math.floor(r() * 3); i < n; i++) {
+        add(`${month}-${pad(1 + Math.floor(r() * 27))}`, 'Restaurants', 17 + r() * 17, '5814');
+      }
     }
   }
-  add('2025-12-12', 'Travel', 164, '7011');
-  add('2026-06-05', 'Travel', 286, '4511');
+  if (neobank) {
+    add('2025-12-12', 'Travel', 164, '7011');
+    add('2026-06-05', 'Travel', 286, '4511');
+  }
   tx.sort((a, b) => a.date.localeCompare(b.date));
 
   const tens = (v: number) => Math.round(v / 10) * 10;
-  const accounts: OtherAccount[] =
-    bank.kind === 'neobank'
-      ? [
-          { name: `${bank.name}-tili`, kind: 'current', balance: tens(monthlyIncome * 0.2) },
-          { name: 'Säästöholvi', kind: 'savings', balance: tens(monthlyIncome * 0.35), ratePct: 2 },
-        ]
-      : [
-          { name: 'Säästötili', kind: 'savings', balance: tens(monthlyIncome * 0.55), ratePct: 1.25 },
-          { name: 'Luottokortti', kind: 'credit', balance: -tens(monthlyIncome * 0.39), ratePct: 15.9, limit: 3000 },
-        ];
+  const accounts: OtherAccount[] = neobank
+    ? [
+        { name: `${bank.name}-tili`, kind: 'current', balance: tens(monthlyIncome * (0.15 + 0.1 * r())) },
+        { name: 'Säästöholvi', kind: 'savings', balance: tens(monthlyIncome * (0.25 + 0.2 * r())), ratePct: 2 },
+      ]
+    : [
+        { name: 'Säästötili', kind: 'savings', balance: tens(monthlyIncome * (0.4 + 0.3 * r())), ratePct: 1.25 },
+        {
+          name: 'Luottokortti',
+          kind: 'credit',
+          balance: -tens(monthlyIncome * (0.25 + 0.2 * r())),
+          ratePct: [14.9, 15.9, 16.9, 17.9, 19.9][Math.floor(r() * 5)],
+          limit: [2000, 3000, 5000][Math.floor(r() * 3)],
+        },
+      ];
   return { id: bank.id, name: bank.name, inessive: bank.inessive, accounts, tx };
 }

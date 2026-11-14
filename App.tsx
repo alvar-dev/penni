@@ -45,7 +45,7 @@ import { loadConversations, saveConversations, titleFrom, type Conversation } fr
 import { loadPlans, savePlans, type Plan } from './src/plan';
 import { loadConnected, saveConnected } from './src/banks';
 import { ConnectSheet } from './src/components/ConnectSheet';
-import { bankById } from './src/shared/banks';
+import { bankById, OTHER_BANKS, type OtherBankInfo } from './src/shared/banks';
 import type { Summary } from './src/shared/api';
 import { useVoiceInput } from './src/hooks/useVoiceInput';
 import { colors, type } from './src/theme';
@@ -139,11 +139,16 @@ function Screen() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [plans, setPlans] = useState<Record<string, Plan>>({});
   // Customers who connected another bank (PSD2); the coach then sees every account.
-  const [banks, setBanks] = useState<Record<string, string>>({});
+  const [banks, setBanks] = useState<Record<string, string[]>>({});
   const banksLoaded = useRef(false);
   const [connectOpen, setConnectOpen] = useState(false);
-  const connectedBank = bankById(banks[personaId]);
-  const connected = !!connectedBank;
+  const connectedBanks = useMemo(
+    () => (banks[personaId] ?? []).map(bankById).filter((b): b is OtherBankInfo => b !== undefined),
+    [banks, personaId],
+  );
+  const bankIds = useMemo(() => connectedBanks.map((b) => b.id).sort(), [connectedBanks]);
+  const bankKey = bankIds.join(',');
+  const canConnectMore = connectedBanks.length < OTHER_BANKS.length;
   const plansLoaded = useRef(false);
   const [thinkingStep, setThinkingStep] = useState(0);
 
@@ -261,7 +266,7 @@ function Screen() {
     const controller = new AbortController();
     let retry: ReturnType<typeof setTimeout> | undefined;
     const load = (attempt: number) =>
-      getSummary(personaId, connectedBank?.id, controller.signal)
+      getSummary(personaId, bankIds, controller.signal)
         .then(setSummary)
         .catch(() => {
           if (controller.signal.aborted) return;
@@ -273,7 +278,9 @@ function Screen() {
       controller.abort();
       clearTimeout(retry);
     };
-  }, [personaId, connectedBank?.id]);
+    // bankKey stands for bankIds, which is a new array on every change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personaId, bankKey]);
 
   useEffect(() => {
     void loadConnected().then((saved) => {
@@ -284,11 +291,15 @@ function Screen() {
   useEffect(() => {
     if (banksLoaded.current) void saveConnected(banks);
   }, [banks]);
-  const setBankConnected = useCallback(
-    (bankId: string | null) =>
+  /** Connect a bank (add), disconnect one (remove), or all of them (clear). */
+  const changeBanks = useCallback(
+    (change: { add?: string; remove?: string; clear?: boolean }) =>
       setBanks((prev) => {
+        let list = change.clear ? [] : (prev[personaId] ?? []);
+        if (change.add && !list.includes(change.add)) list = [...list, change.add];
+        if (change.remove) list = list.filter((id) => id !== change.remove);
         const next = { ...prev };
-        if (bankId) next[personaId] = bankId;
+        if (list.length) next[personaId] = list;
         else delete next[personaId];
         return next;
       }),
@@ -365,7 +376,7 @@ function Screen() {
    * no history so the answer stands on its own.
    */
   const submit = useCallback(
-    (question: string, options: { bank?: string; silent?: boolean } = {}) => {
+    (question: string, options: { banks?: string[]; silent?: boolean } = {}) => {
       Keyboard.dismiss();
       setDraft('');
       // Earlier answers carry the calculation behind their chart, so "another chart" can redraw it.
@@ -392,7 +403,7 @@ function Screen() {
       inFlight.current = controller;
       const timeout = setTimeout(() => controller.abort(), 90_000);
 
-      ask({ personaId, question, history, bank: options.bank ?? connectedBank?.id }, controller.signal)
+      ask({ personaId, question, history, banks: options.banks ?? bankIds }, controller.signal)
         .then((answer) => {
           if (seq !== requestSeq.current) return;
           pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
@@ -411,28 +422,29 @@ function Screen() {
           setPhase('idle');
         });
     },
-    [messages, personaId, currentId, cancelRequest, pushMessage, connectedBank?.id],
+    [messages, personaId, currentId, cancelRequest, pushMessage, bankIds],
   );
 
   /**
-   * Another bank is connected. If the conversation just showed the gap (the
-   * accounts card with only S-Pankki), the coach carries on by itself and
-   * answers the same question again with every account.
+   * A bank is connected. If the conversation just showed the accounts card,
+   * the coach carries on by itself and answers the same question again with
+   * every account, this bank included.
    */
   const onBankConnected = useCallback(
     (bankId: string) => {
     const bank = bankById(bankId);
     if (!bank) return;
     setConnectOpen(false);
-    setBankConnected(bank.id);
+    changeBanks({ add: bank.id });
+    const nextIds = [...new Set([...bankIds, bank.id])].sort();
     const at = messages.findLastIndex((m) => m.role === 'assistant' && m.viz?.kind === 'accounts');
     const asked = at > 0 ? messages.slice(0, at).findLast((m) => m.role === 'user') : undefined;
     if (currentId && asked && phase === 'idle') {
       pushMessage(currentId, { id: newId(), role: 'assistant', text: strings.connectedEvent.replace('{bank}', bank.name), event: true });
-      submit(asked.text, { bank: bank.id, silent: true });
+      submit(asked.text, { banks: nextIds, silent: true });
     }
     },
-    [messages, currentId, phase, pushMessage, submit, setBankConnected],
+    [messages, currentId, phase, pushMessage, submit, changeBanks, bankIds],
   );
 
   const send = useCallback(
@@ -564,10 +576,10 @@ function Screen() {
   }, [visibleConversations, openConversation]);
 
   const planMonthly = summary?.plan?.monthly;
-  const actions = useRef({ send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, setBankConnected, onBankConnected });
+  const actions = useRef({ send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, changeBanks, onBankConnected });
   useEffect(() => {
-    actions.current = { send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, setBankConnected, onBankConnected };
-  }, [send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, setBankConnected, onBankConnected]);
+    actions.current = { send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, changeBanks, onBankConnected };
+  }, [send, onOrbPress, settleDrawer, cancelRequest, selectPersona, openLatest, setPlan, planMonthly, changeBanks, onBankConnected]);
 
   // Development only: jump straight to a state, e.g. exp://127.0.0.1:8081/--/?preview=chat
   useEffect(() => {
@@ -647,14 +659,14 @@ function Screen() {
         // (the coach carries on); bankson only switches the bank on.
         const bank = url?.match(/[?&]bank=(\w+)/)?.[1] ?? 'op';
         if (name === 'connected') actions.current.onBankConnected(bank);
-        else actions.current.setBankConnected(bank);
+        else actions.current.changeBanks({ add: bank });
       } else if (name === 'banksoff') {
-        actions.current.setBankConnected(null);
+        actions.current.changeBanks({ clear: true });
       } else if (name === 'reset') {
         // A clean start for a demo: no saved conversations, no plan, only S-Pankki.
         setConversations([]);
         actions.current.setPlan(null);
-        actions.current.setBankConnected(null);
+        actions.current.changeBanks({ clear: true });
         actions.current.cancelRequest();
         setMessages([]);
         setCurrentId(null);
@@ -723,7 +735,7 @@ function Screen() {
                   </Animated.View>
                 ) : (
                   <Animated.View key={message.id} entering={FadeInDown.duration(320)} style={styles.answer}>
-                    {message.viz ? <Viz viz={message.viz} example={message.example} onConnect={connected ? undefined : () => setConnectOpen(true)} /> : null}
+                    {message.viz ? <Viz viz={message.viz} example={message.example} onConnect={canConnectMore ? () => setConnectOpen(true) : undefined} /> : null}
                     <Text style={[styles.answerText, !message.viz && styles.answerTextAlone]}>{message.text}</Text>
                     {message.sources?.length ? (
                       <Text style={styles.answerSource}>
@@ -933,14 +945,15 @@ function Screen() {
         onDelete={deleteConversation}
         onNewChat={newChat}
         onSettle={settleDrawer}
-        bank={connectedBank}
+        banks={connectedBanks}
+        canConnectMore={canConnectMore}
         onConnectBank={() => {
           settleDrawer(false);
           setConnectOpen(true);
         }}
-        onDisconnectBank={() => setBankConnected(null)}
+        onDisconnectBank={(id) => changeBanks({ remove: id })}
       />
-      <ConnectSheet visible={connectOpen} onClose={() => setConnectOpen(false)} onConnected={onBankConnected} />
+      <ConnectSheet visible={connectOpen} connectedIds={bankIds} onClose={() => setConnectOpen(false)} onConnected={onBankConnected} />
     </View>
   );
 }

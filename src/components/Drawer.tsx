@@ -29,10 +29,11 @@ type Props = {
   onDelete: (id: string) => void;
   onNewChat: () => void;
   onSettle: (open: boolean) => void;
-  /** The other bank connected under PSD2, if any. */
-  bank?: OtherBankInfo;
+  /** Other banks connected under PSD2. */
+  banks: OtherBankInfo[];
+  canConnectMore: boolean;
   onConnectBank: () => void;
-  onDisconnectBank: () => void;
+  onDisconnectBank: (bankId: string) => void;
 };
 
 /** What a saved conversation's row shows under its title: the latest answer's key figure. */
@@ -57,7 +58,7 @@ export function Avatar({ name, size }: { name: string; size: number }) {
   );
 }
 
-export function Drawer({ open, progress, width, persona, conversations, currentId, onOpen, onDelete, onNewChat, onSettle, bank, onConnectBank, onDisconnectBank }: Props) {
+export function Drawer({ open, progress, width, persona, conversations, currentId, onOpen, onDelete, onNewChat, onSettle, banks, canConnectMore, onConnectBank, onDisconnectBank }: Props) {
   const insets = useSafeAreaInsets();
   const groups = useMemo(() => groupByDay(conversations), [conversations]);
 
@@ -169,19 +170,20 @@ export function Drawer({ open, progress, width, persona, conversations, currentI
             <BankLogo id="spankki" size={22} />
             <Text style={styles.bankName}>S-Pankki</Text>
           </View>
-          {bank ? (
-            <View style={styles.bankRow}>
+          {banks.map((bank) => (
+            <View key={bank.id} style={styles.bankRow}>
               <BankLogo id={bank.id} size={22} />
               <Text style={styles.bankName}>{bank.name}</Text>
-              <Pressable onPress={onDisconnectBank} hitSlop={8} accessibilityRole="button">
+              <Pressable onPress={() => onDisconnectBank(bank.id)} hitSlop={8} accessibilityRole="button">
                 <Text style={styles.bankAction}>{strings.banksDisconnect}</Text>
               </Pressable>
             </View>
-          ) : (
+          ))}
+          {canConnectMore ? (
             <Pressable onPress={onConnectBank} hitSlop={6} accessibilityRole="button" style={styles.bankRow}>
-              <Text style={styles.bankConnect}>+ {strings.accountsConnect}</Text>
+              <Text style={styles.bankConnect}>+ {banks.length ? strings.accountsConnectMore : strings.accountsConnect}</Text>
             </Pressable>
-          )}
+          ) : null}
         </View>
         <View style={[styles.profile, { paddingBottom: insets.bottom + 10 }]}>
           <Avatar name={persona.name} size={32} />

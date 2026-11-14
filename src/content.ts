@@ -81,6 +81,8 @@ export const strings = {
   connectClose: 'Sulje',
   connectedEvent: '{bank} yhdistetty',
   accountsConnect: 'Yhdistä toinen pankki',
+  accountsConnectMore: 'Yhdistä lisää pankkeja',
+  connectAlready: 'Yhdistetty',
   accountsConnectNote: 'PSD2 · vain lukuoikeus',
   accountsExample: 'esimerkkidata',
   banksTitle: 'Pankit',

@@ -53,8 +53,8 @@ export async function transcribe(audio: string, sampleRate: number, signal: Abor
 }
 
 /** The start screen's overview (computed on the server, no model involved). */
-export async function getSummary(personaId: string, bank: string | undefined, signal: AbortSignal): Promise<Summary> {
-  const response = await fetch(`${baseUrl()}/summary?personaId=${encodeURIComponent(personaId)}${bank ? `&bank=${encodeURIComponent(bank)}` : ''}`, {
+export async function getSummary(personaId: string, banks: string[], signal: AbortSignal): Promise<Summary> {
+  const response = await fetch(`${baseUrl()}/summary?personaId=${encodeURIComponent(personaId)}${banks.length ? `&banks=${banks.map(encodeURIComponent).join(',')}` : ''}`, {
     headers: { 'X-App-Token': process.env.EXPO_PUBLIC_API_TOKEN ?? '' },
     signal,
   });
