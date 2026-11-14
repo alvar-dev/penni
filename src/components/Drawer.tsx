@@ -4,6 +4,8 @@ import Animated, { Easing, interpolate, useAnimatedStyle, type SharedValue } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { strings, type Persona } from '../content';
+import type { OtherBankInfo } from '../shared/banks';
+import { BankLogo } from './BankLogo';
 import { groupByDay, shortTime, type Conversation } from '../conversations';
 import { colors, formatEur, type } from '../theme';
 
@@ -27,8 +29,8 @@ type Props = {
   onDelete: (id: string) => void;
   onNewChat: () => void;
   onSettle: (open: boolean) => void;
-  /** Another bank is connected (PSD2). */
-  bankConnected: boolean;
+  /** The other bank connected under PSD2, if any. */
+  bank?: OtherBankInfo;
   onConnectBank: () => void;
   onDisconnectBank: () => void;
 };
@@ -55,7 +57,7 @@ export function Avatar({ name, size }: { name: string; size: number }) {
   );
 }
 
-export function Drawer({ open, progress, width, persona, conversations, currentId, onOpen, onDelete, onNewChat, onSettle, bankConnected, onConnectBank, onDisconnectBank }: Props) {
+export function Drawer({ open, progress, width, persona, conversations, currentId, onOpen, onDelete, onNewChat, onSettle, bank, onConnectBank, onDisconnectBank }: Props) {
   const insets = useSafeAreaInsets();
   const groups = useMemo(() => groupByDay(conversations), [conversations]);
 
@@ -164,11 +166,13 @@ export function Drawer({ open, progress, width, persona, conversations, currentI
         <View style={styles.banks}>
           <Text style={styles.banksTitle}>{strings.banksTitle}</Text>
           <View style={styles.bankRow}>
+            <BankLogo id="spankki" size={22} />
             <Text style={styles.bankName}>S-Pankki</Text>
           </View>
-          {bankConnected ? (
+          {bank ? (
             <View style={styles.bankRow}>
-              <Text style={styles.bankName}>{strings.connectBank}</Text>
+              <BankLogo id={bank.id} size={22} />
+              <Text style={styles.bankName}>{bank.name}</Text>
               <Pressable onPress={onDisconnectBank} hitSlop={8} accessibilityRole="button">
                 <Text style={styles.bankAction}>{strings.banksDisconnect}</Text>
               </Pressable>
@@ -235,8 +239,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, lineHeight: 21, fontWeight: '500', color: colors.text, marginLeft: 10 },
   banks: { paddingTop: 12, paddingBottom: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   banksTitle: { fontSize: 13, lineHeight: 18, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 },
-  bankRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
-  bankName: { fontSize: 15, lineHeight: 20, color: colors.text },
+  bankRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
+  bankName: { flex: 1, fontSize: 15, lineHeight: 20, color: colors.text, marginLeft: 10 },
   bankAction: { fontSize: 14, lineHeight: 19, color: colors.textSecondary },
   bankConnect: { fontSize: 15, lineHeight: 20, fontWeight: '600', color: colors.green700 },
 

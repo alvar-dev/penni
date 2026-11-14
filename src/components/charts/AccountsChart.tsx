@@ -2,9 +2,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { strings } from '../../content';
+import { BankLogo } from '../BankLogo';
 import { colors, formatEur, type } from '../../theme';
 
-type Bank = { name: string; example?: boolean; accounts: { name: string; balance: number; note?: string }[] };
+type Bank = { id?: string; name: string; example?: boolean; accounts: { name: string; balance: number; note?: string }[] };
 type Props = { banks: Bank[]; connectable: boolean; footnote?: string; onConnect?: () => void };
 
 /**
@@ -17,7 +18,8 @@ export function AccountsChart({ banks, connectable, footnote, onConnect }: Props
       {banks.map((bank, b) => (
         <Animated.View key={bank.name} entering={FadeIn.duration(320).delay(120 * b)} style={b > 0 && styles.bankGap}>
           <View style={styles.bankHeader}>
-            <Text style={styles.bankName}>{bank.name}</Text>
+            {bank.id ? <BankLogo id={bank.id} size={20} /> : null}
+            <Text style={[styles.bankName, !!bank.id && styles.bankNameWithLogo]}>{bank.name}</Text>
             {bank.example ? <Text style={styles.example}>{strings.accountsExample}</Text> : null}
           </View>
           {bank.accounts.map((a, i) => (
@@ -54,7 +56,8 @@ export function AccountsChart({ banks, connectable, footnote, onConnect }: Props
 
 const styles = StyleSheet.create({
   bankGap: { marginTop: 16 },
-  bankHeader: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 2 },
+  bankHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  bankNameWithLogo: { marginLeft: 8 },
   bankName: { ...type.caption, fontWeight: '600', color: colors.textSecondary },
   example: { ...type.caption, color: colors.textTertiary, marginLeft: 8 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },

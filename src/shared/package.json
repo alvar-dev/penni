@@ -1,0 +1,4 @@
+{
+  "//": "Shared by the app and the Node server; the server loads these files as ES modules.",
+  "type": "module"
+}

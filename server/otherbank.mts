@@ -1,15 +1,16 @@
+import type { OtherBankInfo } from '../src/shared/banks.ts';
+
 /**
  * A second bank, connected under PSD2 (account information). The challenge
  * data has only S-Pankki accounts, so this is clearly-labelled example data,
- * generated the same way for a customer every time: a savings account, a
- * credit card with a revolving balance, and the purchases made with that card.
+ * generated the same way for a customer every time: for a bank, a savings
+ * account and a credit card with a revolving balance; for Revolut, an account
+ * and a savings vault. Either way, the purchases made with that bank's card.
  */
 
 export type OtherTx = { date: string; month: string; day: number; category: string; amount: number; balance: number; mcc: string; bank: 'other' };
-export type OtherAccount = { name: string; kind: 'savings' | 'credit'; balance: number; ratePct: number; limit?: number };
-export type OtherBank = { name: string; accounts: OtherAccount[]; tx: OtherTx[] };
-
-export const OTHER_BANK_NAME = 'Toinen pankki';
+export type OtherAccount = { name: string; kind: 'current' | 'savings' | 'credit'; balance: number; ratePct?: number; limit?: number };
+export type OtherBank = { id: string; name: string; inessive: string; accounts: OtherAccount[]; tx: OtherTx[] };
 
 /** Small deterministic random numbers (mulberry32), seeded from the customer id. */
 function random(seed: string): () => number {
@@ -30,7 +31,7 @@ function nextMonth(month: string): string {
   return m === 12 ? `${y + 1}-01` : `${y}-${pad(m + 1)}`;
 }
 
-export function buildOtherBank(customerId: string, fromMonth: string, today: string, monthlyIncome: number): OtherBank {
+export function buildOtherBank(customerId: string, bank: OtherBankInfo, fromMonth: string, today: string, monthlyIncome: number): OtherBank {
   const r = random(customerId);
   const tx: OtherTx[] = [];
   const todayMonth = today.slice(0, 7);
@@ -55,12 +56,16 @@ export function buildOtherBank(customerId: string, fromMonth: string, today: str
   add('2026-06-05', 'Travel', 286, '4511');
   tx.sort((a, b) => a.date.localeCompare(b.date));
 
-  return {
-    name: OTHER_BANK_NAME,
-    accounts: [
-      { name: 'Säästötili', kind: 'savings', balance: Math.round((monthlyIncome * 0.55) / 10) * 10, ratePct: 1.25 },
-      { name: 'Luottokortti', kind: 'credit', balance: -Math.round((monthlyIncome * 0.39) / 10) * 10, ratePct: 15.9, limit: 3000 },
-    ],
-    tx,
-  };
+  const tens = (v: number) => Math.round(v / 10) * 10;
+  const accounts: OtherAccount[] =
+    bank.kind === 'neobank'
+      ? [
+          { name: `${bank.name}-tili`, kind: 'current', balance: tens(monthlyIncome * 0.2) },
+          { name: 'Säästöholvi', kind: 'savings', balance: tens(monthlyIncome * 0.35), ratePct: 2 },
+        ]
+      : [
+          { name: 'Säästötili', kind: 'savings', balance: tens(monthlyIncome * 0.55), ratePct: 1.25 },
+          { name: 'Luottokortti', kind: 'credit', balance: -tens(monthlyIncome * 0.39), ratePct: 15.9, limit: 3000 },
+        ];
+  return { id: bank.id, name: bank.name, inessive: bank.inessive, accounts, tx };
 }

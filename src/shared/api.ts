@@ -87,7 +87,7 @@ export type Viz =
       kind: 'accounts';
       label: string;
       value: number;
-      banks: { name: string; example?: boolean; accounts: { name: string; balance: number; note?: string }[] }[];
+      banks: { id?: string; name: string; example?: boolean; accounts: { name: string; balance: number; note?: string }[] }[];
       /** No other bank connected yet: the card offers to connect one. */
       connectable: boolean;
       footnote?: string;
@@ -135,8 +135,8 @@ export type AskRequest = {
   question: string;
   /** The last few turns, oldest first, so follow-up questions make sense. */
   history: HistoryItem[];
-  /** Another bank is connected (PSD2), so the coach sees its accounts too. */
-  connected?: boolean;
+  /** The other bank connected under PSD2 (see shared/banks.ts), so the coach sees its accounts too. */
+  bank?: string;
 };
 
 export type AskResponse = { text: string; viz?: Viz; call?: ToolCall; sources?: string[] } | { error: string };

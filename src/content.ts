@@ -64,8 +64,9 @@ export const strings = {
   // Another bank (PSD2). The other bank is example data in the demo.
   connectTitle: 'Yhdistä toinen pankki',
   connectLead: 'Kun annat luvan, S-Pankki hakee tilitietosi toisesta pankista. Valmentaja näkee silloin koko taloutesi ja neuvoo sen perusteella.',
-  connectBank: 'Toinen pankki',
-  connectBankNote: 'Esimerkkipankki tässä demossa',
+  connectChoose: 'Valitse pankki',
+  connectBack: 'Pankit',
+  connectBankNote: 'Tiedot ovat tässä demossa esimerkkidataa',
   connectScopeTitle: 'Luvalla saa',
   connectScope: [
     ['Saldot ja tapahtumat', 'Tilit, kortit ja ostot'],
@@ -74,10 +75,11 @@ export const strings = {
   ] as [string, string][],
   connectLegal: 'Tilitietopalvelu perustuu maksupalveludirektiiviin (PSD2). Tunnistaudut toisen pankin omilla tunnuksilla.',
   connectContinue: 'Jatka tunnistautumiseen',
-  connectAuthenticating: 'Tunnistaudutaan toisessa pankissa…',
+  /** {bank} is the bank's name in the inessive: "OP:ssa", "Revolutissa". */
+  connectAuthenticating: 'Tunnistaudutaan {bank}…',
   connectDone: 'Yhdistetty',
   connectClose: 'Sulje',
-  connectedEvent: 'Toinen pankki yhdistetty',
+  connectedEvent: '{bank} yhdistetty',
   accountsConnect: 'Yhdistä toinen pankki',
   accountsConnectNote: 'PSD2 · vain lukuoikeus',
   accountsExample: 'esimerkkidata',

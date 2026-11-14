@@ -1,18 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/** Customers who connected another bank (PSD2, read-only), with when. Kept on the device only. */
-const KEY = 'banks.v1';
+/** The other bank each customer connected (PSD2, read-only), by bank id. Kept on the device only. */
+const KEY = 'banks.v2';
 
-export async function loadConnected(): Promise<Record<string, number>> {
+export async function loadConnected(): Promise<Record<string, string>> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
   } catch {
     return {};
   }
 }
 
-export async function saveConnected(connected: Record<string, number>): Promise<void> {
+export async function saveConnected(connected: Record<string, string>): Promise<void> {
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(connected));
   } catch {

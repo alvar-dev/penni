@@ -45,6 +45,7 @@ import { loadConversations, saveConversations, titleFrom, type Conversation } fr
 import { loadPlans, savePlans, type Plan } from './src/plan';
 import { loadConnected, saveConnected } from './src/banks';
 import { ConnectSheet } from './src/components/ConnectSheet';
+import { bankById } from './src/shared/banks';
 import type { Summary } from './src/shared/api';
 import { useVoiceInput } from './src/hooks/useVoiceInput';
 import { colors, type } from './src/theme';
@@ -62,8 +63,8 @@ const DOCK_SHEET = INPUT_ROW;
 const SLOT = 40;
 const FIELD_PAD_RIGHT = 4;
 const FIELD_HEIGHT = 48;
-/** The field grows to five lines of 22 pt text, then scrolls. */
-const INPUT_MAX = SLOT + 4 * 22;
+/** The field grows to five lines of text (about 20 pt each), then scrolls. */
+const INPUT_MAX = SLOT + 4 * 20.5;
 const FADE = 36;
 const HEADER = 52;
 /** How far below the header the conversation fades out as it scrolls up. */
@@ -138,10 +139,11 @@ function Screen() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [plans, setPlans] = useState<Record<string, Plan>>({});
   // Customers who connected another bank (PSD2); the coach then sees every account.
-  const [banks, setBanks] = useState<Record<string, number>>({});
+  const [banks, setBanks] = useState<Record<string, string>>({});
   const banksLoaded = useRef(false);
   const [connectOpen, setConnectOpen] = useState(false);
-  const connected = !!banks[personaId];
+  const connectedBank = bankById(banks[personaId]);
+  const connected = !!connectedBank;
   const plansLoaded = useRef(false);
   const [thinkingStep, setThinkingStep] = useState(0);
 
@@ -255,12 +257,23 @@ function Screen() {
 
   // The start screen's overview of this customer's money.
   useEffect(() => {
+    // If the server is not up yet (or restarting), try again for a while.
     const controller = new AbortController();
-    getSummary(personaId, connected, controller.signal)
-      .then(setSummary)
-      .catch(() => setSummary(null));
-    return () => controller.abort();
-  }, [personaId, connected]);
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const load = (attempt: number) =>
+      getSummary(personaId, connectedBank?.id, controller.signal)
+        .then(setSummary)
+        .catch(() => {
+          if (controller.signal.aborted) return;
+          setSummary(null);
+          if (attempt < 30) retry = setTimeout(() => void load(attempt + 1), 2000);
+        });
+    void load(0);
+    return () => {
+      controller.abort();
+      clearTimeout(retry);
+    };
+  }, [personaId, connectedBank?.id]);
 
   useEffect(() => {
     void loadConnected().then((saved) => {
@@ -272,10 +285,10 @@ function Screen() {
     if (banksLoaded.current) void saveConnected(banks);
   }, [banks]);
   const setBankConnected = useCallback(
-    (on: boolean) =>
+    (bankId: string | null) =>
       setBanks((prev) => {
         const next = { ...prev };
-        if (on) next[personaId] = Date.now();
+        if (bankId) next[personaId] = bankId;
         else delete next[personaId];
         return next;
       }),
@@ -352,7 +365,7 @@ function Screen() {
    * no history so the answer stands on its own.
    */
   const submit = useCallback(
-    (question: string, options: { connected?: boolean; silent?: boolean } = {}) => {
+    (question: string, options: { bank?: string; silent?: boolean } = {}) => {
       Keyboard.dismiss();
       setDraft('');
       // Earlier answers carry the calculation behind their chart, so "another chart" can redraw it.
@@ -379,7 +392,7 @@ function Screen() {
       inFlight.current = controller;
       const timeout = setTimeout(() => controller.abort(), 90_000);
 
-      ask({ personaId, question, history, connected: options.connected ?? connected }, controller.signal)
+      ask({ personaId, question, history, bank: options.bank ?? connectedBank?.id }, controller.signal)
         .then((answer) => {
           if (seq !== requestSeq.current) return;
           pushMessage(target, { id: newId(), role: 'assistant', text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
@@ -398,7 +411,7 @@ function Screen() {
           setPhase('idle');
         });
     },
-    [messages, personaId, currentId, cancelRequest, pushMessage, connected],
+    [messages, personaId, currentId, cancelRequest, pushMessage, connectedBank?.id],
   );
 
   /**
@@ -406,16 +419,21 @@ function Screen() {
    * accounts card with only S-Pankki), the coach carries on by itself and
    * answers the same question again with every account.
    */
-  const onBankConnected = useCallback(() => {
+  const onBankConnected = useCallback(
+    (bankId: string) => {
+    const bank = bankById(bankId);
+    if (!bank) return;
     setConnectOpen(false);
-    setBankConnected(true);
+    setBankConnected(bank.id);
     const at = messages.findLastIndex((m) => m.role === 'assistant' && m.viz?.kind === 'accounts');
     const asked = at > 0 ? messages.slice(0, at).findLast((m) => m.role === 'user') : undefined;
     if (currentId && asked && phase === 'idle') {
-      pushMessage(currentId, { id: newId(), role: 'assistant', text: strings.connectedEvent, event: true });
-      submit(asked.text, { connected: true, silent: true });
+      pushMessage(currentId, { id: newId(), role: 'assistant', text: strings.connectedEvent.replace('{bank}', bank.name), event: true });
+      submit(asked.text, { bank: bank.id, silent: true });
     }
-  }, [messages, currentId, phase, pushMessage, submit, setBankConnected]);
+    },
+    [messages, currentId, phase, pushMessage, submit, setBankConnected],
+  );
 
   const send = useCallback(
     (raw: string) => {
@@ -624,16 +642,19 @@ function Screen() {
         inputRef.current?.focus();
       } else if (name === 'connect') {
         setConnectOpen(true);
-      } else if (name === 'connected') {
-        // As if the consent and the sign-in at the other bank had just finished.
-        actions.current.onBankConnected();
-      } else if (name === 'bankson' || name === 'banksoff') {
-        actions.current.setBankConnected(name === 'bankson');
+      } else if (name === 'connected' || name === 'bankson') {
+        // ?preview=connected&bank=op: as if the consent and the sign-in had just finished
+        // (the coach carries on); bankson only switches the bank on.
+        const bank = url?.match(/[?&]bank=(\w+)/)?.[1] ?? 'op';
+        if (name === 'connected') actions.current.onBankConnected(bank);
+        else actions.current.setBankConnected(bank);
+      } else if (name === 'banksoff') {
+        actions.current.setBankConnected(null);
       } else if (name === 'reset') {
         // A clean start for a demo: no saved conversations, no plan, only S-Pankki.
         setConversations([]);
         actions.current.setPlan(null);
-        actions.current.setBankConnected(false);
+        actions.current.setBankConnected(null);
         actions.current.cancelRequest();
         setMessages([]);
         setCurrentId(null);
@@ -752,16 +773,18 @@ function Screen() {
                         <Waveform history={mic.history} />
                       </View>
                     ) : phase === 'transcribing' ? (
-                      <Text style={styles.statusText} numberOfLines={1}>
-                        {strings.transcribingInline}
-                      </Text>
+                      <View style={styles.statusRow}>
+                        <Text style={styles.statusText} numberOfLines={1}>
+                          {strings.transcribingInline}
+                        </Text>
+                      </View>
                     ) : (
                       <View style={styles.inputWrap}>
                         {/* An invisible copy of the text measures how many lines it needs; the text view
                             itself only reports its size reliably while typing, not when the text is set. */}
                         <Text
                           style={[styles.input, styles.inputMeasure]}
-                          onLayout={(e) => setInputHeight(Math.min(INPUT_MAX, Math.max(SLOT, Math.ceil(e.nativeEvent.layout.height))))}
+                          onLayout={(e) => setInputHeight(Math.min(INPUT_MAX, Math.max(SLOT, Math.round(e.nativeEvent.layout.height))))}
                           accessibilityElementsHidden
                           importantForAccessibility="no-hide-descendants">
                           {draft || ' '}
@@ -910,12 +933,12 @@ function Screen() {
         onDelete={deleteConversation}
         onNewChat={newChat}
         onSettle={settleDrawer}
-        bankConnected={connected}
+        bank={connectedBank}
         onConnectBank={() => {
           settleDrawer(false);
           setConnectOpen(true);
         }}
-        onDisconnectBank={() => setBankConnected(false)}
+        onDisconnectBank={() => setBankConnected(null)}
       />
       <ConnectSheet visible={connectOpen} onClose={() => setConnectOpen(false)} onConnected={onBankConnected} />
     </View>
@@ -1031,8 +1054,9 @@ const styles = StyleSheet.create({
   },
   inputWrap: { flex: 1 },
   inputMeasure: { position: 'absolute', left: 0, right: 0, top: 0, opacity: 0 },
-  // One line is as tall as the orb slot, so single-line text sits centred.
-  input: { fontSize: 17, lineHeight: 22, color: colors.text, paddingTop: (SLOT - 22) / 2, paddingBottom: (SLOT - 22) / 2 },
+  // Natural line height: a fixed lineHeight makes iOS put the extra space above the text, so it sits low.
+  // The padding makes one line as tall as the orb slot, so it is centred like the orb beside it.
+  input: { fontSize: 17, color: colors.text, paddingTop: 10, paddingBottom: 10 },
   sendButton: {
     width: 36,
     height: 36,
@@ -1044,7 +1068,8 @@ const styles = StyleSheet.create({
   },
   sendButtonPressed: { backgroundColor: colors.green400 },
   orbSlot: { width: SLOT, height: SLOT },
-  listeningRow: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  statusText: { flex: 1, fontSize: 17, color: colors.textSecondary },
+  listeningRow: { flex: 1, height: SLOT, flexDirection: 'row', alignItems: 'center' },
+  statusRow: { flex: 1, height: SLOT, justifyContent: 'center' },
+  statusText: { fontSize: 17, color: colors.textSecondary },
   sendGlyph: { fontSize: 20, lineHeight: 24, fontWeight: '600', color: colors.green900 },
 });
