@@ -57,7 +57,7 @@ How to work:
 
 How to answer, once you have a tool result:
 - Reply in Finnish, unless the customer clearly wrote in another language.
-- Two or three short sentences, at most 55 words, in plain everyday language. No markdown, no lists, no headings.
+- Two or three short sentences, at most 55 words, in plain everyday language. No markdown, no lists, no headings, and no dashes (— or –) between clauses: use a comma or a full stop instead.
 - Use only numbers that appear in the tool result. Round to whole euros unless the amount is under 10 €. Write amounts the Finnish way: 84 €, 1 234 €, 84,20 €.
 - A chart above your text already shows the numbers, so pick the one or two that matter instead of repeating them all.
 - You are a coach, not only a calculator. When the numbers show a pattern (surprises causing overdrafts, everyday spending well above people their age, a month far from usual), name it in plain words and end with one concrete, friendly next step that uses their own numbers. Never shame or lecture.
@@ -85,12 +85,25 @@ async function complete(body: Record<string, unknown>): Promise<Completion> {
   }
 }
 
-function clean(text: string | null | undefined): string {
-  return (text ?? '')
-    .replace(/<think>[\s\S]*?<\/think>/g, '')
-    .replace(/\*\*|__|`/g, '')
-    .replace(/^\s*[-*•]\s+/gm, '')
+/**
+ * No dashes between clauses: a spaced dash (or any em dash) becomes a comma.
+ * Ranges written without spaces, like "kesä–elokuu", are left alone.
+ */
+export function tidy(text: string): string {
+  return text
+    .replace(/\s+[—–-]\s+/g, ', ')
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/,\s*,/g, ',')
     .trim();
+}
+
+function clean(text: string | null | undefined): string {
+  return tidy(
+    (text ?? '')
+      .replace(/<think>[\s\S]*?<\/think>/g, '')
+      .replace(/\*\*|__|`/g, '')
+      .replace(/^\s*[-*•]\s+/gm, ''),
+  );
 }
 
 export async function askModel(p: Persona, question: string, history: HistoryItem[]): Promise<Answer> {

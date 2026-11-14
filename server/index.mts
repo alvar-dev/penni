@@ -24,7 +24,7 @@ import { createInterface } from 'node:readline';
 import type { AskRequest, HistoryItem } from '../src/shared/api.ts';
 import { personas, summary, TODAY } from './engine.mts';
 import type { Viz } from '../src/shared/api.ts';
-import { askModel, MODEL } from './llm.mts';
+import { askModel, MODEL, tidy } from './llm.mts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? '0.0.0.0';
@@ -239,7 +239,7 @@ const server = createServer(async (req, res) => {
   const hit = key ? cache.get(key) : undefined;
   if (hit) {
     console.log(`[ask] ${parsed.personaId} cached | ${parsed.question.slice(0, 80)}`);
-    return send(res, 200, hit);
+    return send(res, 200, { ...hit, text: tidy(hit.text) });
   }
   const limited = allowAsk();
   if (limited) return send(res, 429, { error: limited });
