@@ -18,9 +18,7 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
-  FadeInUp,
   FadeOut,
-  FadeOutUp,
   cancelAnimation,
   interpolate,
   useAnimatedStyle,
@@ -813,8 +811,8 @@ function Screen() {
                           style={[styles.input, { height: inputHeight }]}
                           value={draft}
                           onChangeText={setDraft}
-                          placeholder={strings.inputPlaceholder}
-                          placeholderTextColor={colors.textTertiary}
+                          placeholder={notice && !empty ? notice.text : strings.inputPlaceholder}
+                          placeholderTextColor={notice && !empty ? colors.textSecondary : colors.textTertiary}
                           multiline
                           submitBehavior="blurAndSubmit"
                           returnKeyType="send"
@@ -861,6 +859,24 @@ function Screen() {
                     </Text>
                     {phase === 'transcribing' || listening ? (
                       <Text style={styles.hint}>{phase === 'transcribing' ? strings.transcribingHint : (micNote ?? strings.listeningHint)}</Text>
+                    ) : notice ? (
+                      // A short message (e.g. no speech heard) stands in for the hint for a moment.
+                      <Text style={styles.hint} accessibilityLiveRegion="polite">
+                        {notice.text}
+                        {notice.retry ? '.' : ''}
+                        {notice.retry ? (
+                          <Text
+                            style={styles.hintAction}
+                            onPress={() => {
+                              setNotice(null);
+                              void onOrbPress();
+                            }}
+                            accessibilityRole="button">
+                            {'  '}
+                            {strings.retry}
+                          </Text>
+                        ) : null}
+                      </Text>
                     ) : plan && summary?.plan ? (
                       <View style={styles.planPill}>
                         <Text style={styles.planPillText}>
@@ -922,32 +938,6 @@ function Screen() {
               </Animated.View>
             )}
           </View>
-          {/* Notices slide in at the top, under the header, clear of the tiles, questions and input. */}
-          {notice ? (
-            <Animated.View
-              entering={FadeInUp.springify().damping(18).stiffness(220)}
-              exiting={FadeOutUp.duration(180)}
-              style={[styles.notice, { top: insets.top + HEADER + 4 }]}
-              pointerEvents="box-none"
-              accessibilityLiveRegion="polite">
-              <View style={styles.noticePill}>
-                <Text style={styles.noticeText} numberOfLines={2}>
-                  {notice.text}
-                </Text>
-                {notice.retry ? (
-                  <Pressable
-                    onPress={() => {
-                      setNotice(null);
-                      void onOrbPress();
-                    }}
-                    accessibilityRole="button"
-                    hitSlop={10}>
-                    <Text style={styles.noticeAction}>{strings.retry}</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </Animated.View>
-          ) : null}
         </View>
       </KeyboardAvoidingView>
 
@@ -1037,36 +1027,12 @@ const styles = StyleSheet.create({
   },
   caption: { alignItems: 'center', paddingHorizontal: 32 },
   title: { ...type.title, color: colors.text, textAlign: 'center' },
+  hintAction: { fontWeight: '600', color: colors.green700 },
   hint: { ...type.label, fontWeight: '400', color: colors.textSecondary, textAlign: 'center', marginTop: 6 },
 
   overview: { paddingBottom: 16 },
 
   inputRowPinned: { position: 'absolute', left: 0, right: 0, bottom: 0 },
-  notice: {
-    position: 'absolute',
-    left: 20,
-    right: 20,
-    alignItems: 'center',
-  },
-  noticePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    maxWidth: '100%',
-    backgroundColor: colors.bg,
-    borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingVertical: 10,
-    shadowColor: '#000000',
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  noticeText: { flexShrink: 1, fontSize: 15, lineHeight: 20, color: colors.text },
-  noticeAction: { fontSize: 15, lineHeight: 20, fontWeight: '600', color: colors.green700, marginLeft: 14 },
   // Pinned to the bottom, so a taller field grows upwards; the button and the orb stay on the last line.
   inputRow: { minHeight: INPUT_ROW, paddingHorizontal: 16, paddingVertical: (INPUT_ROW - FIELD_HEIGHT) / 2, justifyContent: 'flex-end' },
   field: {
