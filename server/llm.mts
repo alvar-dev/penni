@@ -15,6 +15,12 @@ import { tr } from './lang.mts';
 const API_URL = 'https://api.featherless.ai/v1/chat/completions';
 const KEY = process.env.FEATHERLESS_API_KEY ?? '';
 export const MODEL = process.env.FEATHERLESS_MODEL ?? 'moonshotai/Kimi-K3';
+/**
+ * How hard the model thinks before answering (Kimi K3: low, high or max; its
+ * default is max). Picking one calculation and wording two sentences needs
+ * little, and thinking is most of the wait. REASONING_EFFORT= (empty) sends nothing.
+ */
+const REASONING_EFFORT = process.env.REASONING_EFFORT ?? 'low';
 
 /** USD per million tokens, from Featherless's model list on 2026-11-14. */
 const PRICES: Record<string, { input: number; output: number }> = {
@@ -83,7 +89,7 @@ async function complete(body: Record<string, unknown>): Promise<Completion> {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, ...body }),
+      body: JSON.stringify({ model: MODEL, ...(REASONING_EFFORT ? { reasoning_effort: REASONING_EFFORT } : {}), ...body }),
       signal: AbortSignal.timeout(60_000),
     });
     if (response.ok) return (await response.json()) as Completion;
