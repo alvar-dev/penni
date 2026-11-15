@@ -13,28 +13,28 @@ export type VadState = {
   silence: number;
   heard: boolean;
   smooth: number | null;
+  /** The room's noise level (dBFS): quick to fall, slow to rise, never lifted by speech. */
+  floor: number;
+  /** The first buffers, to measure the room before anyone speaks. */
   recent: number[];
 };
 
 const ASSUMED_FLOOR_DB = -55; // before the room has been heard
 const CALIBRATION_FRAMES = 5; // about half a second
 const LOUD_DB = -27; // this loud is speech whatever the room
+const SPEECH_OVER_FLOOR_DB = 8;
+const SILENCE_OVER_FLOOR_DB = 5;
 const MIN_SPEECH_S = 0.3;
-const END_SILENCE_S = 1.1;
+const END_SILENCE_S = 1.5;
 const NO_SPEECH_GIVE_UP_S = 8;
 const MAX_S = 30;
-const FRAMES_KEPT = 60;
-
-const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 export function createVad(): VadState {
-  return { seconds: 0, frames: 0, speech: 0, silence: 0, heard: false, smooth: null, recent: [] };
+  return { seconds: 0, frames: 0, speech: 0, silence: 0, heard: false, smooth: null, floor: ASSUMED_FLOOR_DB, recent: [] };
 }
 
 export function noiseFloor(s: VadState): number {
-  if (s.recent.length < 3) return ASSUMED_FLOOR_DB;
-  const sorted = [...s.recent].sort((a, b) => a - b);
-  return sorted[Math.floor(sorted.length * 0.15)];
+  return s.floor;
 }
 
 /** Feeds one buffer's loudness (dBFS) and length (s). Returns true when the question is over. */
@@ -43,18 +43,24 @@ export function stepVad(s: VadState, db: number, dt: number): boolean {
   // The first buffers after the microphone opens can be digital silence.
   if (db > -90) {
     s.frames += 1;
-    s.recent.push(db);
-    if (s.recent.length > FRAMES_KEPT) s.recent.shift();
     s.smooth = s.smooth === null ? db : 0.6 * s.smooth + 0.4 * db;
-
-    const floor = noiseFloor(s);
-    const calibrated = s.frames > CALIBRATION_FRAMES;
-    const isSpeech = db > LOUD_DB || (calibrated && db > clamp(floor + 12, -48, -18));
+    if (s.frames <= CALIBRATION_FRAMES) {
+      // Before anyone speaks: the room is the median of the first buffers.
+      s.recent.push(db);
+      const sorted = [...s.recent].sort((a, b) => a - b);
+      s.floor = sorted[Math.floor(sorted.length / 2)];
+    } else if (db < s.floor) {
+      s.floor = 0.7 * s.floor + 0.3 * db;
+    } else if (db < s.floor + SILENCE_OVER_FLOOR_DB) {
+      // Only levels close to the floor may raise it, and slowly: speech, even soft, never does.
+      s.floor += 0.03 * (db - s.floor);
+    }
+    const isSpeech = db > LOUD_DB || (s.frames > CALIBRATION_FRAMES && db > Math.max(s.floor + SPEECH_OVER_FLOOR_DB, -50));
     if (isSpeech) {
       s.speech += dt;
       s.silence = 0;
       if (s.speech >= MIN_SPEECH_S) s.heard = true;
-    } else if (s.smooth < clamp(floor + 9, -54, -22)) {
+    } else if (s.smooth < s.floor + SILENCE_OVER_FLOOR_DB) {
       s.silence += dt;
     }
   }

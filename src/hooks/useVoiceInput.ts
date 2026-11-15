@@ -33,6 +33,11 @@ const LOUD_DB = -14;
  * deviceSpeech.ts): it listens, ends on a pause by itself and returns text,
  * and its volume drives the orb and the waveform.
  */
+/** The question has ended after this long without new words (phone's recognizer). */
+const QUESTION_PAUSE_MS = 1800;
+/** Nothing heard at all: stop listening. */
+const NO_SPEECH_MS = 8000;
+
 export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void) {
   const active = useSharedValue(false);
   /** Recent loudness values (0..1), newest last, for the waveform. */
@@ -44,13 +49,22 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
   }, [onAutoStop]);
 
   // The phone's recognizer: the latest transcript, and whether it has ended.
-  const speech = useRef({ transcript: '', ended: true, startedAt: 0, waiters: [] as (() => void)[], limit: undefined as ReturnType<typeof setTimeout> | undefined });
+  const speech = useRef({ transcript: '', finals: [] as string[], ended: true, startedAt: 0, waiters: [] as (() => void)[], limit: undefined as ReturnType<typeof setTimeout> | undefined, quiet: undefined as ReturnType<typeof setTimeout> | undefined });
   useEffect(() => {
     if (!deviceSpeech) return;
     const subscriptions = [
       deviceSpeech.addListener('result', (event) => {
-        const text = event.results[0]?.transcript;
-        if (text) speech.current.transcript = text;
+        const s = speech.current;
+        const text = event.results[0]?.transcript?.trim();
+        if (text) {
+          // Some recognizers send each finished segment on its own (Android), others the
+          // whole question so far (iOS): keep the finished ones and the one in progress.
+          if (event.isFinal) s.finals.push(text);
+          s.transcript = (event.isFinal ? s.finals : [...s.finals, text]).join(' ');
+        }
+        // The question is over after a real pause, not at the recognizer's first final result.
+        clearTimeout(s.quiet);
+        s.quiet = setTimeout(() => deviceSpeech?.stop(), QUESTION_PAUSE_MS);
       }),
       deviceSpeech.addListener('volumechange', (event) => {
         if (!active.get()) return;
@@ -67,6 +81,7 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
         const s = speech.current;
         s.ended = true;
         clearTimeout(s.limit);
+        clearTimeout(s.quiet);
         s.waiters.splice(0).forEach((resolve) => resolve());
         if (active.get()) {
           active.set(false);
@@ -109,19 +124,27 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
         const permission = await deviceSpeech.requestPermissionsAsync();
         if (!permission.granted) return 'denied';
         const local = await canRecognizeOnDevice();
-        speech.current = { transcript: '', ended: false, startedAt: Date.now(), waiters: [], limit: undefined };
+        speech.current = { transcript: '', finals: [], ended: false, startedAt: Date.now(), waiters: [], limit: undefined, quiet: undefined };
         history.set([]);
         active.set(true);
         deviceSpeech.start({
           lang: SPEECH_LANG,
           interimResults: true,
-          continuous: false,
+          // We decide when the question has ended (a pause of QUESTION_PAUSE_MS); left to
+          // itself the recognizer stopped at its first final result, often mid-sentence.
+          continuous: true,
           requiresOnDeviceRecognition: local,
           addsPunctuation: local,
           volumeChangeEventOptions: { enabled: true, intervalMillis: 90 },
+          // Older Android versions ignore continuous: give their endpointer longer pauses.
+          androidIntentOptions: {
+            EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 2000,
+            EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 1800,
+          },
         });
-        // A question is never longer than this.
+        // A question is never longer than this; and if nothing is heard, give up.
         speech.current.limit = setTimeout(() => deviceSpeech?.stop(), 30_000);
+        speech.current.quiet = setTimeout(() => deviceSpeech?.stop(), NO_SPEECH_MS);
         return 'ok';
       } catch {
         active.set(false);
@@ -161,7 +184,7 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
       if (!s.startedAt) return null;
       const text = s.transcript.trim();
       const seconds = (Date.now() - s.startedAt) / 1000;
-      speech.current = { transcript: '', ended: true, startedAt: 0, waiters: [], limit: undefined };
+      speech.current = { transcript: '', finals: [], ended: true, startedAt: 0, waiters: [], limit: undefined, quiet: undefined };
       return { audio: '', sampleRate: 0, seconds, heardSpeech: text.length > 0, text };
     }
     active.set(false);
