@@ -1,7 +1,6 @@
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 import { EN } from '../lang';
-import { report, setAudioSession } from '../tts/webVoice';
 import { createVad, stepVad } from './vad';
 
 /**
@@ -77,9 +76,6 @@ if (deviceSpeech) {
   const start = deviceSpeech.start.bind(deviceSpeech);
   const stop = deviceSpeech.stop.bind(deviceSpeech);
   deviceSpeech.start = (options) => {
-    // The answers' voice switches Safari to "playback", which cannot record.
-    setAudioSession('play-and-record');
-    if (appleMobile) report('listen start', { continuous: options.continuous, lang: options.lang });
     start(options);
     void startMeter();
   };
@@ -89,23 +85,4 @@ if (deviceSpeech) {
   };
   endQuestion = () => deviceSpeech.stop();
   deviceSpeech.addListener('end', stopMeter);
-
-  // What the recognizer does on iPhones, for the server log (src/tts/webVoice.ts report()).
-  if (appleMobile) {
-    let results = 0;
-    let longest = 0;
-    deviceSpeech.addListener('start', () => report('listen started'));
-    deviceSpeech.addListener('audiostart', () => report('listen audio'));
-    deviceSpeech.addListener('result', (event) => {
-      results++;
-      longest = Math.max(longest, event.results[0]?.transcript?.length ?? 0);
-      if (results === 1) report('listen first result', { final: event.isFinal });
-    });
-    deviceSpeech.addListener('error', (event) => report('listen error', { error: event.error, message: event.message }));
-    deviceSpeech.addListener('end', () => {
-      report('listen end', { results, longest });
-      results = 0;
-      longest = 0;
-    });
-  }
 }

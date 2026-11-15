@@ -10,7 +10,6 @@ import { EN } from '../lang';
 import type { KokoroApi } from './KokoroEngine';
 import { sentences } from '../shared/sentences';
 import { speakable } from '../shared/speakable';
-import { playWeb } from './webVoice';
 
 /**
  * The on-device Kokoro voice exists only in the installed app; in Expo Go the
@@ -30,6 +29,9 @@ export const KokoroEngine: typeof import('./KokoroEngine').KokoroEngine | null =
 
 const KEY = 'voice.v1';
 
+/** Answers are read aloud in the app only; the web version shows them as text. */
+export const VOICE_AVAILABLE = Platform.OS !== 'web';
+
 /**
  * Reads answers aloud. The text is always shown; the voice can be muted (kept
  * on the device) and any answer can be played on demand. Uses Kokoro on the
@@ -37,7 +39,7 @@ const KEY = 'voice.v1';
  * else the phone's own voice.
  */
 export function useSpeaker() {
-  const [voiceOn, setVoiceOn] = useState(true);
+  const [voiceOn, setVoiceOn] = useState(VOICE_AVAILABLE);
   /** The answer being read and the index of the sentence being read in it. */
   const [reading, setReading] = useState<{ id: string; sentence: number } | null>(null);
   const kokoro = useRef<KokoroApi | null>(null);
@@ -46,14 +48,13 @@ export function useSpeaker() {
   /** Bumped on every stop, so a reading in progress notices and ends. */
   const turn = useRef(0);
   const player = useRef<AudioPlayer | null>(null);
-  const webPlayback = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     AsyncStorage.getItem(KEY)
       .then((v) => v === 'off' && setVoiceOn(false))
       .catch(() => {});
     // Without Kokoro on this device (web, Expo Go), ask now whether the server has a voice.
-    if (!KokoroEngine) void serverHasVoice();
+    if (!KokoroEngine && VOICE_AVAILABLE) void serverHasVoice();
   }, []);
 
   const finish = useCallback((id: string) => {
@@ -69,8 +70,6 @@ export function useSpeaker() {
     setReading(null);
     kokoro.current?.stop();
     void Speech.stop();
-    webPlayback.current?.stop();
-    webPlayback.current = null;
     const p = player.current;
     player.current = null;
     if (p) {
@@ -86,6 +85,7 @@ export function useSpeaker() {
   const speak = useCallback(
     (id: string, text: string, onStart?: () => void) => {
       stop();
+      if (!VOICE_AVAILABLE) return;
       const parts = sentences(text);
       const spoken = parts.map((part) => speakable(part, EN));
       if (spoken.length === 0) return;
@@ -127,18 +127,6 @@ export function useSpeaker() {
       // Kokoro on the computer, streamed from the local server (Expo Go): each
       // sentence is fetched while the one before plays, so speech starts quickly.
       const serverVoice = async () => {
-        // In a browser through Web Audio (an <audio> started this late is blocked; see webVoice.ts).
-        if (Platform.OS === 'web') {
-          const playback = playWeb(spoken.map((part) => speechUrl(part)), at, live);
-          webPlayback.current = playback;
-          try {
-            await playback.done;
-          } catch (error) {
-            if (!begun) throw error; // nothing played yet: the browser's own voice takes over
-          }
-          if (live()) finish(id);
-          return;
-        }
         await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).catch(() => {});
         const prepare = (i: number) => {
           if (i < spoken.length) void fetch(speechUrl(spoken[i]), { headers: { Range: 'bytes=0-1' } }).catch(() => {});
@@ -201,13 +189,13 @@ export function useSpeaker() {
   }, []);
 
   /** Whether the next answer will be read by the server's voice (no Kokoro on this device yet). */
-  const usesServerVoice = useCallback(() => kokoro.current === null, []);
+  const usesServerVoice = useCallback(() => VOICE_AVAILABLE && kokoro.current === null, []);
 
   const speakingId = reading?.id ?? null;
   const sentence = reading?.sentence ?? -1;
   // A stable object, so callers' callbacks only change when the voice state does.
   return useMemo(
-    () => ({ voiceOn, toggleVoice, speak, stop, speakingId, sentence, onKokoro, usesServerVoice }),
+    () => ({ available: VOICE_AVAILABLE, voiceOn, toggleVoice, speak, stop, speakingId, sentence, onKokoro, usesServerVoice }),
     [voiceOn, toggleVoice, speak, stop, speakingId, sentence, onKokoro, usesServerVoice],
   );
 }

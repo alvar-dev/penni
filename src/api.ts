@@ -66,15 +66,6 @@ export function serverHasVoice(): Promise<boolean> {
 }
 
 /** A URL the audio player can stream the spoken answer from. */
-/** Diagnostics from the web version (what happened to the voice) for the server log. */
-export function clientLog(data: Record<string, unknown>): void {
-  void fetch(`${baseUrl()}/clientlog`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-App-Token': process.env.EXPO_PUBLIC_API_TOKEN ?? '' },
-    body: JSON.stringify(data),
-  }).catch(() => {});
-}
-
 export function speechUrl(text: string): string {
   return `${baseUrl()}/speak?token=${encodeURIComponent(process.env.EXPO_PUBLIC_API_TOKEN ?? '')}&text=${encodeURIComponent(text)}`;
 }

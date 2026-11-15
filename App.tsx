@@ -799,15 +799,17 @@ function Screen() {
               ))
             : message.text}
         </Text>
-        {/* Listen to this answer (also when the voice is muted). */}
-        <Pressable
-          onPress={() => (speaker.speakingId === message.id ? speaker.stop() : speaker.speak(message.id, message.text))}
-          accessibilityRole="button"
-          hitSlop={8}
-          style={({ pressed }) => [styles.listen, pressed && styles.headerPressed]}>
-          <SpeakerIcon size={16} color={colors.green700} />
-          <Text style={styles.listenText}>{speaker.speakingId === message.id ? strings.listenStop : strings.listen}</Text>
-        </Pressable>
+        {/* Listen to this answer (also when the voice is muted); the app only, not the web version. */}
+        {speaker.available ? (
+          <Pressable
+            onPress={() => (speaker.speakingId === message.id ? speaker.stop() : speaker.speak(message.id, message.text))}
+            accessibilityRole="button"
+            hitSlop={8}
+            style={({ pressed }) => [styles.listen, pressed && styles.headerPressed]}>
+            <SpeakerIcon size={16} color={colors.green700} />
+            <Text style={styles.listenText}>{speaker.speakingId === message.id ? strings.listenStop : strings.listen}</Text>
+          </Pressable>
+        ) : null}
         {message.sources?.length ? (
           <Text style={styles.answerSource}>
             {strings.source} {message.sources.map((s) => s.replace(/^(Tilastokeskus|Statistics Finland), /, '')).join(' · ')}
@@ -1049,16 +1051,18 @@ function Screen() {
               <PersonIcon size={22} color={colors.green700} />
             </Pressable>
             <View style={styles.flex} pointerEvents="none" />
-            {/* Read answers aloud, or mute; the text always shows. */}
-            <Pressable
-              onPress={speaker.toggleVoice}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: speaker.voiceOn }}
-              accessibilityLabel={strings.voiceLabel}
-              hitSlop={10}
-              style={({ pressed }) => [styles.profileButton, !empty && styles.headerGap, pressed && styles.headerPressed]}>
-              <SpeakerIcon size={22} color={colors.green700} muted={!speaker.voiceOn} />
-            </Pressable>
+            {/* Read answers aloud, or mute; the text always shows. Not in the web version. */}
+            {speaker.available ? (
+              <Pressable
+                onPress={speaker.toggleVoice}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: speaker.voiceOn }}
+                accessibilityLabel={strings.voiceLabel}
+                hitSlop={10}
+                style={({ pressed }) => [styles.profileButton, !empty && styles.headerGap, pressed && styles.headerPressed]}>
+                <SpeakerIcon size={22} color={colors.green700} muted={!speaker.voiceOn} />
+              </Pressable>
+            ) : null}
             {/* A new conversation; on the start screen one is already open. */}
             {empty ? null : (
               <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
