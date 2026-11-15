@@ -326,6 +326,8 @@ function parseAsk(body: unknown): AskRequest | string {
   return { personaId: b.personaId, question: b.question.trim(), history, banks: bankList(b.banks), serverVoice: b.serverVoice === true };
 }
 
+const clientLogs: number[] = [];
+
 // The web version (scripts/build-web.sh builds it into web/): the same app in a browser.
 const WEB_DIR = new URL('../web/', import.meta.url);
 const WEB_TYPES: Record<string, string> = {
@@ -422,6 +424,20 @@ const server = createServer(async (req, res) => {
     }
     res.writeHead(200, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': audio.length });
     return res.end(audio);
+  }
+  // Diagnostics from the web version (src/tts/webVoice.ts): what happened to the voice on a phone.
+  if (req.method === 'POST' && req.url === '/clientlog') {
+    if (req.headers['x-app-token'] !== TOKEN) return send(res, 401, { error: 'Unauthorized' });
+    const now = Date.now();
+    while (clientLogs.length && now - clientLogs[0] > 60_000) clientLogs.shift();
+    if (clientLogs.length >= 60) return send(res, 429, { error: 'Too many' });
+    clientLogs.push(now);
+    try {
+      console.log(`[client] ${JSON.stringify(await readJson(req, 2000)).slice(0, 500)}`);
+    } catch {
+      return send(res, 400, { error: 'Invalid JSON' });
+    }
+    return send(res, 204, {});
   }
   if (req.method === 'GET' && serveWeb(req, res)) return;
   if (req.method !== 'POST' || (req.url !== '/ask' && req.url !== '/transcribe')) return send(res, 404, { error: 'Not found' });
