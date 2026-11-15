@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --paper: #f4f7f3;
+        --ink: #101411;
+        --ink-2: #545c57;
+        --ink-3: #69706b;
+        --green: #1d7a4a;
+        --b1: #004628;
+        --b2: #00aa46;
+        --b3: #5fd889;
+        --font: -apple-system, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: radial-gradient(1400px 900px at 50% 38%, #fbfdfb 0%, #eef3ee 72%, #e6ede7 100%);
+        font-family: var(--font);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      #cam {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 46%;
+      }
+      /* A dotted floor running to the horizon. */
+      #floorwrap {
+        position: absolute;
+        inset: 0;
+        perspective: 900px;
+        perspective-origin: 50% 30%;
+        z-index: 1;
+        overflow: hidden;
+      }
+      #floor {
+        position: absolute;
+        left: -1400px;
+        top: 560px;
+        width: 4720px;
+        height: 2200px;
+        transform: rotateX(76deg);
+        transform-origin: 50% 0%;
+        background-image: radial-gradient(circle, rgba(16, 70, 40, 0.22) 1.6px, transparent 2.2px);
+        background-size: 44px 44px;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 100%);
+        mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 100%);
+      }
+      canvas.dust {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        pointer-events: none;
+      }
+      #dustBack {
+        z-index: 2;
+      }
+      #dustFront {
+        z-index: 40;
+      }
+      #orb {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        z-index: 6;
+      }
+      #grain {
+        position: absolute;
+        inset: -64px;
+        z-index: 60;
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      .back {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+      }
+      .front {
+        position: absolute;
+        inset: 0;
+        z-index: 12;
+      }
+      .layer {
+        z-index: 14;
+      }
+      .h {
+        font-weight: 600;
+        letter-spacing: -0.045em;
+        line-height: 1.02;
+      }
+      .ln {
+        display: block;
+        overflow: hidden;
+        padding: 0.04em 0 0.12em;
+        margin-bottom: -0.12em;
+      }
+      .ln > span {
+        display: inline-block;
+      }
+      .lede {
+        font-size: 34px;
+        line-height: 1.38;
+        letter-spacing: -0.012em;
+        color: var(--ink-2);
+      }
+      .tag {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--green);
+      }
+      .center {
+        position: absolute;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
+      svg.ico {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Swarm chips */
+      .chip {
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 22px 9px 9px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow:
+          0 18px 40px rgba(12, 58, 34, 0.12),
+          0 3px 8px rgba(12, 40, 26, 0.06),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.05);
+        white-space: nowrap;
+        font-size: 26px;
+        will-change: transform, opacity, filter;
+      }
+      .chip .ic {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #e3f4e7;
+        color: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chip .ic svg {
+        width: 24px;
+        height: 24px;
+      }
+      .chip .nm {
+        color: var(--ink-2);
+      }
+      .chip .am {
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Ledger */
+      #ledgerWrap {
+        position: absolute;
+        left: 140px;
+        top: 110px;
+        width: 760px;
+        height: 860px;
+        perspective: 1600px;
+      }
+      #ledger {
+        position: absolute;
+        inset: 0;
+        border-radius: 40px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow:
+          0 60px 120px rgba(12, 58, 34, 0.16),
+          0 14px 30px rgba(12, 40, 26, 0.08),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.05);
+        overflow: hidden;
+        transform-origin: 30% 50%;
+      }
+      #ledger .head {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 110px;
+        padding: 34px 40px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        background: linear-gradient(#fff 70%, rgba(255, 255, 255, 0));
+        z-index: 3;
+      }
+      #ledger .head b {
+        font-size: 34px;
+        letter-spacing: -0.02em;
+      }
+      #ledger .head span {
+        font-size: 26px;
+        color: var(--ink-3);
+      }
+      #rows {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+      }
+      .row {
+        position: absolute;
+        left: 28px;
+        right: 28px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 14px;
+        border-radius: 18px;
+        font-size: 26px;
+      }
+      .row .ic {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: #eef6f0;
+        color: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+      }
+      .row .ic svg {
+        width: 24px;
+        height: 24px;
+      }
+      .row .tx {
+        flex: 1;
+        line-height: 1.15;
+      }
+      .row .tx small {
+        display: block;
+        font-size: 20px;
+        color: var(--ink-3);
+      }
+      .row .am {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+      }
+      .row .bt {
+        width: 132px;
+        height: 36px;
+        border-radius: 18px;
+        font-size: 19px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex: none;
+      }
+      .row .bt i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      #scan {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        height: 78px;
+        top: 451px;
+        border-radius: 22px;
+        background: linear-gradient(90deg, rgba(0, 170, 70, 0.1), rgba(0, 235, 90, 0.16), rgba(0, 170, 70, 0.1));
+        box-shadow:
+          0 0 0 2px rgba(0, 170, 70, 0.35),
+          0 0 40px rgba(0, 235, 90, 0.25);
+        z-index: 2;
+      }
+      #ledger .fadeb {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 160px;
+        background: linear-gradient(rgba(255, 255, 255, 0), #fff);
+        z-index: 3;
+      }
+      .mini {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 210px;
+        height: 30px;
+        margin: -15px 0 0 -105px;
+        border-radius: 15px;
+        color: #fff;
+        font-size: 17px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 18px rgba(12, 58, 34, 0.16);
+        font-variant-numeric: tabular-nums;
+      }
+      .stackLabel {
+        position: absolute;
+        width: 260px;
+        margin-left: -130px;
+        text-align: center;
+      }
+      .stackLabel b {
+        display: block;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      .stackLabel span {
+        font-size: 44px;
+        font-weight: 600;
+        letter-spacing: -0.035em;
+        font-variant-numeric: tabular-nums;
+      }
+      .base {
+        position: absolute;
+        height: 6px;
+        width: 240px;
+        margin-left: -120px;
+        border-radius: 3px;
+        background: rgba(16, 60, 36, 0.12);
+      }
+
+      /* Baskets */
+      .blabel {
+        position: absolute;
+        width: 420px;
+        margin-left: -210px;
+        text-align: center;
+      }
+      .blabel .name {
+        font-size: 30px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .blabel .val {
+        font-size: 58px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .blabel .per {
+        font-size: 28px;
+        color: var(--ink-3);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Year chart */
+      #chart {
+        position: absolute;
+        left: 160px;
+        top: 300px;
+        width: 1600px;
+        height: 620px;
+      }
+      .bar {
+        position: absolute;
+        bottom: 60px;
+        width: 86px;
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 4px;
+      }
+      .seg {
+        width: 100%;
+        border-radius: 10px;
+        transform-origin: 50% 100%;
+      }
+      .mon {
+        position: absolute;
+        bottom: 12px;
+        width: 86px;
+        text-align: center;
+        font-size: 24px;
+        color: var(--ink-3);
+      }
+      .gridline {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(16, 60, 36, 0.09);
+      }
+      .gridline span {
+        position: absolute;
+        right: 100%;
+        margin-right: 16px;
+        top: -14px;
+        font-size: 22px;
+        color: var(--ink-3);
+        font-variant-numeric: tabular-nums;
+      }
+      .legend {
+        position: absolute;
+        top: 132px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 28px;
+        font-weight: 500;
+      }
+      .legend i {
+        width: 26px;
+        height: 26px;
+        display: inline-block;
+      }
+      #callout {
+        position: absolute;
+        left: 860px;
+        top: 212px;
+        width: 560px;
+        padding: 26px 30px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow:
+          0 40px 80px rgba(12, 58, 34, 0.16),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.06);
+        z-index: 3;
+      }
+      #callout b {
+        display: block;
+        font-size: 30px;
+        letter-spacing: -0.02em;
+      }
+      #callout p {
+        font-size: 26px;
+        line-height: 1.35;
+        color: var(--ink-2);
+        margin-top: 8px;
+      }
+      #callout .big {
+        font-size: 54px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        color: var(--b2);
+        margin-top: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      #calloutLine {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="28.5" data-width="1920" data-height="1080">
+      <div id="cam" class="clip" data-start="0" data-duration="28.5" data-track-index="0">
+        <div id="floorwrap"><div id="floor"></div></div>
+        <canvas class="dust" id="dustBack" width="1920" height="1080"></canvas>
+        <div class="back" id="swarmBack"></div>
+        <canvas id="orb" width="1920" height="1080"></canvas>
+        <div class="front" id="swarmFront"></div>
+
+        <!-- 1. Open: the noise of everyday spending, pulled into one calm place. -->
+        <div id="s1" class="clip layer" data-start="0" data-duration="6.6" data-track-index="1">
+          <div class="center tag" id="s1-tag" style="top: 716px">Introducing Penni</div>
+          <div class="center h" id="s1-h" style="top: 762px; font-size: 128px"><span class="ln"><span>Ask your money.</span></span></div>
+        </div>
+
+        <!-- 2. Every euro, sorted. -->
+        <div id="s2" class="clip layer" data-start="6.4" data-duration="8.4" data-track-index="1">
+          <div id="ledgerWrap">
+            <div id="ledger">
+              <div class="head"><b>Transactions</b><span>July 2026</span></div>
+              <div id="rows"></div>
+              <div id="scan"></div>
+              <div class="fadeb"></div>
+            </div>
+          </div>
+          <div id="minis"></div>
+          <div class="base" style="left: 1170px; top: 790px"></div>
+          <div class="base" style="left: 1450px; top: 790px"></div>
+          <div class="base" style="left: 1730px; top: 790px"></div>
+          <div class="stackLabel" id="sl1" style="left: 1170px; top: 806px"><b>Essentials</b><span id="st1">€0</span></div>
+          <div class="stackLabel" id="sl2" style="left: 1450px; top: 806px"><b>Surprises</b><span id="st2">€0</span></div>
+          <div class="stackLabel" id="sl3" style="left: 1730px; top: 806px"><b>Extras</b><span id="st3">€0</span></div>
+          <div class="h" id="s2-h" style="position: absolute; left: 1020px; top: 120px; font-size: 84px">
+            <span class="ln"><span>Every euro,</span></span><span class="ln"><span>sorted.</span></span>
+          </div>
+        </div>
+
+        <!-- 3. Three baskets, then a year of them. -->
+        <div id="s3" class="clip layer" data-start="14.5" data-duration="14" data-track-index="1">
+          <svg id="rings" width="1920" height="1080" viewBox="0 0 1920 1080" style="position: absolute; inset: 0"></svg>
+          <div class="h" id="s3-h" style="position: absolute; left: 150px; top: 100px; font-size: 88px"><span class="ln"><span>Three baskets.</span></span></div>
+          <div class="lede" id="s3-l" style="position: absolute; left: 154px; top: 220px">Everything you spend falls into one of them.</div>
+          <div class="blabel" id="lab1" style="left: 600px; top: 822px">
+            <div class="name">Essentials</div>
+            <div class="val" id="v1">€0</div>
+            <div class="per"><span id="p1">0</span>% · a month</div>
+          </div>
+          <div class="blabel" id="lab2" style="left: 1120px; top: 822px">
+            <div class="name">Surprises</div>
+            <div class="val" id="v2">€0</div>
+            <div class="per"><span id="p2">0</span>% · a month</div>
+          </div>
+          <div class="blabel" id="lab3" style="left: 1430px; top: 822px">
+            <div class="name">Extras</div>
+            <div class="val" id="v3">€0</div>
+            <div class="per"><span id="p3">0</span>% · a month</div>
+          </div>
+          <div class="h" id="s3-h2" style="position: absolute; left: 150px; top: 100px; font-size: 80px"><span class="ln"><span>A year of your money.</span></span></div>
+          <div class="h" id="s3-h3" style="position: absolute; left: 150px; top: 100px; font-size: 80px"><span class="ln"><span>Steer the extras.</span></span></div>
+          <div class="lede" id="s3-l3" style="position: absolute; left: 154px; top: 206px">The light green is where small changes add up.</div>
+          <div class="legend" id="lg1" style="left: 1239px"><i></i>Essentials</div>
+          <div class="legend" id="lg2" style="left: 1449px"><i></i>Surprises</div>
+          <div class="legend" id="lg3" style="left: 1659px"><i></i>Extras</div>
+          <div id="chart"></div>
+          <svg id="calloutLine" width="1920" height="1080" viewBox="0 0 1920 1080"><path id="cpath" d="" fill="none" stroke="#00AA46" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 8" /><circle id="cdot" r="9" fill="#00AA46" /></svg>
+          <div id="callout">
+            <b>July: a washing machine</b>
+            <div class="big" id="cbig">€0</div>
+            <p>One surprise, ten days overdrawn. €125 set aside each payday would have covered it.</p>
+          </div>
+        </div>
+      </div>
+      <canvas class="dust" id="dustFront" width="1920" height="1080"></canvas>
+      <div id="grain"></div>
+    </div>
+    <div id="park" style="display: none"></div>
+
+    <script>
+      // =====================================================================
+      // Shapes for the orb to become: smoothed signed distance fields.
+      // =====================================================================
+      const INF = 1e20;
+      function edt1d(f, n, d, v, z) {
+        let k = 0;
+        v[0] = 0;
+        z[0] = -INF;
+        z[1] = INF;
+        for (let q = 1; q < n; q++) {
+          let s = (f[q] + q * q - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+          while (s <= z[k]) {
+            k--;
+            s = (f[q] + q * q - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+          }
+          k++;
+          v[k] = q;
+          z[k] = s;
+          z[k + 1] = INF;
+        }
+        k = 0;
+        for (let q = 0; q < n; q++) {
+          while (z[k + 1] < q) k++;
+          d[q] = (q - v[k]) * (q - v[k]) + f[v[k]];
+        }
+      }
+      function edt2d(grid, w, h) {
+        const n = Math.max(w, h);
+        const f = new Float64Array(n), d = new Float64Array(n), z = new Float64Array(n + 1), v = new Int32Array(n);
+        for (let x = 0; x < w; x++) {
+          for (let y = 0; y < h; y++) f[y] = grid[y * w + x];
+          edt1d(f, h, d, v, z);
+          for (let y = 0; y < h; y++) grid[y * w + x] = d[y];
+        }
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) f[x] = grid[y * w + x];
+          edt1d(f, w, d, v, z);
+          for (let x = 0; x < w; x++) grid[y * w + x] = d[x];
+        }
+      }
+      function blur(a, w, h, r, passes) {
+        const tmp = new Float32Array(w * h);
+        for (let p = 0; p < passes; p++) {
+          for (let y = 0; y < h; y++) {
+            let acc = 0;
+            for (let x = -r; x <= r; x++) acc += a[y * w + Math.min(w - 1, Math.max(0, x))];
+            for (let x = 0; x < w; x++) {
+              tmp[y * w + x] = acc / (2 * r + 1);
+              acc += a[y * w + Math.min(w - 1, x + r + 1)] - a[y * w + Math.max(0, x - r)];
+            }
+          }
+          for (let x = 0; x < w; x++) {
+            let acc = 0;
+            for (let y = -r; y <= r; y++) acc += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+            for (let y = 0; y < h; y++) {
+              a[y * w + x] = acc / (2 * r + 1);
+              acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x];
+            }
+          }
+        }
+      }
+      function sdfFrom(canvas, smooth) {
+        const w = canvas.width, h = canvas.height;
+        const px = canvas.getContext("2d").getImageData(0, 0, w, h).data;
+        const out = new Float64Array(w * h), inn = new Float64Array(w * h);
+        for (let i = 0; i < w * h; i++) {
+          const on = px[i * 4 + 3] > 127;
+          out[i] = on ? 0 : INF;
+          inn[i] = on ? INF : 0;
+        }
+        edt2d(out, w, h);
+        edt2d(inn, w, h);
+        const dist = new Float32Array(w * h);
+        for (let i = 0; i < w * h; i++) dist[i] = Math.sqrt(out[i]) - Math.sqrt(inn[i]);
+        blur(dist, w, h, smooth, 3);
+        const data = new Float32Array(w * h * 2);
+        for (let i = 0; i < w * h; i++) data[i * 2] = dist[i];
+        return data;
+      }
+      function canvasOf(w, h, draw) {
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        const g = c.getContext("2d");
+        g.fillStyle = g.strokeStyle = "#000";
+        draw(g, w, h);
+        return c;
+      }
+      const cut = (g, fn) => { g.save(); g.globalCompositeOperation = "destination-out"; fn(); g.restore(); };
+      const ell = (g, x, y, rx, ry) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.fill(); };
+      const rr = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); };
+      const shapeDefs = {
+        house: { w: 512, h: 512, draw: (g, s) => {
+          g.lineJoin = "round";
+          g.lineWidth = s * 0.09;
+          g.beginPath();
+          g.moveTo(s * 0.5, s * 0.17);
+          g.lineTo(s * 0.15, s * 0.47);
+          g.lineTo(s * 0.85, s * 0.47);
+          g.closePath();
+          g.fill();
+          g.stroke();
+          rr(g, s * 0.22, s * 0.42, s * 0.56, s * 0.43, s * 0.08);
+          cut(g, () => rr(g, s * 0.43, s * 0.6, s * 0.14, s * 0.26, [s * 0.07, s * 0.07, 0, 0]));
+        } },
+        machine: { w: 512, h: 512, draw: (g, s) => {
+          rr(g, s * 0.18, s * 0.12, s * 0.64, s * 0.76, s * 0.13);
+          cut(g, () => {
+            ell(g, s * 0.5, s * 0.55, s * 0.22, s * 0.22);
+            ell(g, s * 0.31, s * 0.215, s * 0.03, s * 0.03);
+            ell(g, s * 0.41, s * 0.215, s * 0.03, s * 0.03);
+          });
+          ell(g, s * 0.5, s * 0.55, s * 0.15, s * 0.15);
+        } },
+        coffee: { w: 512, h: 512, draw: (g, s) => {
+          ell(g, s * 0.69, s * 0.55, s * 0.125, s * 0.125);
+          cut(g, () => ell(g, s * 0.69, s * 0.55, s * 0.06, s * 0.06));
+          g.beginPath();
+          g.moveTo(s * 0.2, s * 0.38);
+          g.lineTo(s * 0.72, s * 0.38);
+          g.lineTo(s * 0.67, s * 0.72);
+          g.quadraticCurveTo(s * 0.65, s * 0.8, s * 0.57, s * 0.8);
+          g.lineTo(s * 0.35, s * 0.8);
+          g.quadraticCurveTo(s * 0.27, s * 0.8, s * 0.25, s * 0.72);
+          g.closePath();
+          g.fill();
+          g.lineWidth = s * 0.055;
+          g.lineCap = "round";
+          [0.37, 0.52].forEach((x) => {
+            g.beginPath();
+            g.moveTo(s * x, s * 0.3);
+            g.bezierCurveTo(s * (x - 0.05), s * 0.24, s * (x + 0.05), s * 0.19, s * x, s * 0.12);
+            g.stroke();
+          });
+        } },
+      };
+
+      // =====================================================================
+      // The orb: the app's shader look, three bodies that melt into each other.
+      // =====================================================================
+      const VERT = `#version 300 es
+        in vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }`;
+      const FRAG = `#version 300 es
+        precision highp float;
+        uniform vec2 uRes; uniform float uTime;
+        uniform vec2 uC[3]; uniform float uRad[3]; uniform vec2 uSC[3]; uniform float uM[3];
+        uniform vec2 uBox[3]; uniform vec2 uSize[3]; uniform float uVis[3]; uniform float uBev[3];
+        uniform vec3 uRamp[12];
+        uniform sampler2D uT0; uniform sampler2D uT1; uniform sampler2D uT2;
+        uniform float uSmooth, uEnergy, uLevel, uShadow, uFloor, uHalo, uAlpha;
+        out vec4 o;
+        float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+        float noise(vec2 p){ vec2 i = floor(p), f = fract(p);
+          float a = hash(i), b = hash(i + vec2(1,0)), c = hash(i + vec2(0,1)), d = hash(i + vec2(1,1));
+          vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(a, b, u.x), mix(c, d, u.x), u.y); }
+        float fbm(vec2 p){ float v = 0.0, a = 0.5;
+          for (int i = 0; i < 4; i++){ v += a * noise(p); p = p * 2.03 + vec2(17.1, 9.2); a *= 0.5; } return v; }
+        vec4 tex(int i, vec2 uv){ if (i == 0) return texture(uT0, uv); if (i == 1) return texture(uT1, uv); return texture(uT2, uv); }
+        float bobOf(int i){ return min(uRad[i], 220.0) * 0.048 * sin(uTime * 1.15 + float(i) * 1.7); }
+        float blobD(int i, vec2 fp, out float vis){
+          vis = uVis[i];
+          if (uRad[i] < 0.5) return 1e5;
+          float bob = bobOf(i);
+          vec2 p = fp - uC[i] - vec2(0.0, bob);
+          float r = length(p), ang = atan(p.y, p.x);
+          float t = uTime * (0.5 + 0.8 * uEnergy);
+          float amp = 0.008 + 0.004 * uEnergy + 0.0112 * uLevel;
+          float wob = uRad[i] * amp * (sin(ang * 3.0 + t * 1.7 + float(i) * 2.1) + 0.7 * sin(ang * 5.0 - t * 2.3) + 0.5 * sin(ang * 2.0 + t * 0.9));
+          wob += uRad[i] * 0.012 * uLevel * sin(ang * 9.0 - t * 4.0);
+          float dC = r - uRad[i] * (1.0 + 0.14 * uLevel) - wob;
+          if (uM[i] <= 0.0) return dC;
+          vec2 local = fp - uSC[i] - vec2(0.0, bob);
+          vec2 uv = local / uBox[i] + 0.5;
+          vec4 s = tex(i, clamp(uv, 0.0, 1.0));
+          vec2 outside = max(abs(local) - uBox[i] * 0.5, 0.0);
+          float dS = s.r * (uBox[i].x / uSize[i].x) + length(outside);
+          return mix(dC, dS, uM[i]);
+        }
+        float scene(vec2 fp, out float vis, out vec3 w){
+          float v0, v1, v2;
+          float d0 = blobD(0, fp, v0), d1 = blobD(1, fp, v1), d2 = blobD(2, fp, v2);
+          float k = max(uSmooth, 0.001);
+          float h = clamp(0.5 + 0.5 * (d1 - d0) / k, 0.0, 1.0);
+          float d = mix(d1, d0, h) - k * h * (1.0 - h);
+          float h2 = clamp(0.5 + 0.5 * (d2 - d) / k, 0.0, 1.0);
+          d = mix(d2, d, h2) - k * h2 * (1.0 - h2);
+          vis = mix(v2, mix(v1, v0, h), h2);
+          w = vec3(h * h2, (1.0 - h) * h2, 1.0 - h2);
+          return d;
+        }
+        vec3 ramp(int k, vec3 w){ return w.x * uRamp[k] + w.y * uRamp[4 + k] + w.z * uRamp[8 + k]; }
+        void main(){
+          vec2 fp = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
+          float vis, vt; vec3 w, wt;
+          float d = scene(fp, vis, w);
+          vec3 qx, qy, qr, bv;
+          for (int i = 0; i < 3; i++){
+            vec2 c = mix(uC[i], uSC[i], uM[i]) + vec2(0.0, bobOf(i));
+            qx[i] = c.x; qy[i] = c.y;
+            qr[i] = max(mix(uRad[i], uBox[i].x * 0.42, uM[i]), 1.0);
+            bv[i] = mix(uRad[i], uBev[i], uM[i]);
+          }
+          vec2 qc = vec2(dot(w, qx), dot(w, qy));
+          float rq = dot(w, qr), bev = max(dot(w, bv), 1.0);
+          float unitPx = 4.0 * min(rq, 260.0);
+          float bob = 0.012 * sin(uTime * 1.15);
+          vec2 sp = (fp - uC[0] - vec2(0.0, uRad[0] * 1.7)) / vec2(uRad[0] * (0.60 + 0.08 * uLevel), uRad[0] * 0.08);
+          float shA = exp(-dot(sp, sp) * 1.3) * (0.15 + 2.5 * bob) * uFloor;
+          float ds = scene(fp - vec2(12.0, 26.0), vt, wt);
+          shA += (1.0 - smoothstep(-24.0, 60.0, ds)) * 0.08 * uShadow * vt;
+          if ((d > 0.3 * unitPx || vis <= 0.0) && shA < 0.002) { o = vec4(0.0); return; }
+          vec2 g = normalize(vec2(scene(fp + vec2(1.0, 0.0), vt, wt) - d, scene(fp + vec2(0.0, 1.0), vt, wt) - d) + 1e-7);
+          float e = clamp(1.0 + d / bev, 0.0, 1.0);
+          vec3 nrm = vec3(g * e, sqrt(max(1.0 - e * e, 0.0)));
+          float depth = nrm.z;
+          float t = uTime * (0.5 + 0.8 * uEnergy);
+          vec2 q = (fp - qc) / min(rq, 640.0);
+          vec2 flow = vec2(fbm(q * 1.6 + vec2(0.0, t * 0.35)), fbm(q * 1.6 + vec2(5.2, -t * 0.3)));
+          float n = fbm(q * 2.2 + 2.0 * flow + vec2(t * 0.15, 0.0));
+          vec3 deep = ramp(0, w), mid = ramp(1, w), bright = ramp(2, w), mint = ramp(3, w);
+          vec3 col = mix(deep, mid, smoothstep(0.20, 0.50, n));
+          col = mix(col, bright, smoothstep(0.42, 0.70, n));
+          col = mix(col, mint, smoothstep(0.60, 0.88, n) * 0.9);
+          float light = clamp(dot(normalize(nrm + vec3(0.0, 0.0, 0.0001)), normalize(vec3(-0.45, -0.60, 0.66))), 0.0, 1.0);
+          col = mix(col, mint, pow(light, 3.0) * 0.55);
+          col += vec3(1.0) * pow(light, 14.0) * 0.35;
+          col = mix(col, bright, pow(1.0 - depth, 2.5) * 0.5);
+          col += mint * (0.08 + 0.25 * uLevel) * (1.0 - smoothstep(0.0, 0.9, e));
+          col = clamp(col, 0.0, 1.0);
+          float inside = 1.0 - smoothstep(-1.0, 1.0, d);
+          float du = max(d, 0.0) / unitPx;
+          float glow = exp(-du * (17.0 - 7.0 * uLevel)) * (0.34 + 0.34 * uLevel + 0.10 * uEnergy) * uHalo;
+          glow *= 1.0 - smoothstep(0.13, 0.22, du);
+          vec3 glowCol = mix(bright, mint, 0.6);
+          float orbA = clamp(inside + (1.0 - inside) * glow, 0.0, 1.0) * vis;
+          vec3 orbRGB = mix(glowCol, col, inside);
+          vec3 shRGB = vec3(0.000, 0.275, 0.157);
+          float a = orbA + shA * (1.0 - orbA);
+          o = vec4(orbRGB * orbA + shRGB * shA * (1.0 - orbA), a) * uAlpha;
+        }`;
+      const canvas = document.getElementById("orb");
+      const gl = canvas.getContext("webgl2", { premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true });
+      const compile = (type, src) => {
+        const sh = gl.createShader(type);
+        gl.shaderSource(sh, src);
+        gl.compileShader(sh);
+        if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+        return sh;
+      };
+      const prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+      gl.useProgram(prog);
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const aLoc = gl.getAttribLocation(prog, "a");
+      gl.enableVertexAttribArray(aLoc);
+      gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
+      const U = {};
+      ["uRes", "uTime", "uC", "uRad", "uSC", "uM", "uBox", "uSize", "uVis", "uBev", "uRamp", "uT0", "uT1", "uT2",
+        "uSmooth", "uEnergy", "uLevel", "uShadow", "uFloor", "uHalo", "uAlpha"].forEach((n) => (U[n] = gl.getUniformLocation(prog, n)));
+      const shapes = {};
+      for (const [name, def] of Object.entries(shapeDefs)) {
+        const data = sdfFrom(canvasOf(def.w, def.h, def.draw), 4);
+        const t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, def.w, def.h, 0, gl.RG, gl.FLOAT, data);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        shapes[name] = { tex: t, size: [def.w, def.h] };
+      }
+      const RAMPS = [
+        [[0.0, 0.471, 0.255], [0.0, 0.667, 0.275], [0.0, 0.922, 0.353], [0.569, 0.98, 0.608]],
+        [[0.0, 0.2, 0.11], [0.0, 0.33, 0.18], [0.0, 0.52, 0.28], [0.3, 0.72, 0.45]],
+        [[0.0, 0.42, 0.23], [0.0, 0.62, 0.27], [0.0, 0.85, 0.33], [0.55, 0.95, 0.6]],
+        [[0.0, 0.62, 0.3], [0.3, 0.85, 0.45], [0.62, 0.97, 0.66], [0.86, 0.99, 0.87]],
+      ];
+      const rampOf = (f) => {
+        const i = Math.max(0, Math.min(3, Math.floor(f))), j = Math.min(3, i + 1), t = Math.max(0, Math.min(1, f - i));
+        return RAMPS[i].map((c, k) => c.map((v, ch) => v + (RAMPS[j][k][ch] - v) * t));
+      };
+      const blob = (o) => Object.assign({ x: 960, y: 520, r: 0, sx: 960, sy: 520, m: 0, bw: 400, bev: 30, vis: 1, pal: 0, shape: "house" }, o);
+      const S = { b: [blob({}), blob({ shape: "machine" }), blob({ shape: "coffee" })], smooth: 0, energy: 0.25, level: 0, shadow: 0, floor: 0, halo: 1, alpha: 1,
+        absorb: 0, scroll: 0, n1: 0, n2: 0, n3: 0, pc: 0, chart: 0, big: 0, dimOthers: 0, cam: 1, camX: 0, camY: 0 };
+      function draw(t) {
+        const C = [], R = [], SC = [], M = [], BOX = [], SIZE = [], VIS = [], BEV = [], RAMP = [];
+        S.b.forEach((b, i) => {
+          const sh = shapes[b.shape];
+          gl.activeTexture(gl.TEXTURE0 + i);
+          gl.bindTexture(gl.TEXTURE_2D, sh.tex);
+          C.push(b.x, b.y); R.push(b.r); SC.push(b.sx, b.sy); M.push(b.m);
+          BOX.push(b.bw, (b.bw * sh.size[1]) / sh.size[0]); SIZE.push(sh.size[0], sh.size[1]);
+          VIS.push(b.vis); BEV.push(b.bev);
+          rampOf(b.pal).forEach((c) => RAMP.push(...c));
+        });
+        gl.viewport(0, 0, 1920, 1080);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform1i(U.uT0, 0); gl.uniform1i(U.uT1, 1); gl.uniform1i(U.uT2, 2);
+        gl.uniform2f(U.uRes, 1920, 1080);
+        gl.uniform1f(U.uTime, t);
+        gl.uniform2fv(U.uC, C); gl.uniform1fv(U.uRad, R); gl.uniform2fv(U.uSC, SC); gl.uniform1fv(U.uM, M);
+        gl.uniform2fv(U.uBox, BOX); gl.uniform2fv(U.uSize, SIZE); gl.uniform1fv(U.uVis, VIS);
+        gl.uniform1fv(U.uBev, BEV); gl.uniform3fv(U.uRamp, RAMP);
+        gl.uniform1f(U.uSmooth, S.smooth); gl.uniform1f(U.uEnergy, S.energy);
+        gl.uniform1f(U.uLevel, S.level); gl.uniform1f(U.uShadow, S.shadow); gl.uniform1f(U.uFloor, S.floor);
+        gl.uniform1f(U.uHalo, S.halo); gl.uniform1f(U.uAlpha, S.alpha);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+
+      // =====================================================================
+      // Deterministic randomness, icons, data.
+      // =====================================================================
+      function rng(seed) {
+        let s = seed >>> 0;
+        return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+      }
+      const ICONS = {
+        cart: '<path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L19.5 8H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
+        cup: '<path d="M5 9h11v5a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V9z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8.5 3.5c0 1.5 1 1.5 1 3M12 3.5c0 1.5 1 1.5 1 3"/>',
+        bus: '<rect x="5" y="3" width="14" height="15" rx="3"/><path d="M5 11h14M8 18v2.5M16 18v2.5"/>',
+        car: '<path d="M4.5 16v-3.5L7 7h10l2.5 5.5V16"/><path d="M4 12.5h16V16H4z"/><circle cx="8" cy="17" r="1.4"/><circle cx="16" cy="17" r="1.4"/>',
+        tooth: '<path d="M8 3.5C5.5 3.5 4 5.4 4 7.8c0 1.9 1 3.4 1.5 5.4.6 2.5.8 7.3 2.6 7.3 1.5 0 1.4-4.2 3.9-4.2s2.4 4.2 3.9 4.2c1.8 0 2-4.8 2.6-7.3.5-2 1.5-3.5 1.5-5.4 0-2.4-1.5-4.3-4-4.3-1.6 0-2.5 1-4 1s-2.4-1-4-1z"/>',
+        play: '<rect x="3" y="5" width="18" height="14" rx="3.5"/><path d="M10.2 9.5v5l4.3-2.5z"/>',
+        bolt: '<path d="M13 2.5 5.5 13H11l-1 8.5L17.5 11H12l1-8.5z"/>',
+        home: '<path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/>',
+        bag: '<path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+        fork: '<path d="M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5"/><path d="M16 21V3c2 1.5 3 4 3 7h-3"/>',
+        heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+        phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+        ticket: '<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4V7z"/><path d="M14 7v10"/>',
+        paw: '<circle cx="7" cy="10" r="1.6"/><circle cx="11" cy="7" r="1.6"/><circle cx="15" cy="7.5" r="1.6"/><circle cx="18" cy="11" r="1.6"/><path d="M8.5 17c0-3 1.8-5 3.8-5s3.7 2 3.7 5c0 2-2 2.5-3.7 2.5S8.5 19 8.5 17z"/>',
+        tool: '<path d="M14.5 6a4 4 0 0 0 5 5L12 18.5a2.1 2.1 0 0 1-3-3L16.5 8"/><path d="M4 20l3-3"/>',
+      };
+      const svg = (k) => `<svg class="ico" viewBox="0 0 24 24">${ICONS[k]}</svg>`;
+      // basket: 0 essentials, 1 surprises, 2 extras
+      const TX = [
+        ["cart", "Groceries", "S-market", 62.15, 0], ["cup", "Coffee", "Café", 4.2, 2], ["home", "Rent", "Housing", 1133.0, 0],
+        ["bus", "Bus ticket", "HSL", 3.1, 0], ["car", "Taxi", "Transport", 18.4, 2], ["tooth", "Dentist", "Health", 95.0, 1],
+        ["play", "Streaming", "Entertainment", 12.99, 2], ["bolt", "Electricity", "Bills", 48.3, 0], ["bag", "Clothes", "Shopping", 59.9, 2],
+        ["fork", "Lunch", "Restaurants", 11.5, 2], ["tool", "Washing machine", "Home & tech", 1008.0, 1], ["phone", "Phone bill", "Bills", 19.9, 0],
+        ["cart", "Groceries", "Prisma", 87.4, 0], ["ticket", "Cinema", "Entertainment", 14.5, 2], ["heart", "Pharmacy", "Health", 8.7, 1],
+        ["paw", "Pet food", "Groceries", 21.4, 0], ["cup", "Coffee", "Café", 3.9, 2], ["car", "Car repair", "Transport", 240.0, 1],
+        ["bag", "Books", "Shopping", 24.0, 2], ["cart", "Groceries", "Lidl", 45.8, 0], ["fork", "Pizza", "Restaurants", 17.8, 2],
+        ["bus", "Bus ticket", "HSL", 3.1, 0], ["bolt", "Water", "Bills", 22.0, 0], ["play", "Music", "Entertainment", 10.99, 2],
+      ];
+      const fmt = (v) => "€" + (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2));
+      const euro = (v) => "€" + Math.round(v).toLocaleString("en-US");
+      const BCOL = ["#004628", "#00AA46", "#5fd889"];
+      const BTINT = ["#e3efe7", "#dff6e7", "#e8fbec"];
+      const BNAME = ["Essential", "Surprise", "Extra"];
+
+      // =====================================================================
+      // Scene times.
+      // =====================================================================
+      const T2 = 6.5, T3 = 14.5, END = 28.5;
+
+      // ---- 1. The swarm: purchases circling in depth, then pulled into the orb.
+      const SW = [];
+      const r1 = rng(7);
+      for (let i = 0; i < 44; i++) {
+        const [ic, nm, , am] = TX[i % TX.length];
+        const el = document.createElement("div");
+        el.className = "chip";
+        el.innerHTML = `<span class="ic">${svg(ic)}</span><span class="nm">${nm}</span><span class="am">${fmt(am)}</span>`;
+        document.getElementById("park").appendChild(el);
+        SW.push({ el, a0: r1() * Math.PI * 2, rad: 380 + r1() * 620, tilt: 0.34 + r1() * 0.16, speed: (0.18 + r1() * 0.22) * (r1() < 0.5 ? 1 : 1), lag: r1() * 0.9, yo: (r1() - 0.5) * 160 });
+      }
+      function swarmAt(t) {
+        SW.forEach((c, i) => {
+          const pull = Math.max(0, Math.min(1, (S.absorb * 1.9) - c.lag));
+          const ease = pull * pull * (3 - 2 * pull);
+          const born = Math.max(0, Math.min(1, (t - 1.2 - i * 0.025) / 0.6));
+          if (born <= 0 || ease >= 1 || t > T2 + 0.2) {
+            if (c.el.parentNode !== document.getElementById("park")) document.getElementById("park").appendChild(c.el);
+            return;
+          }
+          const a = c.a0 + t * c.speed + ease * 2.2;
+          const R = c.rad * (1 - ease) * (0.85 + 0.15 * born);
+          const depth = (Math.sin(a) + 1) / 2;
+          const x = S.b[0].x + Math.cos(a) * R;
+          const y = S.b[0].y + Math.sin(a) * R * c.tilt + c.yo * (1 - ease);
+          const sc = (0.55 + 0.6 * depth) * (1 - 0.7 * ease);
+          const parent = Math.sin(a) > 0 ? "swarmFront" : "swarmBack";
+          if (c.el.parentNode.id !== parent) document.getElementById(parent).appendChild(c.el);
+          c.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${sc})`;
+          c.el.style.opacity = born * (1 - ease) * (0.45 + 0.55 * depth);
+          c.el.style.filter = depth < 0.35 ? `blur(${(0.35 - depth) * 10}px)` : "none";
+        });
+      }
+
+      // ---- 2. The ledger scrolls through the scanner; each row is tagged and sent to its stack.
+      const ROW_H = 78, ROW_TOP = 130, SCAN_Y = 451, SPEED = 150, SCROLL_T0 = T2 + 1.2;
+      const rowsEl = document.getElementById("rows");
+      const ROWS = TX.map(([ic, nm, sub, am, b], i) => {
+        const el = document.createElement("div");
+        el.className = "row";
+        el.style.top = `${ROW_TOP + i * ROW_H}px`;
+        const day = 30 - Math.floor(i / 2);
+        el.innerHTML = `<span class="ic">${svg(ic)}</span><span class="tx">${nm}<small>${sub} · Jul ${day}</small></span><span class="am">−${fmt(am)}</span>` +
+          `<span class="bt" style="background:${BTINT[b]};color:${BCOL[b]}"><i style="background:${BCOL[b]}"></i>${BNAME[b]}</span>`;
+        rowsEl.appendChild(el);
+        const cross = SCROLL_T0 + (ROW_TOP + i * ROW_H + ROW_H / 2 - (SCAN_Y + 39)) / SPEED;
+        return { el, tag: el.querySelector(".bt"), b, am, cross: Math.max(T2 + 1.0 + i * 0.12, cross) };
+      });
+      // Minis fly from the scanner to their stack.
+      const STACK_X = [1170, 1450, 1730], STACK_BASE = 776, MINI_H = 36;
+      const minisEl = document.getElementById("minis");
+      const counts = [0, 0, 0];
+      const MINIS = ROWS.filter((r) => r.cross < T3 - 1.6).map((r) => {
+        const el = document.createElement("div");
+        el.className = "mini";
+        el.style.background = BCOL[r.b];
+        if (r.b === 2) el.style.color = "#063d22";
+        el.textContent = fmt(r.am);
+        minisEl.appendChild(el);
+        const slot = counts[r.b]++;
+        return { el, r, slot };
+      });
+      const totals = [0, 0, 0];
+      function ledgerAt(t) {
+        S.scroll = Math.max(0, t - SCROLL_T0) * SPEED;
+        rowsEl.style.transform = `translateY(${-S.scroll}px)`;
+        ROWS.forEach((r) => {
+          const k = Math.max(0, Math.min(1, (t - r.cross) / 0.35));
+          r.tag.style.opacity = k;
+          r.tag.style.transform = `scale(${0.6 + 0.4 * k})`;
+          r.el.style.background = t > r.cross - 0.25 && t < r.cross + 0.5 ? "rgba(0,170,70,0.04)" : "transparent";
+        });
+        totals[0] = totals[1] = totals[2] = 0;
+        MINIS.forEach((m) => {
+          const t0 = m.r.cross + 0.15, t1 = t0 + 0.75;
+          const k = Math.max(0, Math.min(1, (t - t0) / (t1 - t0)));
+          const e = 1 - Math.pow(1 - k, 3);
+          const sx = 880, sy = 110 + SCAN_Y + 40;
+          const tx = STACK_X[m.r.b], ty = STACK_BASE - m.slot * (MINI_H + 6) - MINI_H / 2;
+          // after the stacks are gathered into the orb
+          const g = Math.max(0, Math.min(1, (t - (T3 - 1.0) - m.slot * 0.04) / 0.6));
+          const ge = g * g;
+          const ox = S.b[0].x, oy = S.b[0].y;
+          let x = sx + (tx - sx) * e, y = sy + (ty - sy) * e - Math.sin(Math.PI * e) * 120;
+          x = x + (ox - x) * ge;
+          y = y + (oy - y) * ge;
+          m.el.style.opacity = k <= 0 ? 0 : 1 - ge;
+          m.el.style.transform = `translate(${x}px, ${y}px) scale(${(0.7 + 0.3 * e) * (1 - 0.7 * ge)}) rotate(${(1 - e) * -8}deg)`;
+          if (k >= 1) totals[m.r.b] += m.r.am;
+        });
+        document.getElementById("st1").textContent = euro(totals[0]);
+        document.getElementById("st2").textContent = euro(totals[1]);
+        document.getElementById("st3").textContent = euro(totals[2]);
+      }
+
+      // ---- 3b. A year of the three baskets.
+      const MONTHS = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
+      const ESS = [2450, 2480, 2470, 2620, 2500, 2440, 2490, 2510, 2480, 2480, 2520, 2530];
+      const SUR = [180, 420, 260, 520, 150, 610, 230, 390, 300, 170, 1110, 220];
+      const EXT = [430, 470, 450, 690, 380, 410, 440, 460, 480, 440, 470, 455];
+      const chartEl = document.getElementById("chart");
+      const CH = 520, MAXV = 4400, BW = 86, GAP = (1600 - 12 * BW) / 11;
+      [0, 1000, 2000, 3000, 4000].forEach((v) => {
+        const gline = document.createElement("div");
+        gline.className = "gridline";
+        gline.style.bottom = `${60 + (v / MAXV) * CH}px`;
+        gline.innerHTML = `<span>${v ? "€" + v / 1000 + "k" : "€0"}</span>`;
+        chartEl.appendChild(gline);
+      });
+      const BARS = MONTHS.map((m, i) => {
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.left = `${i * (BW + GAP)}px`;
+        const segs = [ESS[i], SUR[i], EXT[i]].map((v, k) => {
+          const s = document.createElement("div");
+          s.className = "seg";
+          s.style.height = `${(v / MAXV) * CH - 4}px`;
+          s.style.background = BCOL[k];
+          bar.appendChild(s);
+          return s;
+        });
+        chartEl.appendChild(bar);
+        const lab = document.createElement("div");
+        lab.className = "mon";
+        lab.style.left = `${i * (BW + GAP)}px`;
+        lab.textContent = m;
+        chartEl.appendChild(lab);
+        return { bar, segs, lab };
+      });
+      // July's surprise segment, on screen.
+      const JUL_X = 160 + 10 * (BW + GAP) + BW / 2, JUL_Y = 300 + 620 - 60 - ((ESS[10] + SUR[10] * 0.55) / MAXV) * CH;
+      function chartAt(t) {
+        BARS.forEach((b, i) => {
+          b.segs.forEach((s, k) => {
+            const k0 = S.chart * 1.0 - i * 0.045 - k * 0.12;
+            const p = Math.max(0, Math.min(1, k0 / 0.35));
+            s.style.transform = `scaleY(${1 - Math.pow(1 - p, 3)})`;
+            const dim = k === 2 ? 0 : S.dimOthers;
+            s.style.opacity = 1 - 0.72 * dim;
+          });
+          b.lab.style.opacity = Math.max(0, Math.min(1, (S.chart - i * 0.045) / 0.3));
+        });
+        const cx = 1420, cy = 330;
+        document.getElementById("cpath").setAttribute("d", `M ${cx} ${cy} C ${cx + 110} ${cy}, ${JUL_X} ${JUL_Y - 120}, ${JUL_X} ${JUL_Y}`);
+        document.getElementById("cdot").setAttribute("cx", JUL_X);
+        document.getElementById("cdot").setAttribute("cy", JUL_Y);
+        document.getElementById("cbig").textContent = euro(S.big);
+      }
+
+      // Rings around the baskets.
+      const BASKET = [[600, 560], [1120, 600], [1430, 600]];
+      const SHARES = [72, 14, 13], RING_R = [224, 112, 108];
+      const ringsEl = document.getElementById("rings");
+      const ringArcs = BASKET.map(([x, y], i) => {
+        const r = RING_R[i];
+        ringsEl.insertAdjacentHTML("beforeend",
+          `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="rgba(16,60,36,0.08)" stroke-width="6" />` +
+          `<circle id="ra${i}" cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${BCOL[i]}" stroke-width="6" stroke-linecap="round" transform="rotate(-90 ${x} ${y})" />`);
+        const el = document.getElementById(`ra${i}`);
+        const len = 2 * Math.PI * r;
+        el.setAttribute("stroke-dasharray", `${len} ${len}`);
+        return { el, len, share: SHARES[i] / 100 };
+      });
+
+      // ---- Dust: soft particles at different depths, drifting.
+      const DUST = [];
+      const r2 = rng(42);
+      for (let i = 0; i < 140; i++) DUST.push({ x: r2() * 1920, y: r2() * 1080, z: r2(), s: r2(), p: r2() * 6.28 });
+      const dB = document.getElementById("dustBack").getContext("2d");
+      const dF = document.getElementById("dustFront").getContext("2d");
+      function dustAt(t) {
+        dB.clearRect(0, 0, 1920, 1080);
+        dF.clearRect(0, 0, 1920, 1080);
+        DUST.forEach((d) => {
+          const front = d.z > 0.9;
+          const g = front ? dF : dB;
+          const par = 0.3 + d.z * 1.2;
+          const x = ((d.x + t * 14 * par + 60 * Math.sin(t * 0.3 + d.p)) % 2000 + 2000) % 2000 - 40;
+          const y = d.y + 30 * Math.sin(t * 0.25 + d.p * 1.3) - t * 6 * par;
+          const yy = ((y % 1160) + 1160) % 1160 - 40;
+          const r = front ? 10 + d.s * 22 : 1.2 + d.z * 3.2;
+          const a = front ? 0.10 : 0.10 + d.z * 0.32;
+          const grad = g.createRadialGradient(x, yy, 0, x, yy, r);
+          grad.addColorStop(0, `rgba(60, 200, 120, ${a})`);
+          grad.addColorStop(1, "rgba(60, 200, 120, 0)");
+          g.fillStyle = grad;
+          g.beginPath();
+          g.arc(x, yy, r, 0, Math.PI * 2);
+          g.fill();
+        });
+      }
+
+      // Grain.
+      (function () {
+        const c = document.createElement("canvas");
+        c.width = c.height = 256;
+        const g = c.getContext("2d"), img = g.createImageData(256, 256);
+        const r3 = rng(99);
+        for (let i = 0; i < 256 * 256; i++) {
+          img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = r3() * 255;
+          img.data[i * 4 + 3] = 9;
+        }
+        g.putImageData(img, 0, 0);
+        document.getElementById("grain").style.backgroundImage = `url(${c.toDataURL()})`;
+      })();
+
+      // =====================================================================
+      // The orb's choreography and the frame's state.
+      // =====================================================================
+      const [B0, B1, B2] = S.b;
+      const io = "power3.inOut", soft = "sine.inOut";
+      const O = gsap.timeline({ paused: true });
+      O.set(B0, { x: 960, y: 470, r: 2600, m: 0, pal: 0 }, 0)
+        .to(B0, { r: 150, duration: 2.0, ease: "expo.inOut" }, 0.1)
+        .to(S, { floor: 1, duration: 1.0, ease: soft }, 1.6)
+        // the swarm is drawn in
+        .to(S, { absorb: 1, duration: 2.4, ease: "power1.in" }, 3.0)
+        .to(S, { energy: 1, level: 0.45, duration: 1.4, ease: soft }, 3.6)
+        .to(B0, { r: 165, duration: 0.5, ease: "power2.out" }, 5.0)
+        .to(B0, { r: 150, duration: 0.8, ease: "power2.inOut" }, 5.5)
+        .to(S, { energy: 0.3, level: 0, duration: 1.0, ease: soft }, 5.4)
+        // 2. it watches the sorting from above the stacks
+        .to(B0, { x: 1450, y: 330, r: 96, duration: 1.2, ease: io }, T2)
+        .to(S, { floor: 0, duration: 0.6 }, T2)
+        .to(S, { energy: 0.7, duration: 0.6 }, T3 - 1.2)
+        .to(B0, { r: 116, duration: 0.6, ease: "power2.out" }, T3 - 0.6)
+        .to(B0, { x: 960, y: 520, r: 172, duration: 0.9, ease: io }, T3 - 0.2)
+        .to(S, { energy: 0.25, floor: 0, duration: 0.8 }, T3)
+        // 3. divide by share, become the three things, then go to the legend
+        .set(B0, { shape: "house", bev: 40 }, T3 - 0.1)
+        .set(B1, { x: 960, y: 520, r: 0, pal: 0, shape: "machine", m: 0, vis: 1, bev: 20 }, T3 - 0.1)
+        .set(B2, { x: 960, y: 520, r: 0, pal: 0, shape: "coffee", m: 0, vis: 1, bev: 19 }, T3 - 0.1)
+        .set(S, { smooth: 150 }, T3 + 0.6)
+        .to([B1, B2], { r: 60, duration: 0.5, ease: "power2.out" }, T3 + 0.8)
+        .to(B0, { x: BASKET[0][0], y: BASKET[0][1], r: 190, pal: 1, duration: 1.7, ease: io }, T3 + 0.9)
+        .to(B1, { x: BASKET[1][0], y: BASKET[1][1], r: 82, pal: 2, duration: 1.7, ease: io }, T3 + 0.9)
+        .to(B2, { x: BASKET[2][0], y: BASKET[2][1], r: 78, pal: 3, duration: 1.7, ease: io }, T3 + 0.9)
+        .to(S, { smooth: 0, duration: 1.0, ease: soft }, T3 + 1.8)
+        .to(S, { halo: 0.55, shadow: 1, duration: 1.0, ease: soft }, T3 + 2.2)
+        .set(B0, { sx: BASKET[0][0], sy: BASKET[0][1], bw: 470 }, T3 + 2.6)
+        .set(B1, { sx: BASKET[1][0], sy: BASKET[1][1], bw: 218 }, T3 + 2.6)
+        .set(B2, { sx: BASKET[2][0], sy: BASKET[2][1], bw: 212 }, T3 + 2.6)
+        .to(S, { n1: 2510, n2: 500, n3: 455, pc: 1, duration: 1.6, ease: "power2.out" }, T3 + 2.4)
+        .to(B0, { m: 1, duration: 0.9, ease: io }, T3 + 3.4)
+        .to(B1, { m: 1, duration: 0.9, ease: io }, T3 + 3.7)
+        .to(B2, { m: 1, duration: 0.9, ease: io }, T3 + 4.0)
+        .to([B0, B1, B2], { m: 0, duration: 0.8, ease: io }, T3 + 6.6)
+        .to(S, { halo: 1, shadow: 0, duration: 0.8 }, T3 + 6.6)
+        .to(B0, { x: 1252, y: 147, r: 13, pal: 1, duration: 1.1, ease: io }, T3 + 7.2)
+        .to(B1, { x: 1462, y: 147, r: 13, duration: 1.1, ease: io }, T3 + 7.25)
+        .to(B2, { x: 1672, y: 147, r: 13, duration: 1.1, ease: io }, T3 + 7.3)
+        .to(S, { halo: 0.4, duration: 0.6 }, T3 + 7.6)
+        .to(S, { chart: 1.0, duration: 2.6, ease: "none" }, T3 + 7.9)
+        .to(S, { big: 1008, duration: 1.2, ease: "power2.out" }, T3 + 10.6)
+        .to(S, { dimOthers: 1, duration: 0.8, ease: soft }, T3 + 12.2)
+        .to([B0, B1], { vis: 0.3, duration: 0.8, ease: soft }, T3 + 12.2)
+        // camera: slow pushes per scene
+        .set(S, { cam: 1 }, 0).to(S, { cam: 1.04, duration: T2, ease: "none" }, 0)
+        .set(S, { cam: 1 }, T2).to(S, { cam: 1.03, duration: T3 - T2, ease: "none" }, T2)
+        .set(S, { cam: 1 }, T3).to(S, { cam: 1.025, duration: END - T3, ease: "none" }, T3);
+
+      const floorEl = document.getElementById("floor");
+      function renderAt(t) {
+        O.seek(t, false);
+        draw(t);
+        swarmAt(t);
+        ledgerAt(t);
+        chartAt(t);
+        dustAt(t);
+        floorEl.style.backgroundPosition = `0px ${(t * 26) % 44}px`;
+        document.getElementById("cam").style.transform = `scale(${S.cam})`;
+        document.getElementById("grain").style.backgroundPosition = `${(Math.floor(t * 24) * 73) % 256}px ${(Math.floor(t * 24) * 151) % 256}px`;
+        document.getElementById("v1").textContent = euro(S.n1);
+        document.getElementById("v2").textContent = euro(S.n2);
+        document.getElementById("v3").textContent = euro(S.n3);
+        document.getElementById("p1").textContent = Math.round(72 * S.pc);
+        document.getElementById("p2").textContent = Math.round(14 * S.pc);
+        document.getElementById("p3").textContent = Math.round(13 * S.pc);
+        ringArcs.forEach(({ el, len, share }) => el.setAttribute("stroke-dashoffset", `${len * (1 - share * S.pc)}`));
+      }
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+
+      // =====================================================================
+      // Type and panels on the root timeline.
+      // =====================================================================
+      const tl = gsap.timeline({ paused: true });
+      const rise = (sel, at, stagger = 0.09) =>
+        tl.fromTo(`${sel} .ln > span`, { yPercent: 115 }, { yPercent: 0, duration: 1.2, ease: "expo.out", stagger }, at);
+      const sink = (sel, at) => tl.to(`${sel} .ln > span`, { yPercent: -115, duration: 0.7, ease: "expo.in", stagger: 0.05 }, at);
+      const fadeIn = (sel, at) =>
+        tl.fromTo(sel, { opacity: 0, y: 18, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.0, ease: "power3.out" }, at);
+      const fadeOut = (sel, at) => tl.to(sel, { opacity: 0, y: -10, filter: "blur(8px)", duration: 0.55, ease: "power2.in" }, at);
+
+      fadeIn("#s1-tag", 4.4);
+      rise("#s1-h", 4.7);
+      fadeOut("#s1-tag", T2 - 0.3);
+      sink("#s1-h", T2 - 0.35);
+
+      tl.fromTo("#ledger", { x: -900, rotationY: 34, rotationX: 8, opacity: 0 }, { x: 0, rotationY: 16, rotationX: 5, opacity: 1, duration: 1.3, ease: "expo.out" }, T2)
+        .to("#ledger", { rotationY: 10, duration: 6, ease: "none" }, T2 + 1.3)
+        .to("#ledger", { x: -900, rotationY: 30, opacity: 0, duration: 0.9, ease: "power3.in" }, T3 - 1.1);
+      rise("#s2-h", T2 + 1.0);
+      sink("#s2-h", T3 - 1.2);
+      [".base", "#sl1", "#sl2", "#sl3"].forEach((s, i) => fadeIn(s, T2 + 1.4 + i * 0.1));
+      fadeOut([".base", "#sl1", "#sl2", "#sl3"], T3 - 1.0);
+
+      tl.set(["#s3-h2 .ln > span", "#s3-h3 .ln > span"], { yPercent: 115 }, T3);
+      rise("#s3-h", T3 + 1.0);
+      fadeIn("#s3-l", T3 + 1.5);
+      tl.fromTo("#rings", { opacity: 0 }, { opacity: 1, duration: 0.6 }, T3 + 2.2);
+      ["#lab1", "#lab2", "#lab3"].forEach((s, i) => fadeIn(s, T3 + 2.3 + i * 0.15));
+      sink("#s3-h", T3 + 6.4);
+      fadeOut(["#s3-l", "#lab1", "#lab2", "#lab3", "#rings"], T3 + 6.4);
+      rise("#s3-h2", T3 + 7.4);
+      ["#lg1", "#lg2", "#lg3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, T3 + 8.0 + i * 0.12));
+      tl.fromTo("#chart .gridline", { opacity: 0 }, { opacity: 1, duration: 0.6, stagger: 0.06 }, T3 + 7.7);
+      tl.fromTo("#callout", { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.4)" }, T3 + 10.4)
+        .fromTo("#calloutLine", { opacity: 0 }, { opacity: 1, duration: 0.6 }, T3 + 10.6)
+        .to(["#callout", "#calloutLine"], { opacity: 0, y: -12, duration: 0.5, ease: "power2.in" }, T3 + 12.0);
+      sink("#s3-h2", T3 + 12.0);
+      rise("#s3-h3", T3 + 12.5);
+      fadeIn("#s3-l3", T3 + 12.9);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+      renderAt(0);
+    </script>
+  </body>
+</html>

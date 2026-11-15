@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ink: #101411;
+        --ink-2: #4f5752;
+        --ink-3: #626965;
+        --green: #1d7a4a;
+        --font: -apple-system, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #eef3ef;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        font-family: var(--font);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      #bg {
+        width: 1920px;
+        height: 1080px;
+        object-fit: cover;
+        z-index: 1;
+      }
+      #grain {
+        position: absolute;
+        inset: -64px;
+        z-index: 60;
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      .layer {
+        z-index: 10;
+      }
+      .h {
+        font-weight: 600;
+        letter-spacing: -0.045em;
+        line-height: 1.02;
+      }
+      .ln {
+        display: block;
+        overflow: hidden;
+        padding: 0.04em 0 0.12em;
+        margin-bottom: -0.12em;
+      }
+      .ln > span {
+        display: inline-block;
+      }
+      .lede {
+        font-size: 36px;
+        line-height: 1.38;
+        letter-spacing: -0.012em;
+        color: var(--ink-2);
+      }
+      .tag {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--green);
+      }
+      .center {
+        position: absolute;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
+      .blabel {
+        position: absolute;
+        width: 420px;
+        margin-left: -210px;
+        text-align: center;
+      }
+      .blabel .name {
+        font-size: 30px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .blabel .val {
+        font-size: 58px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .blabel .per {
+        font-size: 28px;
+        color: var(--ink-3);
+        font-variant-numeric: tabular-nums;
+      }
+      .bench {
+        position: absolute;
+        left: 164px;
+        width: 900px;
+      }
+      .bench .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 34px;
+        letter-spacing: -0.015em;
+      }
+      .bench .row b {
+        font-size: 46px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+      }
+      .bench .src {
+        color: var(--ink-3);
+        font-size: 28px;
+      }
+      .bench .track {
+        height: 26px;
+        border-radius: 13px;
+        background: rgba(16, 60, 36, 0.08);
+        margin-top: 14px;
+        overflow: hidden;
+      }
+      .bench .fill {
+        height: 100%;
+        border-radius: 13px;
+        transform-origin: left center;
+      }
+      #bubble {
+        position: absolute;
+        left: 250px;
+        top: 186px;
+        padding: 24px 32px;
+        border-radius: 34px 34px 10px 34px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow:
+          0 24px 60px rgba(12, 58, 34, 0.14),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.06);
+        font-size: 34px;
+        font-weight: 500;
+        letter-spacing: -0.015em;
+        white-space: nowrap;
+        transform-origin: 85% 100%;
+        min-width: 80px;
+      }
+      #bubble .caret {
+        display: inline-block;
+        width: 3px;
+        height: 34px;
+        margin-left: 3px;
+        vertical-align: -5px;
+        background: var(--green);
+        border-radius: 2px;
+      }
+      .pill {
+        position: absolute;
+        left: 150px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 16px 30px 16px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow:
+          0 20px 44px rgba(12, 58, 34, 0.12),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.05);
+        font-size: 32px;
+        letter-spacing: -0.015em;
+        white-space: nowrap;
+      }
+      .pill .ck {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .pill .ck svg {
+        width: 26px;
+        height: 26px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .word {
+        font-size: 168px;
+        font-weight: 700;
+        letter-spacing: -0.055em;
+        line-height: 1;
+        background: linear-gradient(100deg, #101411 0%, #101411 42%, #3f9a68 50%, #101411 58%, #101411 100%);
+        background-size: 300% 100%;
+        background-position: 100% 0;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="57" data-width="1920" data-height="1080">
+      <video id="bg" class="clip" src="assets/film.mp4" data-start="0" data-duration="57" data-track-index="0" muted playsinline></video>
+
+      <div id="s1" class="clip layer" data-start="0" data-duration="6.6" data-track-index="1">
+        <div class="center tag" id="s1-tag" style="top: 706px">Introducing Penni</div>
+        <div class="center h" id="s1-h" style="top: 752px; font-size: 128px"><span class="ln"><span>Ask your money.</span></span></div>
+      </div>
+
+      <div id="s2" class="clip layer" data-start="6.5" data-duration="8" data-track-index="1">
+        <div class="h" id="s2-h" style="position: absolute; left: 150px; top: 800px; font-size: 92px"><span class="ln"><span>Every day, money leaves a trail.</span></span></div>
+      </div>
+
+      <div id="s3" class="clip layer" data-start="14.5" data-duration="14.5" data-track-index="1">
+        <div class="h" id="s3-h" style="position: absolute; left: 150px; top: 100px; font-size: 88px"><span class="ln"><span>Three baskets.</span></span></div>
+        <div class="lede" id="s3-l" style="position: absolute; left: 154px; top: 220px">Everything you spend falls into one of them.</div>
+        <div class="h" id="s3-h2" style="position: absolute; left: 150px; top: 100px; font-size: 88px">
+          <span class="ln"><span>Extras are the part</span></span><span class="ln"><span>you can steer.</span></span>
+        </div>
+        <div class="blabel" id="lab1" style="left: 511px; top: 806px">
+          <div class="name">Essentials</div>
+          <div class="val" id="v1">€0</div>
+          <div class="per"><span id="p1">0</span>% · a month</div>
+        </div>
+        <div class="blabel" id="lab2" style="left: 1130px; top: 806px">
+          <div class="name">Surprises</div>
+          <div class="val" id="v2">€0</div>
+          <div class="per"><span id="p2">0</span>% · a month</div>
+        </div>
+        <div class="blabel" id="lab3" style="left: 1456px; top: 806px">
+          <div class="name">Extras</div>
+          <div class="val" id="v3">€0</div>
+          <div class="per"><span id="p3">0</span>% · a month</div>
+        </div>
+      </div>
+
+      <div id="s4" class="clip layer" data-start="28.9" data-duration="5.9" data-track-index="1">
+        <div class="h" id="s4-h" style="position: absolute; left: 150px; top: 230px; font-size: 92px"><span class="ln"><span>How do you compare?</span></span></div>
+        <div class="lede" id="s4-l" style="position: absolute; left: 154px; top: 352px">Statistics Finland benchmarks, built in.</div>
+        <div class="bench" id="bench1" style="top: 500px">
+          <div class="row"><span>Your extras</span><b id="bp1">0%</b></div>
+          <div class="track"><div class="fill" id="bf1" style="width: 65%; background: var(--green)"></div></div>
+        </div>
+        <div class="bench" id="bench2" style="top: 640px">
+          <div class="row"><span>People aged 35–44 in Finland</span><b id="bp2">0%</b></div>
+          <div class="track"><div class="fill" id="bf2" style="width: 90%; background: #9fd3b1"></div></div>
+        </div>
+        <div class="bench" id="bench3" style="top: 790px"><div class="row"><span class="src">Source: Statistics Finland, Household Budget Survey 2022</span></div></div>
+      </div>
+
+      <div id="s5" class="clip layer" data-start="34.6" data-duration="10.6" data-track-index="1">
+        <div class="h" id="s5-h" style="position: absolute; left: 150px; top: 690px; font-size: 104px"><span class="ln"><span>Just ask.</span></span></div>
+        <div class="lede" id="s5-l" style="position: absolute; left: 154px; top: 826px">By voice or text. Clear answers, in seconds.</div>
+        <div id="bubble"><span id="typed"></span><span class="caret" id="caret"></span></div>
+        <div class="pill" id="pl1" style="top: 640px"><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Computed from your own transactions</div>
+        <div class="pill" id="pl2" style="top: 750px"><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>A chart and a plain answer, in seconds</div>
+        <div class="pill" id="pl3" style="top: 860px"><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Read aloud, if you like</div>
+      </div>
+
+      <div id="s6" class="clip layer" data-start="45" data-duration="6" data-track-index="1">
+        <div class="center h" id="s6-h" style="top: 70px; font-size: 92px"><span class="ln"><span>Every bank. One coach.</span></span></div>
+        <div class="center lede" id="s6-l" style="top: 188px">Connect your other banks, read-only.</div>
+      </div>
+
+      <div id="s7" class="clip layer" data-start="51" data-duration="6" data-track-index="1">
+        <div class="center" id="s7-w" style="top: 600px"><span class="ln"><span class="word" id="word">Penni</span></span></div>
+        <div class="center lede" id="s7-l" style="top: 800px; font-size: 40px">Ask your money.</div>
+        <div class="center" id="s7-f" style="top: 980px; font-size: 28px; color: var(--ink-3)">A money coach for S-mobiili</div>
+      </div>
+      <div id="grain"></div>
+    </div>
+
+    <script>
+      const T2 = 6.5, T3 = 14.5, T4 = 28.9, T5 = 34.6, T6 = 45, T7 = 51;
+      // Numbers and typing, driven from a timeline of their own and drawn on every frame.
+      const S = { n1: 0, n2: 0, n3: 0, pc: 0, b1: 0, b2: 0, typed: 0 };
+      const O = gsap.timeline({ paused: true });
+      O.to(S, { n1: 2510, n2: 500, n3: 455, pc: 1, duration: 1.6, ease: "power2.out" }, T3 + 2.0)
+        .to(S, { b1: 13, b2: 18, duration: 1.4, ease: "power2.out" }, T4 + 1.4)
+        .to(S, { typed: 35, duration: 1.7, ease: "none" }, T5 + 3.0);
+
+      (function () {
+        const c = document.createElement("canvas");
+        c.width = c.height = 256;
+        const g = c.getContext("2d"), img = g.createImageData(256, 256);
+        let seed = 1234567;
+        const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+        for (let i = 0; i < 256 * 256; i++) {
+          img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = rnd() * 255;
+          img.data[i * 4 + 3] = 9;
+        }
+        g.putImageData(img, 0, 0);
+        document.getElementById("grain").style.backgroundImage = `url(${c.toDataURL()})`;
+      })();
+
+      const $ = (id) => document.getElementById(id);
+      const euro = (v) => "€" + Math.round(v).toLocaleString("en-US");
+      const QUESTION = "How much can I spend before payday?";
+      function renderAt(t) {
+        O.seek(t, false);
+        $("grain").style.backgroundPosition = `${(Math.floor(t * 24) * 73) % 256}px ${(Math.floor(t * 24) * 151) % 256}px`;
+        $("v1").textContent = euro(S.n1);
+        $("v2").textContent = euro(S.n2);
+        $("v3").textContent = euro(S.n3);
+        $("p1").textContent = Math.round(72 * S.pc);
+        $("p2").textContent = Math.round(14 * S.pc);
+        $("p3").textContent = Math.round(13 * S.pc);
+        $("bp1").textContent = `${Math.round(S.b1)}%`;
+        $("bp2").textContent = `${Math.round(S.b2)}%`;
+        $("typed").textContent = QUESTION.slice(0, Math.round(S.typed));
+        $("caret").style.opacity = S.typed < 35 || Math.floor(t * 2.4) % 2 === 0 ? 1 : 0;
+      }
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+
+      const tl = gsap.timeline({ paused: true });
+      const rise = (sel, at, stagger = 0.09) =>
+        tl.fromTo(`${sel} .ln > span`, { yPercent: 115 }, { yPercent: 0, duration: 1.2, ease: "expo.out", stagger }, at);
+      const sink = (sel, at) => tl.to(`${sel} .ln > span`, { yPercent: -115, duration: 0.7, ease: "expo.in", stagger: 0.05 }, at);
+      const fadeIn = (sel, at) =>
+        tl.fromTo(sel, { opacity: 0, y: 18, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.1, ease: "power3.out" }, at);
+      const fadeOut = (sel, at) => tl.to(sel, { opacity: 0, y: -10, filter: "blur(8px)", duration: 0.6, ease: "power2.in" }, at);
+
+      fadeIn("#s1-tag", 3.4);
+      rise("#s1-h", 3.7);
+      fadeOut("#s1-tag", T2 - 0.3);
+      sink("#s1-h", T2 - 0.35);
+
+      rise("#s2-h", T2 + 1.6);
+      sink("#s2-h", T3 - 1.6);
+
+      tl.set("#s3-h2 .ln > span", { yPercent: 115 }, T3);
+      rise("#s3-h", T3 + 0.6);
+      fadeIn("#s3-l", T3 + 1.2);
+      ["#lab1", "#lab2", "#lab3"].forEach((s, i) => fadeIn(s, T3 + 1.9 + i * 0.15));
+      sink("#s3-h", T3 + 7.6);
+      fadeOut(["#s3-l", "#lab1", "#lab2", "#lab3"], T3 + 7.6);
+      rise("#s3-h2", T3 + 8.3);
+      sink("#s3-h2", T3 + 11.3);
+
+      rise("#s4-h", T4 + 0.5);
+      fadeIn("#s4-l", T4 + 1.0);
+      fadeIn("#bench1", T4 + 1.3);
+      fadeIn("#bench2", T4 + 1.45);
+      fadeIn("#bench3", T4 + 2.0);
+      tl.fromTo("#bf1", { scaleX: 0 }, { scaleX: 1, duration: 1.3, ease: "power3.out" }, T4 + 1.4)
+        .fromTo("#bf2", { scaleX: 0 }, { scaleX: 1, duration: 1.3, ease: "power3.out" }, T4 + 1.55);
+      sink("#s4-h", T5 - 0.9);
+      fadeOut(["#s4-l", "#bench1", "#bench2", "#bench3"], T5 - 0.9);
+
+      rise("#s5-h", T5 + 1.4);
+      fadeIn("#s5-l", T5 + 2.0);
+      tl.fromTo("#bubble", { opacity: 0, scale: 0.7, y: 24 }, { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "back.out(1.5)" }, T5 + 2.7)
+        .to("#bubble", { x: 560, y: 160, scale: 0.3, opacity: 0, filter: "blur(6px)", duration: 0.9, ease: "power3.in" }, T5 + 4.9);
+      sink("#s5-h", T5 + 6.1);
+      fadeOut("#s5-l", T5 + 6.0);
+      ["#pl1", "#pl2", "#pl3"].forEach((s, i) =>
+        tl.fromTo(s, { opacity: 0, x: -40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.9, ease: "power3.out" }, T5 + 7.0 + i * 0.35));
+      fadeOut(["#pl1", "#pl2", "#pl3"], T6 - 1.0);
+
+      rise("#s6-h", T6 + 1.3);
+      fadeIn("#s6-l", T6 + 1.9);
+      sink("#s6-h", T7 - 1.2);
+      fadeOut("#s6-l", T7 - 1.3);
+
+      rise("#s7-w", T7 + 0.8);
+      fadeIn("#s7-l", T7 + 1.5);
+      fadeIn("#s7-f", T7 + 2.2);
+      tl.to("#word", { backgroundPosition: "0% 0", duration: 1.8, ease: "sine.inOut" }, T7 + 2.2);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+      renderAt(0);
+    </script>
+  </body>
+</html>

@@ -81,7 +81,7 @@ def principled(name, color, rough=0.4, metal=0.0, coat=0.0, emit=None, emit_stre
     return m
 
 
-def orb_material(emit_strength=1.5, speed=0.35, name="Orb", radius=1.0):
+def orb_material(emit_strength=1.5, speed=0.35, name="Orb", radius=1.0, colors=None):
     """The app's orb in 3D: domain-warped noise mapped onto the four greens, a glossy coat,
     a bright rim, and its own light."""
     m, n, l = material(name)
@@ -105,17 +105,18 @@ def orb_material(emit_strength=1.5, speed=0.35, name="Orb", radius=1.0):
     noise.inputs["Roughness"].default_value = 0.55
     ramp = n.new("ShaderNodeValToRGB")
     els = ramp.color_ramp.elements
-    els[0].position, els[0].color = 0.36, lin(DEEP)
-    els[1].position, els[1].color = 0.8, lin(MINT)
+    deep, mid, bright, mint = colors or (DEEP, MID, BRIGHT, MINT)
+    els[0].position, els[0].color = 0.36, lin(deep)
+    els[1].position, els[1].color = 0.8, lin(mint)
     e2 = els.new(0.5)
-    e2.color = lin(MID)
+    e2.color = lin(mid)
     e3 = els.new(0.64)
-    e3.color = lin(BRIGHT)
+    e3.color = lin(bright)
     lw = n.new("ShaderNodeLayerWeight")
     lw.inputs["Blend"].default_value = 0.22
     rim = n.new("ShaderNodeMix")
     rim.data_type = "RGBA"
-    rim.inputs["B"].default_value = lin(BRIGHT)
+    rim.inputs["B"].default_value = lin(bright)
     l.new(mp.outputs["Vector"], warp.inputs["Vector"])
     l.new(mp.outputs["Vector"], mix.inputs["A"])
     l.new(warp.outputs["Color"], mix.inputs["B"])
@@ -127,8 +128,8 @@ def orb_material(emit_strength=1.5, speed=0.35, name="Orb", radius=1.0):
     l.new(rim.outputs["Result"], p.inputs["Emission Color"])
     p.inputs["Emission Strength"].default_value = emit_strength
     p.inputs["Roughness"].default_value = 0.3
-    p.inputs["Coat Weight"].default_value = 1.0
-    p.inputs["Coat Roughness"].default_value = 0.03
+    p.inputs["Coat Weight"].default_value = 0.6
+    p.inputs["Coat Roughness"].default_value = 0.12
     # The surface flows: W follows the frame.
     for node in (warp, noise):
         fc = node.inputs["W"].driver_add("default_value")
