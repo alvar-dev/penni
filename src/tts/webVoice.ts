@@ -136,11 +136,14 @@ function load(url: string): Promise<AudioBuffer> {
   return job;
 }
 
-/** Asks the server to prepare a sentence (one byte is enough), so it is ready when its turn comes. */
-/** How long a sentence may take to start playing before the voice gives up on the answer. */
-const SENTENCE_START_MS = 6000;
+/**
+ * How long a sentence may take to start playing before the voice gives up: the
+ * first one is short (better no voice than one long after the answer appeared);
+ * later ones may wait for the server, which makes them while the first plays.
+ */
+const FIRST_START_MS = 6000;
+const LATER_START_MS = 20000;
 
-const prepare = (url: string) => void fetch(url, { headers: { Range: 'bytes=0-1' } }).catch(() => {});
 
 /**
  * Plays the sentences' audio in order, calling `onSentence` as each starts.
@@ -164,9 +167,9 @@ export function playWeb(urls: string[], onSentence: (index: number) => void, liv
     const el = element!;
     busy = true;
     try {
-      for (let i = 0; i < urls.length && going(); i++) {
-        if (i + 1 < urls.length) prepare(urls[i + 1]);
-        await new Promise<void>((resolve, reject) => {
+      // One sentence on the element; a stalled start is retried once with a fresh URL.
+      const playOne = (i: number, url: string, limit: number) =>
+        new Promise<void>((resolve, reject) => {
           const clear = () => {
             el.onplaying = el.onended = el.onerror = null;
           };
@@ -182,7 +185,7 @@ export function playWeb(urls: string[], onSentence: (index: number) => void, liv
             el.pause();
             clear();
             reject(new Error('late'));
-          }, SENTENCE_START_MS);
+          }, limit);
           el.onplaying = () => {
             clearTimeout(late);
             begin(i);
@@ -193,15 +196,26 @@ export function playWeb(urls: string[], onSentence: (index: number) => void, liv
             resolve();
           };
           el.onerror = () => {
+            clearTimeout(late);
             clear();
             reject(new Error(`audio error ${el.error?.code ?? ''}`));
           };
-          el.src = urls[i];
+          el.src = url;
           el.play().catch((error: Error) => {
+            clearTimeout(late);
             clear();
             reject(error);
           });
         });
+      for (let i = 0; i < urls.length && going(); i++) {
+        const limit = i === 0 ? FIRST_START_MS : LATER_START_MS;
+        try {
+          await playOne(i, urls[i], limit);
+        } catch (error) {
+          if ((error as Error).message !== 'late' || !going()) throw error;
+          report('sentence stalled, retrying', { sentence: i });
+          await playOne(i, `${urls[i]}&retry=${Date.now()}`, limit);
+        }
       }
     } finally {
       busy = false;

@@ -419,10 +419,12 @@ const server = createServer(async (req, res) => {
         'Accept-Ranges': 'bytes',
         'Content-Range': `bytes ${start}-${end}/${audio.length}`,
         'Content-Length': end - start + 1,
+        // A cached piece of a sentence can stall Safari's media player; the server keeps its own cache.
+        'Cache-Control': 'no-store',
       });
       return res.end(audio.subarray(start, end + 1));
     }
-    res.writeHead(200, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': audio.length });
+    res.writeHead(200, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': audio.length, 'Cache-Control': 'no-store' });
     return res.end(audio);
   }
   // Diagnostics from the web version (src/tts/webVoice.ts): what happened to the voice on a phone.
