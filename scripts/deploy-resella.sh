@@ -11,6 +11,9 @@
 #   cd ~/valmentaja/stt && python3 -m venv --without-pip .venv
 #   curl -fsSL https://bootstrap.pypa.io/get-pip.py | .venv/bin/python
 #   .venv/bin/pip install kokoro-onnx numpy
+# Currently OFF (2026-11-15): the VM has too little memory (new sentences took
+# 15-30 s and slowed everything), so the environment is parked as stt/.venv.off
+# and the web version shows answers as text. Rename it back to .venv to turn on.
 # The web version (scripts/build-web.sh -> dist/) is served from ~/valmentaja/web.
 #
 # The answer cache on the VM is kept; FRESH_CACHE=1 replaces it with the local
