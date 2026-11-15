@@ -11,7 +11,7 @@ export type MicStart = 'ok' | 'denied' | 'error';
  * A finished recording: 16-bit mono PCM, base64-encoded for the API; or, when
  * the phone's own recognizer did the work, just the recognised `text`.
  */
-export type Recording = { audio: string; sampleRate: number; seconds: number; heardSpeech: boolean; text?: string };
+export type Recording = { audio: string; sampleRate: number; seconds: number; heardSpeech: boolean; text?: string; error?: string };
 
 /** How many recent loudness values the waveform shows. */
 export const WAVE_BARS = 48;
@@ -49,7 +49,7 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
   }, [onAutoStop]);
 
   // The phone's recognizer: the latest transcript, and whether it has ended.
-  const speech = useRef({ transcript: '', finals: [] as string[], ended: true, startedAt: 0, waiters: [] as (() => void)[], limit: undefined as ReturnType<typeof setTimeout> | undefined, quiet: undefined as ReturnType<typeof setTimeout> | undefined });
+  const speech = useRef({ transcript: '', finals: [] as string[], ended: true, startedAt: 0, waiters: [] as (() => void)[], limit: undefined as ReturnType<typeof setTimeout> | undefined, quiet: undefined as ReturnType<typeof setTimeout> | undefined, error: undefined as string | undefined });
   useEffect(() => {
     if (!deviceSpeech) return;
     const subscriptions = [
@@ -78,6 +78,7 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
         history.set([...history.get().slice(1 - WAVE_BARS), loudness]);
       }),
       deviceSpeech.addListener('error', (event) => {
+        speech.current.error = event.error;
         if (__DEV__) console.warn('speech recognition', event.error, event.message);
       }),
       // Also after an error. A pause ends the question here, like the VAD does below.
@@ -128,7 +129,7 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
         const permission = await deviceSpeech.requestPermissionsAsync();
         if (!permission.granted) return 'denied';
         const local = await canRecognizeOnDevice();
-        speech.current = { transcript: '', finals: [], ended: false, startedAt: Date.now(), waiters: [], limit: undefined, quiet: undefined };
+        speech.current = { transcript: '', finals: [], ended: false, startedAt: Date.now(), waiters: [], limit: undefined, quiet: undefined, error: undefined };
         history.set([]);
         active.set(true);
         deviceSpeech.start({
@@ -188,8 +189,8 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
       if (!s.startedAt) return null;
       const text = s.transcript.trim();
       const seconds = (Date.now() - s.startedAt) / 1000;
-      speech.current = { transcript: '', finals: [], ended: true, startedAt: 0, waiters: [], limit: undefined, quiet: undefined };
-      return { audio: '', sampleRate: 0, seconds, heardSpeech: text.length > 0, text };
+      speech.current = { transcript: '', finals: [], ended: true, startedAt: 0, waiters: [], limit: undefined, quiet: undefined, error: undefined };
+      return { audio: '', sampleRate: 0, seconds, heardSpeech: text.length > 0, text, error: s.error };
     }
     active.set(false);
     try {

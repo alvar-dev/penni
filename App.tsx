@@ -382,7 +382,7 @@ function Screen() {
   // A short message above the input that clears itself.
   useEffect(() => {
     if (!notice) return;
-    const timer = setTimeout(() => setNotice(null), notice.retry ? 5000 : 3500);
+    const timer = setTimeout(() => setNotice(null), notice.retry ? 5000 : notice.text.length > 60 ? 8000 : 3500);
     return () => clearTimeout(timer);
   }, [notice]);
 
@@ -499,7 +499,10 @@ function Screen() {
     const recording = await mic.stop();
     if (!recording || !recording.heardSpeech) {
       setPhase('idle');
-      if (!micNote) setNotice({ text: strings.noSpeech, retry: true });
+      // The recognizer refused (in a browser: dictation off on an iPhone, or the microphone blocked).
+      if (recording?.error === 'service-not-allowed') setNotice({ text: strings.voiceOff });
+      else if (recording?.error === 'not-allowed' || recording?.error === 'audio-capture') setNotice({ text: strings.micDenied });
+      else if (!micNote) setNotice({ text: strings.noSpeech, retry: true });
       return;
     }
     // Recognised on the phone already.
