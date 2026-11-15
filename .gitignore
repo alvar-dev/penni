@@ -56,3 +56,4 @@ yarn-error.*
 /video/**/*.mp4
 /video/**/.hyperframes/
 /video/**/.env
+/public/*.apk

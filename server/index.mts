@@ -18,7 +18,7 @@
  */
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createInterface } from 'node:readline';
 
@@ -323,6 +323,18 @@ function parseAsk(body: unknown): AskRequest | string {
 
 const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
+  // The Android build, for anyone to try (Junction's Project Demo link). Put the file in public/.
+  if (req.method === 'GET' && req.url === '/download/penni.apk') {
+    const apk = new URL('../public/penni.apk', import.meta.url);
+    if (!existsSync(apk)) return send(res, 404, { error: 'Not found' });
+    res.writeHead(200, {
+      'Content-Type': 'application/vnd.android.package-archive',
+      'Content-Length': statSync(apk).size,
+      'Content-Disposition': 'attachment; filename="Penni.apk"',
+    });
+    createReadStream(apk).pipe(res);
+    return;
+  }
   if (req.method === 'GET' && req.url === '/health') {
     return send(res, 200, { ok: true, model: MODEL, today: TODAY, asksToday, speech: speechReady, voice: voiceReady });
   }
