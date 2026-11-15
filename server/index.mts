@@ -21,6 +21,7 @@ import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createInterface } from 'node:readline';
+import { extname } from 'node:path';
 
 import type { AskRequest, HistoryItem } from '../src/shared/api.ts';
 import { bankById } from '../src/shared/banks.ts';
@@ -52,6 +53,8 @@ if (!TOKEN) {
 const STT_PORT = 8788;
 const STT_PYTHON = new URL('../stt/.venv/bin/python', import.meta.url).pathname;
 const STT_SCRIPT = new URL('../stt/server.py', import.meta.url).pathname;
+/** The speech service is up (with Whisper on a Mac, voice only elsewhere). */
+let sttStarted = false;
 let speechReady = false;
 /** Kokoro reads answers aloud for Expo Go (the installed app runs Kokoro on the phone). */
 let voiceReady = false;
@@ -62,13 +65,15 @@ if (existsSync(STT_PYTHON)) {
   for (const stream of [stt.stdout!, stt.stderr!]) {
     createInterface({ input: stream }).on('line', (line) => {
       if (line.includes('[stt] ready')) {
-        speechReady = true;
+        sttStarted = true;
+        speechReady = !line.includes('whisper off');
         voiceReady = !line.includes('voice off');
       }
       if (line.startsWith('[stt]') || line.startsWith('[tts]') || /error|traceback/i.test(line)) console.log(line);
     });
   }
   stt.on('exit', (code) => {
+    sttStarted = false;
     speechReady = false;
     voiceReady = false;
     console.error(`[stt] stopped (exit ${code}); voice questions are unavailable`);
@@ -212,7 +217,7 @@ async function prewarm(personaId: string) {
   const combos = (process.env.DEMO_BANKS ?? 'op;revolut;op+revolut').split(';').map((c) => c.split('+').filter((b) => bankById(b)));
   for (const banks of [[], ...combos]) await prewarmFor(personaId, banks);
   // Then the demo answers' audio, so they are read the moment they appear.
-  for (let i = 0; i < 120 && !speechReady; i++) await new Promise((resolve) => setTimeout(resolve, 500));
+  for (let i = 0; i < 120 && !sttStarted; i++) await new Promise((resolve) => setTimeout(resolve, 500));
   if (!voiceReady) return;
   const prefix = `${MODEL}|${TODAY}|${EN ? 'en|' : ''}${personaId}`;
   const texts = [...cache.entries()].filter(([k]) => k.startsWith(prefix) && k.slice(prefix.length).match(/^[+|]/)).map(([, v]) => tidy(v.text));
@@ -318,7 +323,46 @@ function parseAsk(body: unknown): AskRequest | string {
       }
     }
   }
-  return { personaId: b.personaId, question: b.question.trim(), history, banks: bankList(b.banks) };
+  return { personaId: b.personaId, question: b.question.trim(), history, banks: bankList(b.banks), serverVoice: b.serverVoice === true };
+}
+
+// The web version (scripts/build-web.sh builds it into web/): the same app in a browser.
+const WEB_DIR = new URL('../web/', import.meta.url);
+const WEB_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.wasm': 'application/wasm',
+  '.json': 'application/json',
+  '.css': 'text/css',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.ico': 'image/x-icon',
+  '.svg': 'image/svg+xml',
+  '.ttf': 'font/ttf',
+};
+
+/** Serves a file of the web version; unknown paths get the app's index.html. */
+function serveWeb(req: IncomingMessage, res: ServerResponse): boolean {
+  let path: string;
+  try {
+    path = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
+  } catch {
+    return false;
+  }
+  if (path.includes('..') || path.includes('\\')) return false;
+  let file = new URL(`.${path}`, WEB_DIR);
+  if (!file.pathname.startsWith(WEB_DIR.pathname)) return false;
+  if (!existsSync(file) || statSync(file).isDirectory()) file = new URL('index.html', WEB_DIR);
+  if (!existsSync(file)) return false;
+  // Bundles and assets carry a content hash in their names, so they never change.
+  const hashed = path.startsWith('/_expo/') || path.startsWith('/assets/');
+  res.writeHead(200, {
+    'Content-Type': WEB_TYPES[extname(file.pathname)] ?? 'application/octet-stream',
+    'Content-Length': statSync(file).size,
+    'Cache-Control': hashed ? 'public, max-age=31536000, immutable' : 'no-cache',
+  });
+  createReadStream(file).pipe(res);
+  return true;
 }
 
 const server = createServer(async (req, res) => {
@@ -379,6 +423,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': audio.length });
     return res.end(audio);
   }
+  if (req.method === 'GET' && serveWeb(req, res)) return;
   if (req.method !== 'POST' || (req.url !== '/ask' && req.url !== '/transcribe')) return send(res, 404, { error: 'Not found' });
   if (req.headers['x-app-token'] !== TOKEN) return send(res, 401, { error: 'Unauthorized' });
 
@@ -405,7 +450,7 @@ const server = createServer(async (req, res) => {
   if (hit) {
     console.log(`[ask] ${parsed.personaId} cached | ${parsed.question.slice(0, 80)}`);
     const text = tidy(hit.text);
-    await readyToSpeak(text);
+    if (parsed.serverVoice) await readyToSpeak(text);
     return send(res, 200, { ...hit, text });
   }
   const limited = allowAsk();
@@ -421,7 +466,7 @@ const server = createServer(async (req, res) => {
         `cost=$${(answer.usage.usd ?? 0).toFixed(4)} total=$${spentUsd.toFixed(3)} | ${parsed.question.slice(0, 80)}`,
     );
     if (key) remember(key, { text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
-    await readyToSpeak(answer.text);
+    if (parsed.serverVoice) await readyToSpeak(answer.text);
     return send(res, 200, { text: answer.text, viz: answer.viz, call: answer.call, sources: answer.sources });
   } catch (error) {
     console.error(`[ask] failed after ${((Date.now() - started) / 1000).toFixed(1)}s:`, (error as Error).message);

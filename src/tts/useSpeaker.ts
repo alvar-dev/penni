@@ -49,6 +49,8 @@ export function useSpeaker() {
     AsyncStorage.getItem(KEY)
       .then((v) => v === 'off' && setVoiceOn(false))
       .catch(() => {});
+    // Without Kokoro on this device (web, Expo Go), ask now whether the server has a voice.
+    if (!KokoroEngine) void serverHasVoice();
   }, []);
 
   const finish = useCallback((id: string) => {
@@ -181,11 +183,14 @@ export function useSpeaker() {
     kokoro.current = api;
   }, []);
 
+  /** Whether the next answer will be read by the server's voice (no Kokoro on this device yet). */
+  const usesServerVoice = useCallback(() => kokoro.current === null, []);
+
   const speakingId = reading?.id ?? null;
   const sentence = reading?.sentence ?? -1;
   // A stable object, so callers' callbacks only change when the voice state does.
   return useMemo(
-    () => ({ voiceOn, toggleVoice, speak, stop, speakingId, sentence, onKokoro }),
-    [voiceOn, toggleVoice, speak, stop, speakingId, sentence, onKokoro],
+    () => ({ voiceOn, toggleVoice, speak, stop, speakingId, sentence, onKokoro, usesServerVoice }),
+    [voiceOn, toggleVoice, speak, stop, speakingId, sentence, onKokoro, usesServerVoice],
   );
 }

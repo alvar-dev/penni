@@ -424,7 +424,8 @@ function Screen() {
       // feels canned. Slightly different each time, so it does not feel timed.
       const thinkFor = new Promise((resolve) => setTimeout(resolve, MIN_THINK_MS + Math.random() * 600));
 
-      Promise.all([ask({ personaId, question, history, banks: options.banks ?? bankIds }, controller.signal), thinkFor])
+      const serverVoice = speaker.voiceOn && speaker.usesServerVoice();
+      Promise.all([ask({ personaId, question, history, banks: options.banks ?? bankIds, serverVoice }, controller.signal), thinkFor])
         .then(([answer]) => {
           if (seq !== requestSeq.current) return;
           const id = newId();
@@ -919,6 +920,18 @@ function Screen() {
                           submitBehavior="blurAndSubmit"
                           returnKeyType="send"
                           onSubmitEditing={() => send(draft)}
+                          // In a browser, Enter sends (Shift+Enter starts a new line).
+                          onKeyPress={
+                            Platform.OS === 'web'
+                              ? (e) => {
+                                  const key = e.nativeEvent as unknown as { key: string; shiftKey?: boolean };
+                                  if (key.key === 'Enter' && !key.shiftKey) {
+                                    e.preventDefault();
+                                    if (draft.trim()) send(draft);
+                                  }
+                                }
+                              : undefined
+                          }
                           selectionColor={colors.green700}
                         />
                       </View>
@@ -1006,7 +1019,8 @@ function Screen() {
               ) : null}
 
               {/* The input row itself is drawn earlier (pinned to the bottom) so the orb can sit on top of it. */}
-              <View style={{ height: INPUT_ROW + inputExtra }} />
+              {/* Only takes up room: it must not catch taps meant for the input and the orb (it lies above them on the web). */}
+              <View style={{ height: INPUT_ROW + inputExtra }} pointerEvents="none" />
             </Animated.View>
           </View>
           {/* Drawn after the conversation so it sits above it; the conversation scrolls up underneath and fades out. */}
@@ -1183,7 +1197,7 @@ const styles = StyleSheet.create({
     paddingRight: FIELD_PAD_RIGHT,
   },
   inputWrap: { flex: 1 },
-  inputMeasure: { position: 'absolute', left: 0, right: 0, top: 0, opacity: 0 },
+  inputMeasure: { position: 'absolute', left: 0, right: 0, top: 0, opacity: 0, pointerEvents: 'none' },
   // Natural line height: a fixed lineHeight makes iOS put the extra space above the text, so it sits low.
   // The padding makes one line as tall as the orb slot, so it is centred like the orb beside it.
   input: { fontSize: 17, color: colors.text, paddingTop: 10, paddingBottom: 10 },

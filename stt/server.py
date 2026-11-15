@@ -12,6 +12,9 @@ from the network, so it listens on 127.0.0.1 only.
     GET  /health       -> {"ok": true, "tts": bool}
 
 Audio never leaves this computer. The model loads once and stays in memory.
+
+Without mlx_whisper (any non-Mac machine, e.g. the hosted server) only the
+voice runs: /transcribe answers 503 and the ready line says "whisper off".
 """
 import io
 import json
@@ -21,10 +24,14 @@ import sys
 import time
 import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from threading import Lock
+from threading import Lock, Thread
 
-import mlx_whisper
 import numpy as np
+
+try:
+    import mlx_whisper
+except ImportError:  # not a Mac: voice only
+    mlx_whisper = None
 
 MODEL = os.environ.get('STT_MODEL', 'mlx-community/whisper-large-v3-turbo')
 LANGUAGE = os.environ.get('STT_LANGUAGE', 'fi')
@@ -43,18 +50,43 @@ MODELS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
 VOICE = os.environ.get('TTS_VOICE', 'af_heart')
 kokoro = None
 try:
+    import onnxruntime as rt
     from kokoro_onnx import Kokoro
     if os.path.exists(os.path.join(MODELS, 'kokoro-v1.0.int8.onnx')):
-        kokoro = Kokoro(os.path.join(MODELS, 'kokoro-v1.0.int8.onnx'), os.path.join(MODELS, 'voices-v1.0.bin'))
+        options = rt.SessionOptions()
+        # No memory arena or planned buffers: the voice needs less memory, which
+        # matters on the small hosted server.
+        options.enable_cpu_mem_arena = False
+        options.enable_mem_pattern = False
+        session = rt.InferenceSession(os.path.join(MODELS, 'kokoro-v1.0.int8.onnx'), sess_options=options, providers=['CPUExecutionProvider'])
+        kokoro = Kokoro.from_session(session, os.path.join(MODELS, 'voices-v1.0.bin'))
 except Exception as error:  # the app falls back to the phone's own voice
     print(f'[stt] Kokoro unavailable: {error}', flush=True)
 speak_lock = Lock()
+last_spoken = 0.0
+
+
+def keep_warm():
+    """On the small hosted server (no Whisper) an idle voice is swapped out, and
+    the next sentence then takes seconds longer. A tiny sentence every few
+    seconds of idleness keeps the model in memory."""
+    while True:
+        time.sleep(5)
+        if time.time() - last_spoken > 12 and speak_lock.acquire(blocking=False):
+            try:
+                kokoro.create('Hi.', voice=VOICE, speed=1.0, lang='en-us')
+            except Exception:
+                pass
+            finally:
+                speak_lock.release()
 
 
 def speak(text: str) -> bytes:
     """Reads the text with Kokoro and returns a 16-bit mono WAV."""
+    global last_spoken
     with speak_lock:
         samples, rate = kokoro.create(text, voice=VOICE, speed=1.0, lang='en-us' if LANGUAGE == 'en' else 'fi')
+        last_spoken = time.time()
     pcm = (np.clip(samples, -1, 1) * 32767).astype('<i2').tobytes()
     out = io.BytesIO()
     with wave.open(out, 'wb') as w:
@@ -108,6 +140,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._speak()
         if self.path != '/transcribe':
             return self._send(404, {'error': 'Not found'})
+        if mlx_whisper is None:
+            return self._send(503, {'error': 'No speech recognition on this machine'})
         length = int(self.headers.get('Content-Length') or 0)
         if not 0 < length <= MAX_BYTES:
             return self._send(413, {'error': 'Audio must be between 0 and 60 seconds'})
@@ -141,7 +175,12 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     started = time.time()
-    transcribe(np.zeros(16000, dtype=np.float32))  # loads the model before the first real question
-    print(f'[stt] ready on 127.0.0.1:{PORT} · {MODEL} · voice {VOICE if kokoro else "off"} · warm-up {time.time() - started:.1f}s', flush=True)
+    if mlx_whisper:
+        transcribe(np.zeros(16000, dtype=np.float32))  # loads the model before the first real question
+    if kokoro:
+        speak('Ready.')  # the first sentence is slow; get it out of the way
+    if kokoro and not mlx_whisper:
+        Thread(target=keep_warm, daemon=True).start()
+    print(f'[stt] ready on 127.0.0.1:{PORT} · whisper {MODEL if mlx_whisper else "off"} · voice {VOICE if kokoro else "off"} · warm-up {time.time() - started:.1f}s', flush=True)
     sys.stdout.flush()
     ThreadingHTTPServer(('127.0.0.1', PORT), Handler).serve_forever()

@@ -142,6 +142,8 @@ export type AskRequest = {
   history: HistoryItem[];
   /** Other banks connected under PSD2 (ids from shared/banks.ts), so the coach sees their accounts too. */
   banks?: string[];
+  /** The app will read the answer with the server's voice: prepare its first sentence before answering. */
+  serverVoice?: boolean;
 };
 
 export type AskResponse = { text: string; viz?: Viz; call?: ToolCall; sources?: string[] } | { error: string };
