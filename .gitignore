@@ -55,3 +55,4 @@ yarn-error.*
 /video/**/renders/
 /video/**/*.mp4
 /video/**/.hyperframes/
+/video/**/.env
