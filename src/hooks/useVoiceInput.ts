@@ -56,6 +56,7 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
       deviceSpeech.addListener('result', (event) => {
         const s = speech.current;
         const text = event.results[0]?.transcript?.trim();
+        const before = s.transcript;
         if (text) {
           // Some recognizers send each finished segment on its own (Android), others the
           // whole question so far (iOS): keep the finished ones and the one in progress.
@@ -63,8 +64,11 @@ export function useVoiceInput(level: SharedValue<number>, onAutoStop: () => void
           s.transcript = (event.isFinal ? s.finals : [...s.finals, text]).join(' ');
         }
         // The question is over after a real pause, not at the recognizer's first final result.
-        clearTimeout(s.quiet);
-        s.quiet = setTimeout(() => deviceSpeech?.stop(), QUESTION_PAUSE_MS);
+        // Only new words count: some browsers keep repeating the same result in silence.
+        if (s.transcript !== before || !s.quiet) {
+          clearTimeout(s.quiet);
+          s.quiet = setTimeout(() => deviceSpeech?.stop(), QUESTION_PAUSE_MS);
+        }
       }),
       deviceSpeech.addListener('volumechange', (event) => {
         if (!active.get()) return;

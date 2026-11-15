@@ -3,12 +3,14 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-aud
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { serverHasVoice, speechUrl } from '../api';
 import { EN } from '../lang';
 import type { KokoroApi } from './KokoroEngine';
 import { sentences } from '../shared/sentences';
 import { speakable } from '../shared/speakable';
+import { playWeb } from './webVoice';
 
 /**
  * The on-device Kokoro voice exists only in the installed app; in Expo Go the
@@ -44,6 +46,7 @@ export function useSpeaker() {
   /** Bumped on every stop, so a reading in progress notices and ends. */
   const turn = useRef(0);
   const player = useRef<AudioPlayer | null>(null);
+  const webPlayback = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     AsyncStorage.getItem(KEY)
@@ -66,6 +69,8 @@ export function useSpeaker() {
     setReading(null);
     kokoro.current?.stop();
     void Speech.stop();
+    webPlayback.current?.stop();
+    webPlayback.current = null;
     const p = player.current;
     player.current = null;
     if (p) {
@@ -122,6 +127,18 @@ export function useSpeaker() {
       // Kokoro on the computer, streamed from the local server (Expo Go): each
       // sentence is fetched while the one before plays, so speech starts quickly.
       const serverVoice = async () => {
+        // In a browser through Web Audio (an <audio> started this late is blocked; see webVoice.ts).
+        if (Platform.OS === 'web') {
+          const playback = playWeb(spoken.map((part) => speechUrl(part)), at, live);
+          webPlayback.current = playback;
+          try {
+            await playback.done;
+          } catch (error) {
+            if (!begun) throw error; // nothing played yet: the browser's own voice takes over
+          }
+          if (live()) finish(id);
+          return;
+        }
         await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).catch(() => {});
         const prepare = (i: number) => {
           if (i < spoken.length) void fetch(speechUrl(spoken[i]), { headers: { Range: 'bytes=0-1' } }).catch(() => {});
