@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Penni pitch deck</title>
+    <style>
+      @page {
+        size: 1920px 1080px;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        background: #f4f7f3;
+        font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #101411;
+        -webkit-font-smoothing: antialiased;
+      }
+      .slide {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        page-break-after: always;
+        background: radial-gradient(1400px 900px at 70% 40%, #fbfdfb 0%, #eef3ee 72%, #e6ede7 100%);
+      }
+      .slide:last-child {
+        page-break-after: auto;
+      }
+      .full img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .copy {
+        position: absolute;
+        left: 120px;
+        top: 150px;
+        width: 640px;
+      }
+      .k {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #1d7a4a;
+      }
+      h1 {
+        font-size: 76px;
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+        font-weight: 600;
+        margin-top: 22px;
+      }
+      p.lede {
+        font-size: 30px;
+        line-height: 1.4;
+        color: #4f5752;
+        margin-top: 28px;
+      }
+      ul {
+        list-style: none;
+        margin-top: 34px;
+      }
+      li {
+        font-size: 27px;
+        line-height: 1.38;
+        color: #2b322e;
+        padding-left: 34px;
+        position: relative;
+        margin-bottom: 18px;
+      }
+      li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 13px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #00aa46;
+      }
+      .shot {
+        position: absolute;
+        right: 90px;
+        top: 160px;
+        width: 1040px;
+        height: 585px;
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow:
+          0 60px 120px rgba(12, 58, 34, 0.18),
+          0 12px 30px rgba(12, 40, 26, 0.08),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.06);
+      }
+      .shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .foot {
+        position: absolute;
+        left: 120px;
+        bottom: 56px;
+        font-size: 22px;
+        color: #6d736f;
+      }
+      .num {
+        position: absolute;
+        right: 90px;
+        bottom: 56px;
+        font-size: 22px;
+        color: #6d736f;
+        font-variant-numeric: tabular-nums;
+      }
+      .stats {
+        position: absolute;
+        right: 90px;
+        bottom: 150px;
+        width: 1040px;
+        display: flex;
+        gap: 24px;
+      }
+      .stat {
+        flex: 1;
+        padding: 26px 30px;
+        border-radius: 26px;
+        background: #fff;
+        box-shadow: 0 24px 50px rgba(12, 58, 34, 0.08), inset 0 0 0 1px rgba(16, 60, 36, 0.06);
+      }
+      .stat b {
+        display: block;
+        font-size: 48px;
+        letter-spacing: -0.04em;
+        color: #00843a;
+      }
+      .stat span {
+        font-size: 22px;
+        color: #4f5752;
+      }
+      /* architecture */
+      .arch {
+        position: absolute;
+        right: 90px;
+        top: 170px;
+        width: 1040px;
+      }
+      .box {
+        border-radius: 26px;
+        background: #fff;
+        padding: 26px 32px;
+        box-shadow: 0 24px 50px rgba(12, 58, 34, 0.08), inset 0 0 0 1px rgba(16, 60, 36, 0.06);
+        font-size: 26px;
+        line-height: 1.35;
+      }
+      .box b {
+        display: block;
+        font-size: 30px;
+        letter-spacing: -0.02em;
+        margin-bottom: 6px;
+      }
+      .box.dark {
+        background: #004628;
+        color: #fff;
+      }
+      .arrow {
+        text-align: center;
+        font-size: 30px;
+        color: #00aa46;
+        margin: 10px 0;
+      }
+      .row2 {
+        display: flex;
+        gap: 20px;
+      }
+      .row2 .box {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 1 -->
+    <section class="slide full">
+      <img src="img/outro.jpg" alt="" />
+      <div class="k" style="position: absolute; left: 120px; top: 90px">Junction 2026 · S-Pankki: Personal Economic Trainer</div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">The problem</div>
+        <h1>Banking stops at transaction lists.</h1>
+        <p class="lede">Money moves in a hundred small directions. Most people never see where it goes, until a surprise pushes them into the red.</p>
+        <ul>
+          <li>Statements show rows, not patterns.</li>
+          <li>Surprises feel random, so nobody plans for them.</li>
+          <li>Nobody explains the numbers in plain words.</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/swarm.jpg" alt="" /></div>
+      <div class="num">2</div>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Penni</div>
+        <h1>A money coach you can talk to.</h1>
+        <p class="lede">Penni reads your own transactions and sorts every euro into three baskets.</p>
+        <ul>
+          <li><b>Essentials:</b> rent, groceries, bills, transport.</li>
+          <li><b>Surprises:</b> a broken washing machine, the dentist.</li>
+          <li><b>Extras:</b> coffee, taxis, shopping, the part you steer.</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/ledger.jpg" alt="" /></div>
+      <div class="num">3</div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Understand</div>
+        <h1>Where a month really goes.</h1>
+        <p class="lede">Every basket broken down, and compared with people your age using open data from Statistics Finland.</p>
+        <ul>
+          <li>Extras: 13% of spending.</li>
+          <li>People aged 35–44 in Finland: 18%.</li>
+          <li>Sources are named in every answer.</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/baskets.jpg" alt="" /></div>
+      <div class="num">4</div>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Learn</div>
+        <h1>Patterns become lessons.</h1>
+        <p class="lede">One €1,008 washing machine in July meant ten days overdrawn. Over a year, surprises are predictable.</p>
+        <ul>
+          <li>Penni explains why it happened.</li>
+          <li>It suggests a plan: €125 every payday.</li>
+          <li>It shows how the plan would have played out.</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/year.jpg" alt="" /></div>
+      <div class="num">5</div>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Learn</div>
+        <h1>It learns as you spend.</h1>
+        <p class="lede">Month by month, Penni notices patterns, turns them into lessons and lessons into a plan.</p>
+        <ul>
+          <li>Groceries are your biggest cost.</li>
+          <li>Surprises add up to about €420 a month.</li>
+          <li>Plan: set aside €125 every payday.</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/learn.jpg" alt="" /></div>
+      <div class="num">6</div>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Home</div>
+        <h1>A home screen that changes with you.</h1>
+        <p class="lede">The dashboard follows your spending, so what matters now comes first.</p>
+        <ul>
+          <li>Room left until payday.</li>
+          <li>A spike, a surprise, a new habit.</li>
+          <li>Your share against Finland.</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/home.jpg" alt="" /></div>
+      <div class="num">7</div>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Ask</div>
+        <h1>Just ask, out loud.</h1>
+        <p class="lede">Tap the orb and speak. An answer you can see arrives in about three seconds, and is read aloud.</p>
+        <ul>
+          <li>On-device speech recognition.</li>
+          <li>A chart and two or three plain sentences.</li>
+          <li>"Another chart" redraws it.</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/ask.jpg" alt="" /></div>
+      <div class="num">8</div>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Connect</div>
+        <h1>Every bank. One coach.</h1>
+        <p class="lede">Connect your other banks and Penni reasons over the whole picture.</p>
+        <ul>
+          <li>OP, Nordea, Danske, Revolut and six more.</li>
+          <li>"Pay the 15.9% card from savings: save €119 a year."</li>
+          <li>Account data through PSD2 (generated for the demo).</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/banks.jpg" alt="" /></div>
+      <div class="num">9</div>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">How it works</div>
+        <h1>AI that never makes up a number.</h1>
+        <p class="lede">The model chooses the calculation and writes the words. The numbers always come from code.</p>
+      </div>
+      <div class="arch">
+        <div class="box"><b>Question</b>By voice or text, in the app (Expo / React Native)</div>
+        <div class="arrow">↓</div>
+        <div class="box"><b>1. The model picks one tool</b>Spending total, safe to spend, spending profile, what-if, top categories, surprise fund, all accounts</div>
+        <div class="arrow">↓</div>
+        <div class="row2">
+          <div class="box dark"><b>2. The engine computes</b>From the customer's own transactions</div>
+          <div class="box"><b>+ Statistics Finland</b>Open data for the customer's age group</div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="box"><b>3. The model words the answer</b>From those facts only, with a chart, read aloud on the device</div>
+      </div>
+      <div class="num">10</div>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide">
+      <div class="copy">
+        <div class="k">Feasible today</div>
+        <h1>Built to run at a bank.</h1>
+        <ul>
+          <li>Only computed summaries reach the model, never raw transactions.</li>
+          <li>Open-weight model (Kimi K3): can run in the EU, next to the data.</li>
+          <li>Designed to slot into S-mobiili as one screen.</li>
+          <li>Runs now: an Android build and a hosted API.</li>
+        </ul>
+      </div>
+      <div class="stats" style="top: 300px; bottom: auto">
+        <div class="stat"><b>~3 s</b><span>per answer</span></div>
+        <div class="stat"><b>~2 c</b><span>per answer</span></div>
+        <div class="stat"><b>0</b><span>numbers invented by the model</span></div>
+      </div>
+      <div class="stats" style="top: 520px; bottom: auto">
+        <div class="stat"><b>3</b><span>baskets that teach</span></div>
+        <div class="stat"><b>10</b><span>banks in one view</span></div>
+        <div class="stat"><b>EN · FI</b><span>both built in</span></div>
+      </div>
+      <div class="num">11</div>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide full">
+      <img src="img/outro.jpg" alt="" />
+      <div class="foot" style="left: 0; right: 0; text-align: center; bottom: 40px">Thank you · Penni is a Junction 2026 demo built on S-Pankki's synthetic dataset</div>
+    </section>
+    <script id="only">
+      // deck.html?s=3 shows only slide 3 (for checking pages as images).
+      const n = new URLSearchParams(location.search).get("s");
+      if (n) document.querySelectorAll(".slide").forEach((el, i) => { if (i + 1 !== +n) el.style.display = "none"; });
+    </script>
+  </body>
+</html>
