@@ -29,17 +29,18 @@ LINES = [
     ("vo02", 4.0, "Meet Penni: a money coach that explains where it all goes."),
     ("vo03", 7.0, "Penni reads your own transactions, and sorts every euro into three baskets:"),
     ("vo04", 11.4, "what you have to pay, what surprises you, and what you choose."),
-    ("vo05", 15.5, "So you can see where an average month really goes."),
-    ("vo06", 21.9, "Over a year, patterns start to show."),
-    ("vo07", 24.5, "One washing machine in July meant ten days overdrawn."),
-    ("vo08", 27.2, "Surprises are predictable. Extras are yours to steer."),
-    ("vo09", 29.8, "And Penni keeps learning as you spend."),
-    ("vo10", 32.0, "It turns patterns into lessons, and lessons into a plan: a hundred and twenty-five euros, every payday."),
-    ("vo11", 38.6, "Your home screen changes with you."),
-    ("vo12", 41.3, "Payday, a spike, a new habit: what matters now comes first."),
-    ("vo13", 46.1, "And when you have a question, just ask."),
-    ("vo14", 69.7, "Connect your other banks, and Penni sees the whole picture."),
-    ("vo15", 77.2, "Penni. Every euro, understood."),
+    ("vo05", 15.2, "So you can see where an average month really goes."),
+    ("vo05b", 18.35, "Then it compares you with people your age, using Statistics Finland data."),
+    ("vo06", 22.85, "Over a year, patterns start to show."),
+    ("vo07", 25.15, "One washing machine in July meant ten days overdrawn."),
+    ("vo08", 28.35, "Surprises are predictable. Extras are yours to steer."),
+    ("vo09", 31.8, "And Penni keeps learning as you spend."),
+    ("vo10", 34.0, "It turns patterns into lessons, and lessons into a plan: a hundred and twenty-five euros, every payday."),
+    ("vo11", 40.6, "Your home screen changes with you."),
+    ("vo12", 43.3, "Payday, a spike, a new habit: what matters now comes first."),
+    ("vo13", 48.1, "And when you have a question, just ask."),
+    ("vo14", 71.7, "Connect your other banks, and Penni sees the whole picture."),
+    ("vo15", 79.2, "Penni. Every euro, understood."),
 ]
 
 MUSIC_PROMPT = (
@@ -50,16 +51,17 @@ MUSIC_PROMPT = (
 )
 
 SFX = [
-    ("swirl", 3.0, "soft airy whoosh swirling inward with a faint magical shimmer, gentle and subtle"),
+    ("swirl", 3.0, "gentle airy swirl of wind gathering inward with a soft glassy shimmer, premium and subtle"),
     ("bloom", 1.6, "soft warm low bloom impact with a gentle shimmering tail, subtle cinematic"),
-    ("whoosh", 1.0, "short soft clean transition whoosh, modern minimal user interface"),
-    ("scan", 5.0, "subtle soft digital scanner sweep, light electronic hum, minimal"),
-    ("tick", 0.5, "very soft short user interface tick, minimal click"),
-    ("pop", 0.5, "soft gentle bubbly pop, user interface element appearing"),
-    ("chime", 1.4, "soft bright warm notification chime, positive, minimal"),
+    ("whoosh", 1.2, "soft airy cinematic whoosh, smooth and clean, premium product film transition"),
+    ("scan", 4.0, "soft digital scanning sweep, low subtle electronic shimmer, premium"),
+    ("tick", 0.5, "crisp soft glassy user interface tap, premium minimal, very short"),
+    ("pop", 0.5, "soft glassy bubble pop, premium phone interface, gentle"),
+    ("chime", 1.5, "soft warm two-note notification chime, glassy and premium, subtle"),
     ("split", 1.4, "soft liquid blob stretching and splitting into drops, gentle gooey"),
     ("slide", 1.2, "smooth soft swoosh of a phone sliding into frame"),
     ("listen", 0.9, "soft rising tone, voice assistant starts listening"),
+    ("connect", 1.2, "soft digital connection ping, gentle glassy network chime"),
     ("sting", 3.5, "warm soft cinematic logo sting, gentle piano chord with a light shimmer"),
 ]
 
@@ -89,6 +91,9 @@ what = sys.argv[1] if len(sys.argv) > 1 else "all"
 if what in ("vo", "all"):
     for lid, start, text in LINES:
         out = os.path.join(OUT, f"{lid}.mp3")
+        if lid in manifest and manifest[lid].get("text") == text and os.path.exists(out):
+            manifest[lid]["start"] = start
+            continue
         tts(NARRATOR, text, out)
         manifest[lid] = {"start": start, "dur": round(duration(out), 3), "text": text}
         print(lid, manifest[lid]["dur"], "s")

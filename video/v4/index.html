@@ -448,7 +448,7 @@
         left: 160px;
         top: 290px;
         width: 1600px;
-        height: 640px;
+        height: 540px;
       }
       .tile {
         position: absolute;
@@ -875,13 +875,96 @@
         line-height: 96px;
         white-space: nowrap;
       }
+
+      .mesh {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1400px;
+        height: 1400px;
+        margin: -700px 0 0 -700px;
+        border-radius: 50%;
+        z-index: 1;
+      }
+      #mesh1 {
+        background: radial-gradient(circle, rgba(196, 238, 208, 0.75) 0%, rgba(196, 238, 208, 0) 62%);
+      }
+      #mesh2 {
+        background: radial-gradient(circle, rgba(226, 244, 214, 0.75) 0%, rgba(226, 244, 214, 0) 60%);
+      }
+      #mesh3 {
+        background: radial-gradient(circle, rgba(205, 236, 228, 0.7) 0%, rgba(205, 236, 228, 0) 60%);
+      }
+      /* Statistics Finland comparison under the baskets */
+      #bench {
+        position: absolute;
+        left: 160px;
+        top: 852px;
+        width: 1600px;
+        height: 96px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow:
+          0 24px 50px rgba(12, 58, 34, 0.1),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        padding: 0 34px;
+      }
+      #bench .src {
+        width: 360px;
+        line-height: 1.2;
+      }
+      #bench .src b {
+        display: block;
+        font-size: 18px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--green);
+      }
+      #bench .src span {
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      #bench .cmp {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        font-size: 24px;
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+      #bench .trk {
+        flex: 1;
+        height: 16px;
+        border-radius: 8px;
+        background: rgba(16, 60, 36, 0.08);
+        overflow: hidden;
+      }
+      #bench .fil {
+        height: 100%;
+        border-radius: 8px;
+        transform-origin: left center;
+      }
+      #bench .cmp b {
+        font-size: 32px;
+        color: var(--ink);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        width: 70px;
+        text-align: right;
+      }
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="83" data-width="1920" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="85" data-width="1920" data-height="1080">
       <div id="cam" class="clip">
-        <div id="floorwrap"><div id="floor"></div></div>
-        <canvas class="dust" id="dustBack" width="1920" height="1080"></canvas>
+        <div class="mesh" id="mesh1"></div>
+        <div class="mesh" id="mesh2"></div>
+        <div class="mesh" id="mesh3"></div>
         <svg id="links" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
         <div class="back" id="swarmBack"></div>
         <canvas id="orb" width="1920" height="1080"></canvas>
@@ -916,13 +999,18 @@
         </div>
 
         <!-- Breakdown and a year -->
-        <div id="s3" class="clip layer" data-start="14.5" data-duration="14.5" data-track-index="1">
+        <div id="s3" class="clip layer" data-start="14.5" data-duration="16.5" data-track-index="1">
           <div class="h" id="s3-h" style="position: absolute; left: 150px; top: 100px; font-size: 84px"><span class="ln"><span>Three baskets.</span></span></div>
           <div class="lede" id="s3-l" style="position: absolute; left: 154px; top: 204px">Where an average month goes, June to August.</div>
           <div class="legend" id="lg1" style="left: 1239px"><i></i>Essentials</div>
           <div class="legend" id="lg2" style="left: 1449px"><i></i>Surprises</div>
           <div class="legend" id="lg3" style="left: 1659px"><i></i>Extras</div>
           <div id="tree"></div>
+          <div id="bench">
+            <div class="src"><b>Statistics Finland</b><span>Extras, share of spending</span></div>
+            <div class="cmp">You<div class="trk"><div class="fil" id="bf1" style="width: 52%; background: var(--b2)"></div></div><b id="bv1">0%</b></div>
+            <div class="cmp">People 35–44<div class="trk"><div class="fil" id="bf2" style="width: 72%; background: #9fd3b1"></div></div><b id="bv2">0%</b></div>
+          </div>
           <div class="h" id="s3-h2" style="position: absolute; left: 150px; top: 100px; font-size: 80px"><span class="ln"><span>A year of your money.</span></span></div>
           <div class="h" id="s3-h3" style="position: absolute; left: 150px; top: 100px; font-size: 80px"><span class="ln"><span>Steer the extras.</span></span></div>
           <div class="lede" id="s3-l3" style="position: absolute; left: 154px; top: 206px">Over a year, surprises are predictable. Extras are yours to change.</div>
@@ -936,7 +1024,7 @@
         </div>
 
         <!-- Penni learns as you spend -->
-        <div id="s4b" class="clip layer" data-start="28.4" data-duration="9.4" data-track-index="1">
+        <div id="s4b" class="clip layer" data-start="30.4" data-duration="9.4" data-track-index="1">
           <div class="h" id="sl-h" style="position: absolute; left: 150px; top: 100px; font-size: 84px"><span class="ln"><span>Penni learns as you spend.</span></span></div>
           <div class="lede" id="sl-l" style="position: absolute; left: 154px; top: 204px">Patterns become lessons. Lessons become a plan.</div>
           <svg id="tline" width="1920" height="1080" viewBox="0 0 1920 1080" style="position: absolute; inset: 0"></svg>
@@ -948,7 +1036,7 @@
           <div id="stage">
             <div id="phone">
               <div class="screen">
-                <video id="appvid" class="clip" src="assets/app-voice.mp4" data-start="46" data-duration="23" data-track-index="3" muted playsinline></video>
+                <video id="appvid" class="clip" src="assets/app-voice.mp4" data-start="48" data-duration="23" data-track-index="3" muted playsinline></video>
                 <div id="home"><img src="assets/home-frame.png" alt="" /><div id="htiles"></div></div>
                 <div class="glare"></div>
               </div>
@@ -970,14 +1058,14 @@
         </div>
 
         <!-- 03 Connect: every bank -->
-        <div id="s6" class="clip layer" data-start="69" data-duration="7.3" data-track-index="1">
+        <div id="s6" class="clip layer" data-start="71" data-duration="7.3" data-track-index="1">
           <div class="center h" id="s6-h" style="top: 64px; font-size: 88px"><span class="ln"><span>Every bank. One coach.</span></span></div>
           <div class="center lede" id="s6-l" style="top: 176px">Connect your other banks and see the whole picture.</div>
           <div id="banks"></div>
         </div>
 
         <!-- Outro -->
-        <div id="s8" class="clip layer" data-start="76.3" data-duration="6.7" data-track-index="1">
+        <div id="s8" class="clip layer" data-start="78.3" data-duration="6.7" data-track-index="1">
           <div class="center" id="s8-w" style="top: 600px"><span class="ln"><span class="word" id="word">Penni</span></span></div>
           <div class="center h" id="s8-l" style="top: 800px; font-size: 56px; color: var(--green)"><span class="ln"><span>Every euro, understood.</span></span></div>
           <div class="center" id="s8-f" style="top: 960px; font-size: 26px; color: var(--ink-3)">The money coach that learns with you · A Junction 2026 demo</div>
@@ -985,33 +1073,63 @@
       </div>
 
       <!-- audio:start -->
-      <audio id="music" src="assets/audio/music.mp3" data-start="0" data-duration="83.0" data-volume="0.28" data-fade-in="1.5" data-fade-out="3" data-track-index="10" data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:1},{&quot;t&quot;:0.25,&quot;v&quot;:1},{&quot;t&quot;:0.6,&quot;v&quot;:0.55},{&quot;t&quot;:18.54,&quot;v&quot;:0.55},{&quot;t&quot;:18.99,&quot;v&quot;:1},{&quot;t&quot;:21.55,&quot;v&quot;:1},{&quot;t&quot;:21.9,&quot;v&quot;:0.55},{&quot;t&quot;:50.33,&quot;v&quot;:0.55},{&quot;t&quot;:50.78,&quot;v&quot;:1},{&quot;t&quot;:54.15,&quot;v&quot;:1},{&quot;t&quot;:54.5,&quot;v&quot;:0.55},{&quot;t&quot;:68.5,&quot;v&quot;:0.55},{&quot;t&quot;:68.95,&quot;v&quot;:1},{&quot;t&quot;:69.35,&quot;v&quot;:1},{&quot;t&quot;:69.7,&quot;v&quot;:0.55},{&quot;t&quot;:72.53,&quot;v&quot;:0.55},{&quot;t&quot;:72.98,&quot;v&quot;:1},{&quot;t&quot;:76.85,&quot;v&quot;:1},{&quot;t&quot;:77.2,&quot;v&quot;:0.55},{&quot;t&quot;:79.38,&quot;v&quot;:0.55},{&quot;t&quot;:79.83,&quot;v&quot;:1}]}]}"></audio>
+      <audio id="music" src="assets/audio/music.mp3" data-start="0" data-duration="85.0" data-volume="0.28" data-fade-in="1.5" data-fade-out="3" data-track-index="10" data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:1},{&quot;t&quot;:0.25,&quot;v&quot;:1},{&quot;t&quot;:0.6,&quot;v&quot;:0.55},{&quot;t&quot;:47.39,&quot;v&quot;:0.55},{&quot;t&quot;:47.84,&quot;v&quot;:1},{&quot;t&quot;:47.75,&quot;v&quot;:1},{&quot;t&quot;:48.1,&quot;v&quot;:0.55},{&quot;t&quot;:52.33,&quot;v&quot;:0.55},{&quot;t&quot;:52.78,&quot;v&quot;:1},{&quot;t&quot;:56.15,&quot;v&quot;:1},{&quot;t&quot;:56.5,&quot;v&quot;:0.55},{&quot;t&quot;:70.5,&quot;v&quot;:0.55},{&quot;t&quot;:70.95,&quot;v&quot;:1},{&quot;t&quot;:71.35,&quot;v&quot;:1},{&quot;t&quot;:71.7,&quot;v&quot;:0.55},{&quot;t&quot;:74.53,&quot;v&quot;:0.55},{&quot;t&quot;:74.98,&quot;v&quot;:1},{&quot;t&quot;:78.85,&quot;v&quot;:1},{&quot;t&quot;:79.2,&quot;v&quot;:0.55},{&quot;t&quot;:81.38,&quot;v&quot;:0.55},{&quot;t&quot;:81.83,&quot;v&quot;:1}]}]}"></audio>
       <audio id="a-vo01" src="assets/audio/vo01.mp3" data-start="0.600" data-duration="2.879" data-volume="1.78" data-track-index="11"></audio>
       <audio id="a-vo02" src="assets/audio/vo02.mp3" data-start="4.000" data-duration="3.204" data-volume="1.78" data-track-index="11"></audio>
       <audio id="a-vo03" src="assets/audio/vo03.mp3" data-start="7.454" data-duration="4.087" data-volume="1.78" data-track-index="11"></audio>
       <audio id="a-vo04" src="assets/audio/vo04.mp3" data-start="11.791" data-duration="3.576" data-volume="1.78" data-track-index="11"></audio>
       <audio id="a-vo05" src="assets/audio/vo05.mp3" data-start="15.617" data-duration="2.926" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo06" src="assets/audio/vo06.mp3" data-start="21.900" data-duration="2.090" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo07" src="assets/audio/vo07.mp3" data-start="24.500" data-duration="2.972" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo08" src="assets/audio/vo08.mp3" data-start="27.722" data-duration="3.158" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo09" src="assets/audio/vo09.mp3" data-start="31.130" data-duration="1.950" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo10" src="assets/audio/vo10.mp3" data-start="33.330" data-duration="6.177" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo11" src="assets/audio/vo11.mp3" data-start="39.757" data-duration="2.043" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo12" src="assets/audio/vo12.mp3" data-start="42.050" data-duration="4.087" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo13" src="assets/audio/vo13.mp3" data-start="46.387" data-duration="2.276" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo14" src="assets/audio/vo14.mp3" data-start="69.700" data-duration="2.833" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-vo15" src="assets/audio/vo15.mp3" data-start="77.200" data-duration="2.183" data-volume="1.78" data-track-index="11"></audio>
-      <audio id="a-user" src="assets/audio/user-question.mp3" data-start="48.700" data-duration="1.625" data-volume="1.6" data-track-index="11"></audio>
-      <audio id="a-app" src="assets/audio/app-0.mp3" data-start="54.500" data-duration="14.000" data-volume="1.78" data-track-index="11" data-fade-out="1.0"></audio>
-      <audio id="a-sfx-bloom-17" src="assets/audio/sfx-bloom.mp3" data-start="5.000" data-duration="1.600" data-volume="0.22" data-track-index="17"></audio>
-      <audio id="a-sfx-whoosh-18" src="assets/audio/sfx-whoosh.mp3" data-start="14.200" data-duration="1.000" data-volume="0.16" data-track-index="12"></audio>
-      <audio id="a-sfx-whoosh-19" src="assets/audio/sfx-whoosh.mp3" data-start="28.300" data-duration="1.000" data-volume="0.16" data-track-index="13"></audio>
-      <audio id="a-sfx-whoosh-20" src="assets/audio/sfx-whoosh.mp3" data-start="68.400" data-duration="1.000" data-volume="0.16" data-track-index="14"></audio>
-      <audio id="a-sfx-slide-21" src="assets/audio/sfx-slide.mp3" data-start="37.500" data-duration="1.200" data-volume="0.18" data-track-index="15"></audio>
-      <audio id="a-sfx-listen-22" src="assets/audio/sfx-listen.mp3" data-start="47.000" data-duration="0.880" data-volume="0.28" data-track-index="16"></audio>
-      <audio id="a-sfx-sting-23" src="assets/audio/sfx-sting.mp3" data-start="76.600" data-duration="3.480" data-volume="0.26" data-track-index="17"></audio>
+      <audio id="a-vo05b" src="assets/audio/vo05b.mp3" data-start="18.793" data-duration="4.272" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo06" src="assets/audio/vo06.mp3" data-start="23.315" data-duration="2.090" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo07" src="assets/audio/vo07.mp3" data-start="25.655" data-duration="2.972" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo08" src="assets/audio/vo08.mp3" data-start="28.877" data-duration="3.158" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo09" src="assets/audio/vo09.mp3" data-start="32.285" data-duration="1.950" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo10" src="assets/audio/vo10.mp3" data-start="34.485" data-duration="6.177" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo11" src="assets/audio/vo11.mp3" data-start="40.912" data-duration="2.043" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo12" src="assets/audio/vo12.mp3" data-start="43.300" data-duration="4.087" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo13" src="assets/audio/vo13.mp3" data-start="48.100" data-duration="2.276" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo14" src="assets/audio/vo14.mp3" data-start="71.700" data-duration="2.833" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-vo15" src="assets/audio/vo15.mp3" data-start="79.200" data-duration="2.183" data-volume="1.78" data-track-index="11"></audio>
+      <audio id="a-user" src="assets/audio/user-question.mp3" data-start="50.700" data-duration="1.625" data-volume="1.6" data-track-index="11"></audio>
+      <audio id="a-app" src="assets/audio/app-0.mp3" data-start="56.500" data-duration="14.000" data-volume="1.78" data-track-index="11" data-fade-out="1.0"></audio>
+      <audio id="a-sfx-swirl-18" src="assets/audio/sfx-swirl.mp3" data-start="2.600" data-duration="3.000" data-volume="0.191" data-track-index="12"></audio>
+      <audio id="a-sfx-bloom-19" src="assets/audio/sfx-bloom.mp3" data-start="5.000" data-duration="1.600" data-volume="2.475" data-track-index="13"></audio>
+      <audio id="a-sfx-whoosh-20" src="assets/audio/sfx-whoosh.mp3" data-start="6.000" data-duration="1.200" data-volume="0.256" data-track-index="14"></audio>
+      <audio id="a-sfx-whoosh-21" src="assets/audio/sfx-whoosh.mp3" data-start="14.200" data-duration="1.200" data-volume="0.256" data-track-index="15"></audio>
+      <audio id="a-sfx-whoosh-22" src="assets/audio/sfx-whoosh.mp3" data-start="21.100" data-duration="1.200" data-volume="0.256" data-track-index="16"></audio>
+      <audio id="a-sfx-whoosh-23" src="assets/audio/sfx-whoosh.mp3" data-start="30.200" data-duration="1.200" data-volume="0.256" data-track-index="17"></audio>
+      <audio id="a-sfx-whoosh-24" src="assets/audio/sfx-whoosh.mp3" data-start="70.300" data-duration="1.200" data-volume="0.256" data-track-index="12"></audio>
+      <audio id="a-sfx-whoosh-25" src="assets/audio/sfx-whoosh.mp3" data-start="77.800" data-duration="1.200" data-volume="0.256" data-track-index="13"></audio>
+      <audio id="a-sfx-scan-26" src="assets/audio/sfx-scan.mp3" data-start="7.700" data-duration="4.000" data-volume="0.216" data-track-index="14"></audio>
+      <audio id="a-sfx-tick-27" src="assets/audio/sfx-tick.mp3" data-start="8.400" data-duration="0.480" data-volume="0.585" data-track-index="15"></audio>
+      <audio id="a-sfx-tick-28" src="assets/audio/sfx-tick.mp3" data-start="8.640" data-duration="0.480" data-volume="0.585" data-track-index="16"></audio>
+      <audio id="a-sfx-tick-29" src="assets/audio/sfx-tick.mp3" data-start="8.880" data-duration="0.480" data-volume="0.585" data-track-index="17"></audio>
+      <audio id="a-sfx-tick-30" src="assets/audio/sfx-tick.mp3" data-start="9.580" data-duration="0.480" data-volume="0.585" data-track-index="12"></audio>
+      <audio id="a-sfx-tick-31" src="assets/audio/sfx-tick.mp3" data-start="10.620" data-duration="0.480" data-volume="0.585" data-track-index="13"></audio>
+      <audio id="a-sfx-tick-32" src="assets/audio/sfx-tick.mp3" data-start="11.660" data-duration="0.480" data-volume="0.585" data-track-index="14"></audio>
+      <audio id="a-sfx-tick-33" src="assets/audio/sfx-tick.mp3" data-start="12.700" data-duration="0.480" data-volume="0.585" data-track-index="15"></audio>
+      <audio id="a-sfx-tick-34" src="assets/audio/sfx-tick.mp3" data-start="13.740" data-duration="0.480" data-volume="0.585" data-track-index="16"></audio>
+      <audio id="a-sfx-split-35" src="assets/audio/sfx-split.mp3" data-start="15.000" data-duration="1.360" data-volume="1.147" data-track-index="17"></audio>
+      <audio id="a-sfx-pop-36" src="assets/audio/sfx-pop.mp3" data-start="15.800" data-duration="0.480" data-volume="0.207" data-track-index="12"></audio>
+      <audio id="a-sfx-pop-37" src="assets/audio/sfx-pop.mp3" data-start="16.400" data-duration="0.480" data-volume="0.166" data-track-index="13"></audio>
+      <audio id="a-sfx-tick-38" src="assets/audio/sfx-tick.mp3" data-start="18.400" data-duration="0.480" data-volume="0.585" data-track-index="14"></audio>
+      <audio id="a-sfx-chime-39" src="assets/audio/sfx-chime.mp3" data-start="24.900" data-duration="1.480" data-volume="0.447" data-track-index="15"></audio>
+      <audio id="a-sfx-pop-40" src="assets/audio/sfx-pop.mp3" data-start="32.514" data-duration="0.480" data-volume="0.207" data-track-index="16"></audio>
+      <audio id="a-sfx-pop-41" src="assets/audio/sfx-pop.mp3" data-start="33.641" data-duration="0.480" data-volume="0.207" data-track-index="17"></audio>
+      <audio id="a-sfx-pop-42" src="assets/audio/sfx-pop.mp3" data-start="34.768" data-duration="0.480" data-volume="0.207" data-track-index="12"></audio>
+      <audio id="a-sfx-pop-43" src="assets/audio/sfx-pop.mp3" data-start="37.586" data-duration="0.480" data-volume="0.207" data-track-index="13"></audio>
+      <audio id="a-sfx-chime-44" src="assets/audio/sfx-chime.mp3" data-start="38.150" data-duration="1.480" data-volume="0.447" data-track-index="14"></audio>
+      <audio id="a-sfx-slide-45" src="assets/audio/sfx-slide.mp3" data-start="39.500" data-duration="1.200" data-volume="0.908" data-track-index="15"></audio>
+      <audio id="a-sfx-tick-46" src="assets/audio/sfx-tick.mp3" data-start="42.900" data-duration="0.480" data-volume="0.585" data-track-index="16"></audio>
+      <audio id="a-sfx-tick-47" src="assets/audio/sfx-tick.mp3" data-start="45.600" data-duration="0.480" data-volume="0.585" data-track-index="17"></audio>
+      <audio id="a-sfx-listen-48" src="assets/audio/sfx-listen.mp3" data-start="49.000" data-duration="0.880" data-volume="0.991" data-track-index="12"></audio>
+      <audio id="a-sfx-tick-49" src="assets/audio/sfx-tick.mp3" data-start="57.400" data-duration="0.480" data-volume="0.468" data-track-index="13"></audio>
+      <audio id="a-sfx-tick-50" src="assets/audio/sfx-tick.mp3" data-start="59.000" data-duration="0.480" data-volume="0.468" data-track-index="14"></audio>
+      <audio id="a-sfx-tick-51" src="assets/audio/sfx-tick.mp3" data-start="60.600" data-duration="0.480" data-volume="0.468" data-track-index="15"></audio>
+      <audio id="a-sfx-connect-52" src="assets/audio/sfx-connect.mp3" data-start="71.600" data-duration="1.200" data-volume="1.814" data-track-index="16"></audio>
+      <audio id="a-sfx-connect-53" src="assets/audio/sfx-connect.mp3" data-start="72.600" data-duration="1.200" data-volume="1.451" data-track-index="17"></audio>
+      <audio id="a-sfx-sting-54" src="assets/audio/sfx-sting.mp3" data-start="78.600" data-duration="3.480" data-volume="0.31" data-track-index="12"></audio>
       <!-- audio:end -->
-      <canvas class="dust" id="dustFront" width="1920" height="1080"></canvas>
       <div id="grain"></div>
     </div>
     <div id="park" style="display: none"></div>
@@ -1139,7 +1257,7 @@
       };
       const blob = (o) => Object.assign({ x: 960, y: 520, r: 0, vis: 1, pal: 0 }, o);
       const S = { b: [blob({}), blob({}), blob({})], smooth: 0, energy: 0.25, level: 0, floor: 0, halo: 1, alpha: 1,
-        absorb: 0, chart: 0, big: 0, dimOthers: 0, tree: 0, wave: 0, ring: 0, cam: 1 };
+        absorb: 0, chart: 0, big: 0, dimOthers: 0, tree: 0, bench: 0, wave: 0, ring: 0, cam: 1 };
       function draw(t) {
         const C = [], R = [], VIS = [], RAMP = [];
         S.b.forEach((b) => {
@@ -1200,7 +1318,7 @@
       const BNAME = ["Essential", "Surprise", "Extra"];
 
       // Scene times.
-      const T2 = 6.5, T3 = 14.5, T4 = 21.5, TL = 29.0, TD = 37.5, VID = 46.0, TB = 69.3, TO = 76.3, END = 83;
+      const T2 = 6.5, T3 = 14.5, T4 = 21.5, TL = 31.0, TD = 39.5, VID = 48.0, TB = 71.3, TO = 78.3, END = 85;
 
       // ---- Open: purchases circling in depth, then pulled into the orb.
       const SW = [];
@@ -1308,7 +1426,8 @@
         [1408, 536, 192, 104, "", "Taxis €73", 0, "#c6f5d5", "#063d22", 0],
       ];
       const treeEl = document.getElementById("tree");
-      const TILE_EL = TILES.map(([x, y, w, h, k, n, v, fill, ink, vs], i) => {
+      const TILE_EL = TILES.map(([x, y0, w, h0, k, n, v, fill, ink, vs], i) => {
+        const y = Math.round(y0 * 540 / 640), h = Math.round(h0 * 540 / 640);
         const el = document.createElement("div");
         el.className = "tile";
         Object.assign(el.style, { left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px`, background: fill, color: ink });
@@ -1524,32 +1643,11 @@
         document.getElementById("home").style.opacity = t < VID - 0.25 ? 1 : Math.max(0, 1 - (t - (VID - 0.25)) / 0.4);
       }
 
-      // ---- Dust and grain.
-      const DUST = [];
-      const r2 = rng(42);
-      for (let i = 0; i < 140; i++) DUST.push({ x: r2() * 1920, y: r2() * 1080, z: r2(), s: r2(), p: r2() * 6.28 });
-      const dB = document.getElementById("dustBack").getContext("2d");
-      const dF = document.getElementById("dustFront").getContext("2d");
-      function dustAt(t) {
-        dB.clearRect(0, 0, 1920, 1080);
-        dF.clearRect(0, 0, 1920, 1080);
-        const dark = 0;
-        DUST.forEach((d) => {
-          const front = d.z > 0.9;
-          const g = front ? dF : dB;
-          const par = 0.3 + d.z * 1.2;
-          const x = ((d.x + t * 14 * par + 60 * Math.sin(t * 0.3 + d.p)) % 2000 + 2000) % 2000 - 40;
-          const y = ((d.y + 30 * Math.sin(t * 0.25 + d.p * 1.3) - t * 6 * par) % 1160 + 1160) % 1160 - 40;
-          const r = front ? 10 + d.s * 22 : 1.2 + d.z * 3.2;
-          const a = (front ? 0.1 : 0.1 + d.z * 0.32) * (dark ? 1.4 : 1);
-          const col = dark ? "150, 250, 180" : "60, 200, 120";
-          const grad = g.createRadialGradient(x, y, 0, x, y, r);
-          grad.addColorStop(0, `rgba(${col}, ${a})`);
-          grad.addColorStop(1, `rgba(${col}, 0)`);
-          g.fillStyle = grad;
-          g.beginPath();
-          g.arc(x, y, r, 0, Math.PI * 2);
-          g.fill();
+      // ---- A soft colour field drifting behind everything.
+      const MESH = [["mesh1", 560, 380, 120, 80, 0.11, 0.09, 0], ["mesh2", 1420, 300, 140, 90, 0.08, 0.12, 1], ["mesh3", 1080, 900, 160, 70, 0.07, 0.1, 2]];
+      function meshAt(t) {
+        MESH.forEach(([id, x, y, ax, ay, fx, fy, ph]) => {
+          document.getElementById(id).style.transform = `translate(${x + ax * Math.sin(t * fx + ph)}px, ${y + ay * Math.cos(t * fy + ph)}px)`;
         });
       }
       (function () {
@@ -1596,6 +1694,7 @@
         .to(B2, { x: LEG[2][0], y: LEG[2][1], r: 13, pal: 3, duration: 1.4, ease: io }, T3 + 0.8)
         .to(S, { smooth: 0, energy: 0.25, halo: 0.4, duration: 0.8 }, T3 + 1.0)
         .to(S, { tree: 1, duration: 2.0, ease: "none" }, T3 + 1.3)
+        .to(S, { bench: 1, duration: 1.2, ease: "power2.out" }, T3 + 4.3)
         .to(S, { chart: 1.0, duration: 2.6, ease: "none" }, T4 + 0.9)
         .to(S, { big: 1008, duration: 1.2, ease: "power2.out" }, T4 + 3.6)
         .to(S, { dimOthers: 1, duration: 0.8, ease: soft }, T4 + 5.2)
@@ -1631,20 +1730,20 @@
         O.set(S, { cam: 1 }, a).to(S, { cam: 1.03, duration: b - a, ease: "none" }, a);
       });
 
-      const floorEl = document.getElementById("floor");
       function renderAt(t) {
         O.seek(t, false);
         draw(t);
         swarmAt(t);
         ledgerAt(t);
         treeAt();
+        document.getElementById("bv1").textContent = `${Math.round(13 * S.bench)}%`;
+        document.getElementById("bv2").textContent = `${Math.round(18 * S.bench)}%`;
         chartAt();
         waveAt(t);
         learnAt(t);
         homeAt(t);
         banksAt(t);
-        dustAt(t);
-        floorEl.style.backgroundPosition = `0px ${(t * 26) % 44}px`;
+        meshAt(t);
         document.getElementById("cam").style.transform = `scale(${S.cam})`;
         document.getElementById("grain").style.backgroundPosition = `${(Math.floor(t * 24) * 73) % 256}px ${(Math.floor(t * 24) * 151) % 256}px`;
       }
@@ -1688,7 +1787,9 @@
       fadeIn("#s3-l", T3 + 1.3);
       ["#lg1", "#lg2", "#lg3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, T3 + 1.8 + i * 0.12));
       sink("#s3-h", T4 - 0.6);
-      fadeOut(["#s3-l", "#tree"], T4 - 0.6);
+      tl.fromTo("#bench", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, T3 + 3.9)
+        .fromTo(["#bf1", "#bf2"], { scaleX: 0 }, { scaleX: 1, duration: 1.2, ease: "power3.out", stagger: 0.2 }, T3 + 4.3);
+      fadeOut(["#s3-l", "#tree", "#bench"], T4 - 0.6);
       rise("#s3-h2", T4 + 0.2);
       tl.fromTo("#chart .gridline", { opacity: 0 }, { opacity: 1, duration: 0.6, stagger: 0.06 }, T4 + 0.6);
       tl.fromTo("#callout", { opacity: 0, y: 30, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, T4 + 3.4)

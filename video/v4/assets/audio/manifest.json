@@ -20,57 +20,57 @@
   "text": "what you have to pay, what surprises you, and what you choose."
  },
  "vo05": {
-  "start": 15.5,
+  "start": 15.2,
   "dur": 2.926,
   "text": "So you can see where an average month really goes."
  },
  "vo06": {
-  "start": 21.9,
+  "start": 22.85,
   "dur": 2.09,
   "text": "Over a year, patterns start to show."
  },
  "vo07": {
-  "start": 24.5,
+  "start": 25.15,
   "dur": 2.972,
   "text": "One washing machine in July meant ten days overdrawn."
  },
  "vo08": {
-  "start": 27.2,
+  "start": 28.35,
   "dur": 3.158,
   "text": "Surprises are predictable. Extras are yours to steer."
  },
  "vo09": {
-  "start": 29.8,
+  "start": 31.8,
   "dur": 1.95,
   "text": "And Penni keeps learning as you spend."
  },
  "vo10": {
-  "start": 32.0,
+  "start": 34.0,
   "dur": 6.177,
   "text": "It turns patterns into lessons, and lessons into a plan: a hundred and twenty-five euros, every payday."
  },
  "vo11": {
-  "start": 38.6,
+  "start": 40.6,
   "dur": 2.043,
   "text": "Your home screen changes with you."
  },
  "vo12": {
-  "start": 41.3,
+  "start": 43.3,
   "dur": 4.087,
   "text": "Payday, a spike, a new habit: what matters now comes first."
  },
  "vo13": {
-  "start": 46.1,
+  "start": 48.1,
   "dur": 2.276,
   "text": "And when you have a question, just ask."
  },
  "vo14": {
-  "start": 69.7,
+  "start": 71.7,
   "dur": 2.833,
   "text": "Connect your other banks, and Penni sees the whole picture."
  },
  "vo15": {
-  "start": 77.2,
+  "start": 79.2,
   "dur": 2.183,
   "text": "Penni. Every euro, understood."
  },
@@ -90,28 +90,10 @@
   }
  ],
  "music": {
-  "dur": 84.088125
- },
- "sfx-swirl": {
-  "dur": 3.0
+  "dur": 85.080813
  },
  "sfx-bloom": {
   "dur": 1.6
- },
- "sfx-whoosh": {
-  "dur": 1.0
- },
- "sfx-scan": {
-  "dur": 5.0
- },
- "sfx-tick": {
-  "dur": 0.48
- },
- "sfx-pop": {
-  "dur": 0.48
- },
- "sfx-chime": {
-  "dur": 1.36
  },
  "sfx-split": {
   "dur": 1.36
@@ -124,5 +106,31 @@
  },
  "sfx-sting": {
   "dur": 3.48
+ },
+ "vo05b": {
+  "start": 18.35,
+  "dur": 4.272,
+  "text": "Then it compares you with people your age, using Statistics Finland data."
+ },
+ "sfx-swirl": {
+  "dur": 3.0
+ },
+ "sfx-whoosh": {
+  "dur": 1.2
+ },
+ "sfx-scan": {
+  "dur": 4.0
+ },
+ "sfx-tick": {
+  "dur": 0.48
+ },
+ "sfx-pop": {
+  "dur": 0.48
+ },
+ "sfx-chime": {
+  "dur": 1.48
+ },
+ "sfx-connect": {
+  "dur": 1.2
  }
 }
