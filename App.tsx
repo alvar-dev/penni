@@ -685,6 +685,26 @@ function Screen() {
           // Already decoded on the way in.
         }
         actions.current.send(question);
+      } else if (name === 'type') {
+        // ?preview=type&q=<question> types the question into the field like a person, then
+        // sends it (for recording the demo video).
+        const q = url?.match(/[?&]q=([^&]+)/)?.[1]?.replace(/\+/g, ' ');
+        let question = q ?? suggestions[1];
+        try {
+          question = decodeURIComponent(question);
+        } catch {
+          // Already decoded on the way in.
+        }
+        inputRef.current?.focus();
+        let typed = 0;
+        const typing = setInterval(() => {
+          typed += 1;
+          setDraft(question.slice(0, typed));
+          if (typed >= question.length) {
+            clearInterval(typing);
+            setTimeout(() => actions.current.send(question), 600);
+          }
+        }, 75);
       } else if (name === 'mic') {
         actions.current.onOrbPress();
       } else if (name === 'keyboard') {
