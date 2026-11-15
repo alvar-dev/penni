@@ -1,6 +1,7 @@
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 import { EN } from '../lang';
+import { setAudioSession } from '../tts/webVoice';
 import { createVad, stepVad } from './vad';
 
 /**
@@ -76,6 +77,8 @@ if (deviceSpeech) {
   const start = deviceSpeech.start.bind(deviceSpeech);
   const stop = deviceSpeech.stop.bind(deviceSpeech);
   deviceSpeech.start = (options) => {
+    // The answers' voice switches Safari to "playback", which cannot record.
+    setAudioSession('auto');
     start(options);
     void startMeter();
   };

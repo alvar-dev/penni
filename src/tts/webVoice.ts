@@ -9,6 +9,24 @@
  */
 let context: AudioContext | null = null;
 
+type SessionNavigator = Navigator & { audioSession?: { type: string } };
+
+/**
+ * Safari 16.4+ (iPhone): the page's audio session. Web Audio is "ambient" by
+ * default there, silent when the ring/silent switch is off and quiet in the
+ * earpiece after the microphone was used; "playback" makes it play like media.
+ * Elsewhere this does nothing.
+ */
+export function setAudioSession(type: 'playback' | 'auto') {
+  const session = typeof navigator === 'undefined' ? undefined : (navigator as SessionNavigator).audioSession;
+  if (!session || session.type === type) return;
+  try {
+    session.type = type;
+  } catch {
+    // Not settable here.
+  }
+}
+
 function unlock() {
   try {
     context ??= new AudioContext();
@@ -24,7 +42,8 @@ function unlock() {
 }
 
 if (typeof document !== 'undefined') {
-  for (const type of ['pointerdown', 'touchend', 'keydown']) {
+  // touchend and click are what Safari on iPhone counts as a user gesture.
+  for (const type of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) {
     document.addEventListener(type, unlock, { capture: true, passive: true });
   }
 }
@@ -63,9 +82,12 @@ export function playWeb(urls: string[], onSentence: (index: number) => void, liv
   };
   const done = (async () => {
     if (!context) throw new Error('No audio yet');
+    setAudioSession('playback');
     if (context.state !== 'running') {
-      // resume() stays pending without a gesture, so do not wait for it long.
-      await Promise.race([context.resume(), new Promise((resolve) => setTimeout(resolve, 300))]);
+      // resume() stays pending without a gesture, so do not wait for it long; after the
+      // microphone, iOS reports "interrupted" for a moment before it lets go.
+      const wait = context.state === 'interrupted' ? 1500 : 300;
+      await Promise.race([context.resume(), new Promise((resolve) => setTimeout(resolve, wait))]);
       if ((context.state as AudioContextState) !== 'running') throw new Error('Audio is not allowed yet');
     }
     for (let i = 0; i < urls.length; i++) {
