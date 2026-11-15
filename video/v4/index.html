@@ -754,34 +754,147 @@
         font-weight: 700;
         letter-spacing: -0.055em;
         line-height: 1;
-        background: linear-gradient(100deg, #ffffff 0%, #ffffff 42%, #9ff2bd 50%, #ffffff 58%, #ffffff 100%);
+        background: linear-gradient(100deg, #101411 0%, #101411 42%, #3f9a68 50%, #101411 58%, #101411 100%);
         background-size: 300% 100%;
         background-position: 100% 0;
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
       }
+
+      /* Learning timeline */
+      .mon2 {
+        position: absolute;
+        top: 668px;
+        width: 80px;
+        margin-left: -40px;
+        text-align: center;
+        font-size: 24px;
+        color: var(--ink-3);
+      }
+      .ins {
+        position: absolute;
+        width: 380px;
+        margin-left: -190px;
+        padding: 22px 26px;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow:
+          0 30px 60px rgba(12, 58, 34, 0.12),
+          inset 0 0 0 1px rgba(16, 60, 36, 0.06);
+      }
+      .ins .k {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--green);
+      }
+      .ins .t {
+        font-size: 30px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      .ins.plan {
+        background: var(--bank);
+        color: #fff;
+      }
+      .ins.plan .k {
+        color: #8fe3ad;
+      }
+      /* The live home screen over the recording's first frame */
+      #home {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+      }
+      #home img {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 448px;
+        height: 974px;
+      }
+      .ht {
+        position: absolute;
+        width: 196px;
+        height: 116px;
+        border-radius: 20px;
+        background: #fafafa;
+        overflow: hidden;
+      }
+      .ht .st {
+        position: absolute;
+        inset: 0;
+        padding: 15.6px 17.8px;
+      }
+      .ht .lb {
+        font-size: 14.5px;
+        line-height: 18.9px;
+        color: #666;
+        white-space: nowrap;
+      }
+      .ht .vl {
+        font-size: 29px;
+        line-height: 35.7px;
+        font-weight: 600;
+        letter-spacing: -0.45px;
+        color: #1f1f1f;
+        margin-top: 6.7px;
+        font-variant-numeric: tabular-nums;
+      }
+      .ht .sb {
+        font-size: 13.4px;
+        line-height: 17.8px;
+        color: #949494;
+        margin-top: 4.5px;
+        white-space: nowrap;
+      }
+      .ht .ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 20px;
+        box-shadow: inset 0 0 0 2.5px #00aa46;
+        opacity: 0;
+      }
+      #dateRoll {
+        position: relative;
+        height: 96px;
+        overflow: hidden;
+        font-size: 84px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        color: var(--green);
+      }
+      #dateRoll span {
+        position: absolute;
+        left: 0;
+        top: 0;
+        line-height: 96px;
+        white-space: nowrap;
+      }
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="77" data-width="1920" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="83" data-width="1920" data-height="1080">
       <div id="cam" class="clip">
         <div id="floorwrap"><div id="floor"></div></div>
         <canvas class="dust" id="dustBack" width="1920" height="1080"></canvas>
-        <div id="outroBg" class="clip" data-start="69.4" data-duration="7.6" data-track-index="2"></div>
         <svg id="links" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
         <div class="back" id="swarmBack"></div>
         <canvas id="orb" width="1920" height="1080"></canvas>
         <div class="front" id="swarmFront"></div>
 
         <!-- Open -->
-        <div id="s1" class="clip layer" data-start="0" data-duration="6.6" data-track-index="1">
+        <div id="s1" class="clip layer" data-start="0" data-duration="6.5" data-track-index="1">
           <div class="center tag" id="s1-tag" style="top: 716px">Introducing Penni</div>
-          <div class="center h" id="s1-h" style="top: 762px; font-size: 128px"><span class="ln"><span>Ask your money.</span></span></div>
+          <div class="center h" id="s1-h" style="top: 762px; font-size: 128px"><span class="ln"><span>Your money, explained.</span></span></div>
         </div>
 
         <!-- 01 Understand: sorted -->
-        <div id="s2" class="clip layer" data-start="7.9" data-duration="8.3" data-track-index="1">
+        <div id="s2" class="clip layer" data-start="6.3" data-duration="8.3" data-track-index="1">
           <div id="ledgerWrap">
             <div id="ledger">
               <div class="head"><b>Transactions</b><span>July 2026</span></div>
@@ -803,7 +916,7 @@
         </div>
 
         <!-- Breakdown and a year -->
-        <div id="s3" class="clip layer" data-start="16" data-duration="14.6" data-track-index="1">
+        <div id="s3" class="clip layer" data-start="14.5" data-duration="14.5" data-track-index="1">
           <div class="h" id="s3-h" style="position: absolute; left: 150px; top: 100px; font-size: 84px"><span class="ln"><span>Three baskets.</span></span></div>
           <div class="lede" id="s3-l" style="position: absolute; left: 154px; top: 204px">Where an average month goes, June to August.</div>
           <div class="legend" id="lg1" style="left: 1239px"><i></i>Essentials</div>
@@ -812,7 +925,7 @@
           <div id="tree"></div>
           <div class="h" id="s3-h2" style="position: absolute; left: 150px; top: 100px; font-size: 80px"><span class="ln"><span>A year of your money.</span></span></div>
           <div class="h" id="s3-h3" style="position: absolute; left: 150px; top: 100px; font-size: 80px"><span class="ln"><span>Steer the extras.</span></span></div>
-          <div class="lede" id="s3-l3" style="position: absolute; left: 154px; top: 206px">The light green is where small changes add up.</div>
+          <div class="lede" id="s3-l3" style="position: absolute; left: 154px; top: 206px">Over a year, surprises are predictable. Extras are yours to change.</div>
           <div id="chart"></div>
           <svg id="calloutLine" width="1920" height="1080" viewBox="0 0 1920 1080"><path id="cpath" d="" fill="none" stroke="#00AA46" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 8" /><circle id="cdot" r="9" fill="#00AA46" /></svg>
           <div id="callout">
@@ -822,16 +935,29 @@
           </div>
         </div>
 
+        <!-- Penni learns as you spend -->
+        <div id="s4b" class="clip layer" data-start="28.4" data-duration="9.4" data-track-index="1">
+          <div class="h" id="sl-h" style="position: absolute; left: 150px; top: 100px; font-size: 84px"><span class="ln"><span>Penni learns as you spend.</span></span></div>
+          <div class="lede" id="sl-l" style="position: absolute; left: 154px; top: 204px">Patterns become lessons. Lessons become a plan.</div>
+          <svg id="tline" width="1920" height="1080" viewBox="0 0 1920 1080" style="position: absolute; inset: 0"></svg>
+          <div id="months"></div>
+          <div id="insights"></div>
+        </div>
         <!-- 02 Ask: the real app -->
         <div id="s5" class="layer" style="position: absolute; inset: 0">
           <div id="stage">
             <div id="phone">
               <div class="screen">
-                <video id="appvid" class="clip" src="assets/app-voice.mp4" data-start="32.4" data-duration="23" data-track-index="3" muted playsinline></video>
+                <video id="appvid" class="clip" src="assets/app-voice.mp4" data-start="46" data-duration="23" data-track-index="3" muted playsinline></video>
+                <div id="home"><img src="assets/home-frame.png" alt="" /><div id="htiles"></div></div>
                 <div class="glare"></div>
               </div>
             </div>
           </div>
+          <div class="kicker cap" id="d-k" style="top: 250px">Your home screen</div>
+          <div class="h cap" id="d-h" style="top: 296px; font-size: 84px"><span class="ln"><span>It changes</span></span><span class="ln"><span>as you do.</span></span></div>
+          <div class="lede cap" id="d-l" style="top: 498px; width: 760px">Payday, a spike, a new habit: what matters now comes first.</div>
+          <div class="cap" id="d-date" style="top: 660px"><div class="lede" style="font-size: 28px">Today</div><div id="dateRoll"><span>Jul 14</span><span>Aug 20</span><span>Sep 9</span></div></div>
           <div class="kicker cap" id="c-tap" style="top: 250px">Tap the orb and ask</div>
           <div id="quote">
             <div id="wave"></div>
@@ -840,68 +966,24 @@
           <div class="h cap" id="c-ans" style="top: 250px; font-size: 76px"><span class="ln"><span>An answer you</span></span><span class="ln"><span>can see.</span></span></div>
           <div class="pill" id="pl1" style="top: 520px"><span class="ck"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Computed from your own transactions</div>
           <div class="pill" id="pl2" style="top: 630px"><span class="ck"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Compared with Statistics Finland</div>
-          <div class="pill" id="pl3" style="top: 740px"><span class="ck"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Read aloud, sentence by sentence</div>
+          <div class="pill" id="pl3" style="top: 740px"><span class="ck"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>Explained in plain words</div>
         </div>
 
         <!-- 03 Connect: every bank -->
-        <div id="s6" class="clip layer" data-start="56.9" data-duration="7.3" data-track-index="1">
+        <div id="s6" class="clip layer" data-start="69" data-duration="7.3" data-track-index="1">
           <div class="center h" id="s6-h" style="top: 64px; font-size: 88px"><span class="ln"><span>Every bank. One coach.</span></span></div>
           <div class="center lede" id="s6-l" style="top: 176px">Connect your other banks, read-only, under PSD2.</div>
           <div id="banks"></div>
         </div>
 
-        <!-- Built to bank standards -->
-        <div id="s7" class="clip layer" data-start="64" data-duration="5.8" data-track-index="1">
-          <div class="kicker" id="s7-k" style="position: absolute; left: 160px; top: 160px">Ready for S-mobiili</div>
-          <div class="h" id="s7-h" style="position: absolute; left: 156px; top: 204px; font-size: 92px"><span class="ln"><span>Built to bank standards.</span></span></div>
-          <div class="pillar" id="p1" style="left: 160px">
-            <div class="ic"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" /></svg></div>
-            <h3>Your data stays at S-Pankki</h3>
-            <p>The AI sees computed summaries, never raw transactions.</p>
-          </div>
-          <div class="pillar" id="p2" style="left: 710px">
-            <div class="ic"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2.5" /><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h2M12 18h4" /></svg></div>
-            <h3>Numbers computed, never guessed</h3>
-            <p>Every figure comes from a calculation the bank can audit.</p>
-          </div>
-          <div class="pillar" id="p3" style="left: 1260px">
-            <div class="ic"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /><path d="M9 12l2 2 4-4" /></svg></div>
-            <h3>An open model, hosted in the EU</h3>
-            <p>About three seconds and two cents per answer.</p>
-          </div>
-        </div>
-
         <!-- Outro -->
-        <div id="s8" class="clip layer" data-start="69.4" data-duration="7.6" data-track-index="1">
+        <div id="s8" class="clip layer" data-start="76.3" data-duration="6.7" data-track-index="1">
           <div class="center" id="s8-w" style="top: 600px"><span class="ln"><span class="word" id="word">Penni</span></span></div>
-          <div class="center lede" id="s8-l" style="top: 806px; font-size: 42px; color: #b9f3cc">Ask your money.</div>
-          <div class="center" id="s8-f" style="top: 960px; display: flex; justify-content: center; align-items: center; gap: 16px; font-size: 26px; color: rgba(255, 255, 255, 0.72)">
-            <img src="assets/spankki.png" alt="" style="width: 40px; height: 40px; border-radius: 10px" />A money coach for S-mobiili · Junction 2026
-          </div>
+          <div class="center h" id="s8-l" style="top: 800px; font-size: 56px; color: var(--green)"><span class="ln"><span>Every euro, understood.</span></span></div>
+          <div class="center" id="s8-f" style="top: 960px; font-size: 26px; color: var(--ink-3)">The money coach that learns with you · Built for S-mobiili</div>
         </div>
       </div>
 
-      <!-- Chapter cards -->
-      <div class="chap clip" id="ch1" data-start="6.3" data-duration="2.0" data-track-index="4">
-        <div class="num">01</div>
-        <div class="rule"></div>
-        <div class="title"><span class="ln"><span>Understand</span></span></div>
-        <div class="sub">See where every euro goes.</div>
-      </div>
-      <div class="chap clip" id="ch2" data-start="30.2" data-duration="2.0" data-track-index="4">
-        <div class="num">02</div>
-        <div class="rule"></div>
-        <div class="title"><span class="ln"><span>Ask</span></span></div>
-        <div class="sub">Talk to your money, in plain words.</div>
-      </div>
-      <div class="chap clip" id="ch3" data-start="55.4" data-duration="2.0" data-track-index="4">
-        <div class="num">03</div>
-        <div class="rule"></div>
-        <div class="title"><span class="ln"><span>Connect</span></span></div>
-        <div class="sub">One view of every account.</div>
-      </div>
-
-      <div id="bug" class="clip" data-start="0" data-duration="69.4" data-track-index="5" style="inset: auto 48px 40px auto"><img src="assets/spankki.png" alt="" />Penni <span>· S-Pankki</span></div>
       <canvas class="dust" id="dustFront" width="1920" height="1080"></canvas>
       <div id="grain"></div>
     </div>
@@ -1091,7 +1173,7 @@
       const BNAME = ["Essential", "Surprise", "Extra"];
 
       // Scene times.
-      const C1 = 6.3, T2 = 8.0, T3 = 16.0, T4 = 23.0, C2 = 30.2, T5 = 31.6, VID = 32.4, C3 = 55.4, T6 = 56.9, T7 = 64.0, T8 = 69.4, END = 77;
+      const T2 = 6.5, T3 = 14.5, T4 = 21.5, TL = 29.0, TD = 37.5, VID = 46.0, TB = 69.3, TO = 76.3, END = 83;
 
       // ---- Open: purchases circling in depth, then pulled into the orb.
       const SW = [];
@@ -1110,7 +1192,7 @@
           const pull = Math.max(0, Math.min(1, S.absorb * 1.9 - c.lag));
           const ease = pull * pull * (3 - 2 * pull);
           const born = Math.max(0, Math.min(1, (t - 1.2 - i * 0.025) / 0.6));
-          if (born <= 0 || ease >= 1 || t > C1 + 0.4) {
+          if (born <= 0 || ease >= 1 || t > T2 + 0.1) {
             if (c.el.parentNode !== park) park.appendChild(c.el);
             return;
           }
@@ -1305,18 +1387,114 @@
         TILES_B.forEach((b, i) => {
           const show = Math.max(0, Math.min(1, (S.ring * 1.5 - i * 0.05) / 0.5));
           const e = 1 - Math.pow(1 - show, 3);
-          const a = (i / BANKS.length) * Math.PI * 2 - Math.PI / 2 + (t - T6) * 0.08;
+          const a = (i / BANKS.length) * Math.PI * 2 - Math.PI / 2 + (t - TB) * 0.08;
           const x = cx + Math.cos(a) * 560 * (0.4 + 0.6 * e), y = cy + Math.sin(a) * 300 * (0.4 + 0.6 * e);
           b.el.style.transform = `translate(${x}px, ${y}px) scale(${e})`;
           b.el.style.opacity = e;
           b.line.setAttribute("x1", x); b.line.setAttribute("y1", y);
           b.line.setAttribute("x2", cx); b.line.setAttribute("y2", cy);
           b.line.style.opacity = e;
-          const ph = (((t - T6) * 0.55 + i * 0.137) % 1 + 1) % 1;
+          const ph = (((t - TB) * 0.55 + i * 0.137) % 1 + 1) % 1;
           b.pulse.setAttribute("cx", x + (cx - x) * ph);
           b.pulse.setAttribute("cy", y + (cy - y) * ph);
           b.pulse.style.opacity = e * Math.sin(Math.PI * ph);
         });
+      }
+
+
+      // ---- Penni learns: a timeline of months; what it noticed lights up as the orb passes.
+      const TX0 = 240, TX1 = 1680, TY = 640;
+      const mx = (m) => TX0 + (m * (TX1 - TX0)) / 11;
+      const tlineEl = document.getElementById("tline");
+      tlineEl.innerHTML = `<line x1="${TX0}" y1="${TY}" x2="${TX1}" y2="${TY}" stroke="rgba(16,60,36,0.14)" stroke-width="4" stroke-linecap="round" />` +
+        `<line id="tprog" x1="${TX0}" y1="${TY}" x2="${TX0}" y2="${TY}" stroke="#00AA46" stroke-width="4" stroke-linecap="round" />` +
+        MONTHS.map((m, i) => `<circle id="td${i}" cx="${mx(i)}" cy="${TY}" r="7" fill="#fff" stroke="rgba(16,60,36,0.25)" stroke-width="3" />`).join("");
+      const monthsEl = document.getElementById("months");
+      MONTHS.forEach((m, i) => {
+        const el = document.createElement("div");
+        el.className = "mon2";
+        el.style.left = `${mx(i)}px`;
+        el.textContent = m;
+        monthsEl.appendChild(el);
+      });
+      const INSIGHTS = [
+        [1, true, "Pattern", "Groceries are your biggest cost"],
+        [3, false, "Pattern", "Extras doubled in December"],
+        [5, true, "Lesson", "Surprises add up to about €420 a month"],
+        [10, false, "Lesson", "One €1,008 surprise, ten days overdrawn"],
+        [11, true, "Plan", "Set aside €125 every payday"],
+      ];
+      const insEl = document.getElementById("insights");
+      const INS = INSIGHTS.map(([m, above, k, t], i) => {
+        const el = document.createElement("div");
+        el.className = "ins" + (k === "Plan" ? " plan" : "");
+        el.innerHTML = `<div class="k">${k}</div><div class="t">${t}</div>`;
+        const x = Math.min(1720 - 190, Math.max(160 + 190, mx(m)));
+        el.style.left = `${x}px`;
+        el.style.top = above ? "330px" : "730px";
+        insEl.appendChild(el);
+        tlineEl.insertAdjacentHTML("beforeend", `<line id="tc${i}" x1="${mx(m)}" y1="${above ? 470 : 730}" x2="${mx(m)}" y2="${TY}" stroke="${k === "Plan" ? "#004628" : "#00AA46"}" stroke-width="2.5" stroke-dasharray="4 6" />`);
+        return { el, m, conn: document.getElementById(`tc${i}`) };
+      });
+      const LEARN_T0 = TL + 0.9, LEARN_DUR = 6.2;
+      const passAt = (m) => LEARN_T0 + (m / 11) * LEARN_DUR;
+      function learnAt(t) {
+        const k = Math.max(0, Math.min(1, (t - LEARN_T0) / LEARN_DUR));
+        document.getElementById("tprog").setAttribute("x2", TX0 + k * (TX1 - TX0));
+        MONTHS.forEach((m, i) => {
+          const on = t >= passAt(i);
+          const d = document.getElementById(`td${i}`);
+          d.setAttribute("fill", on ? "#00AA46" : "#fff");
+          d.setAttribute("stroke", on ? "#00AA46" : "rgba(16,60,36,0.25)");
+        });
+        INS.forEach(({ el, m, conn }) => {
+          const p = Math.max(0, Math.min(1, (t - passAt(m) - 0.05) / 0.5));
+          const e = 1 - Math.pow(1 - p, 3);
+          el.style.opacity = e;
+          el.style.transform = `translateY(${(1 - e) * 24}px) scale(${0.94 + 0.06 * e})`;
+          conn.style.opacity = e;
+        });
+      }
+
+      // ---- The home screen: tiles that change as the weeks go by, over the recording's first frame.
+      const KS = 0.37148;
+      const HT = [[60, 1311], [618, 1311], [60, 1653], [618, 1653]];
+      const HSTATES = [
+        [["Free until payday", "€338", "21 days to payday"], ["Spending in July", "€2,104", "↑ 12% vs usual"], ["Surprises in July", "€1,008", "Washing machine, Jul 2"], ["Taxis", "€58", "Top everyday cost, Jul"]],
+        [["Free until payday", "€190", "26 days to payday"], ["Spending in August", "€2,640", "↓ 9% vs usual"], ["Discretionary", "12%", "Your age in Finland: 18%"], ["Taxis", "€97", "Top everyday cost, Aug"]],
+      ];
+      const htEl = document.getElementById("htiles");
+      const HTILES = HT.map(([x, y], i) => {
+        const el = document.createElement("div");
+        el.className = "ht";
+        el.style.left = `${x * KS}px`;
+        el.style.top = `${y * KS}px`;
+        el.innerHTML = HSTATES.map((st, k) => `<div class="st" id="hs${i}_${k}"><div class="lb">${st[i][0]}</div><div class="vl">${st[i][1]}</div><div class="sb">${st[i][2]}</div></div>`).join("") + `<div class="ring"></div>`;
+        htEl.appendChild(el);
+        return { el, a: el.querySelector(`#hs${i}_0`), b: el.querySelector(`#hs${i}_1`), ring: el.querySelector(".ring") };
+      });
+      const SWAP1 = TD + 3.4, SWAP2 = TD + 6.1;
+      function homeAt(t) {
+        HTILES.forEach((h, i) => {
+          const s1 = Math.max(0, Math.min(1, (t - SWAP1 - i * 0.12) / 0.45));
+          const s2 = Math.max(0, Math.min(1, (t - SWAP2 - i * 0.12) / 0.45));
+          const e1 = s1 * s1 * (3 - 2 * s1), e2 = s2 * s2 * (3 - 2 * s2);
+          h.a.style.opacity = 1 - e1;
+          h.a.style.transform = `translateY(${-e1 * 14}px)`;
+          h.b.style.opacity = e1 * (1 - e2);
+          h.b.style.transform = `translateY(${(1 - e1) * 14 - e2 * 14}px)`;
+          // after the second change the tile shows the recording's own frame beneath
+          h.el.style.background = e2 > 0 ? `rgba(250,250,250,${1 - e2})` : "#fafafa";
+          const glow = Math.max(Math.sin(Math.PI * s1), Math.sin(Math.PI * s2));
+          h.ring.style.opacity = glow;
+        });
+        const rollK = t < SWAP1 ? 0 : t < SWAP2 ? Math.min(1, (t - SWAP1) / 0.5) : 1 + Math.min(1, (t - SWAP2) / 0.5);
+        [...document.querySelectorAll("#dateRoll span")].forEach((sp, i) => {
+          const off = i - rollK;
+          sp.style.transform = `translateY(${off * 96}px)`;
+          sp.style.opacity = Math.max(0, 1 - Math.abs(off));
+        });
+        document.getElementById("home").style.opacity = t < VID - 0.25 ? 1 : Math.max(0, 1 - (t - (VID - 0.25)) / 0.4);
       }
 
       // ---- Dust and grain.
@@ -1328,7 +1506,7 @@
       function dustAt(t) {
         dB.clearRect(0, 0, 1920, 1080);
         dF.clearRect(0, 0, 1920, 1080);
-        const dark = t > T8 ? 1 : 0;
+        const dark = 0;
         DUST.forEach((d) => {
           const front = d.z > 0.9;
           const g = front ? dF : dB;
@@ -1375,13 +1553,13 @@
         .to(B0, { r: 165, duration: 0.5, ease: "power2.out" }, 5.0)
         .to(B0, { r: 150, duration: 0.8, ease: "power2.inOut" }, 5.5)
         .to(S, { energy: 0.3, level: 0, duration: 1.0, ease: soft }, 5.4)
-        // sorted: the orb watches from above the stacks
-        .set(B0, { x: 1450, y: 330, r: 96 }, C1 + 1.0)
-        .set(S, { floor: 0 }, C1 + 1.0)
+        // sorted: the orb rises to watch over the stacks
+        .to(B0, { x: 1450, y: 330, r: 96, duration: 1.1, ease: io }, T2 - 0.4)
+        .to(S, { floor: 0, duration: 0.6 }, T2 - 0.4)
         .to(S, { energy: 0.7, duration: 0.6 }, T3 - 1.2)
         .to(B0, { r: 116, duration: 0.6, ease: "power2.out" }, T3 - 0.6)
         .to(B0, { x: 960, y: 520, r: 150, duration: 0.8, ease: io }, T3 - 0.2)
-        // it divides into three and becomes the legend
+        // divides into three and becomes the legend
         .set(B1, { x: 960, y: 520, r: 0, pal: 0, vis: 1 }, T3)
         .set(B2, { x: 960, y: 520, r: 0, pal: 0, vis: 1 }, T3)
         .set(S, { smooth: 140 }, T3 + 0.4)
@@ -1395,24 +1573,35 @@
         .to(S, { big: 1008, duration: 1.2, ease: "power2.out" }, T4 + 3.6)
         .to(S, { dimOthers: 1, duration: 0.8, ease: soft }, T4 + 5.2)
         .to([B0, B1], { vis: 0.3, duration: 0.8, ease: soft }, T4 + 5.2)
-        .to(S, { alpha: 0, duration: 0.3 }, C2)
-        // ask: the app has its own orb; the voice is heard
+        // the three melt back into one, which walks the months
+        .to([B0, B1], { vis: 1, duration: 0.4 }, TL - 0.9)
+        .set(S, { smooth: 60 }, TL - 0.9)
+        .to([B0, B1, B2], { x: 1462, y: 147, duration: 0.6, ease: io }, TL - 0.9)
+        .to([B1, B2], { r: 0, duration: 0.4 }, TL - 0.3)
+        .to(B0, { x: TX0, y: TY, r: 34, pal: 0, duration: 1.1, ease: io }, TL - 0.3)
+        .to(S, { halo: 1, energy: 0.5, duration: 0.6 }, TL)
+        .to(B0, { x: TX1, duration: LEARN_DUR, ease: "none" }, LEARN_T0)
+        .to(B0, { r: 52, duration: LEARN_DUR, ease: "none" }, LEARN_T0)
+        .to(S, { level: 0.5, duration: 0.25, yoyo: true, repeat: 1 }, passAt(1))
+        .to(S, { level: 0.5, duration: 0.25, yoyo: true, repeat: 1 }, passAt(3))
+        .to(S, { level: 0.5, duration: 0.25, yoyo: true, repeat: 1 }, passAt(5))
+        .to(S, { level: 0.5, duration: 0.25, yoyo: true, repeat: 1 }, passAt(10))
+        .to(S, { level: 0.7, duration: 0.3, yoyo: true, repeat: 1 }, passAt(11))
+        .to(B0, { r: 0, duration: 0.5, ease: "power2.in" }, TD - 0.6)
+        // the app's own orb takes over in the phone
+        .set(S, { alpha: 0 }, TD)
         .to(S, { wave: 1, duration: 0.3 }, VID + 2.4)
         .to(S, { wave: 0, duration: 0.5 }, VID + 4.9)
-        // connect: the orb in the middle of the banks
-        .set([B1, B2], { r: 0 }, C3)
-        .set(B0, { x: 960, y: 590, r: 96, vis: 1, pal: 0 }, C3)
-        .set(S, { halo: 1, floor: 0, energy: 0.4 }, C3)
-        .to(S, { alpha: 1, duration: 0.3 }, C3 + 1.6)
-        .to(S, { ring: 1, duration: 1.8, ease: "none" }, T6 + 0.2)
-        .to(B0, { r: 0, duration: 0.6, ease: "power2.in" }, T7 - 0.4)
-        .to(S, { ring: 0, duration: 0.6 }, T7 - 0.5)
-        // outro: the orb over the bank's green
-        .set(B0, { x: 960, y: 400, r: 0, pal: 0, vis: 1 }, T8)
-        .to(B0, { r: 124, duration: 1.4, ease: "expo.out" }, T8 + 0.2)
-        .to(S, { energy: 0.5, halo: 1.2, duration: 1 }, T8);
-      [[0, C1], [T2, T3], [T3, T4], [T4, C2], [T5, C3], [T6, T7], [T7, T8], [T8, END]].forEach(([a, b]) => {
-        O.set(S, { cam: 1 }, a).to(S, { cam: 1.035, duration: b - a, ease: "none" }, a);
+        // every bank around the orb
+        .set(B0, { x: 960, y: 590, r: 0, vis: 1, pal: 0 }, TB - 0.4)
+        .set(S, { alpha: 1, halo: 1, floor: 0, energy: 0.4 }, TB - 0.4)
+        .to(B0, { r: 96, duration: 0.8, ease: "expo.out" }, TB - 0.3)
+        .to(S, { ring: 1, duration: 1.8, ease: "none" }, TB + 0.2)
+        .to(S, { ring: 0, duration: 0.6 }, TO - 0.6)
+        .to(B0, { x: 960, y: 380, r: 124, duration: 1.2, ease: io }, TO - 0.4)
+        .to(S, { floor: 1, energy: 0.3, duration: 1.0 }, TO);
+      [[0, T2], [T2, T3], [T3, T4], [T4, TL], [TL, TD], [TD, VID], [VID, TB], [TB, TO], [TO, END]].forEach(([a, b]) => {
+        O.set(S, { cam: 1 }, a).to(S, { cam: 1.03, duration: b - a, ease: "none" }, a);
       });
 
       const floorEl = document.getElementById("floor");
@@ -1424,6 +1613,8 @@
         treeAt();
         chartAt();
         waveAt(t);
+        learnAt(t);
+        homeAt(t);
         banksAt(t);
         dustAt(t);
         floorEl.style.backgroundPosition = `0px ${(t * 26) % 44}px`;
@@ -1454,7 +1645,8 @@
 
       fadeIn("#s1-tag", 4.4);
       rise("#s1-h", 4.7);
-      chapter("#ch1", C1);
+      fadeOut("#s1-tag", T2 - 0.5);
+      sink("#s1-h", T2 - 0.55);
 
       tl.fromTo("#ledger", { x: -900, rotationY: 34, rotationX: 8, opacity: 0 }, { x: 0, rotationY: 16, rotationX: 5, opacity: 1, duration: 1.2, ease: "expo.out" }, T2 - 0.1)
         .to("#ledger", { rotationY: 10, duration: 6, ease: "none" }, T2 + 1.1)
@@ -1478,13 +1670,25 @@
       sink("#s3-h2", T4 + 5.0);
       rise("#s3-h3", T4 + 5.5);
       fadeIn("#s3-l3", T4 + 5.9);
+      sink("#s3-h3", TL - 0.9);
+      fadeOut(["#s3-l3", "#chart", "#lg1", "#lg2", "#lg3"], TL - 0.9);
 
-      chapter("#ch2", C2);
-      tl.fromTo("#stage", { y: 1200, rotationX: 14, transformPerspective: 2400 }, { y: 0, rotationX: 0, duration: 1.3, ease: "expo.out" }, T5)
-        // lean into the chart while it draws, then back
+      rise("#sl-h", TL + 0.1);
+      fadeIn("#sl-l", TL + 0.6);
+      tl.fromTo(["#tline", "#months"], { opacity: 0 }, { opacity: 1, duration: 0.6 }, TL + 0.2);
+      sink("#sl-h", TD - 0.8);
+      fadeOut(["#sl-l", "#tline", "#months", "#insights"], TD - 0.8);
+
+      tl.fromTo("#stage", { y: 1200, rotationX: 14, transformPerspective: 2400 }, { y: 0, rotationX: 0, duration: 1.3, ease: "expo.out" }, TD)
         .to("#stage", { scale: 1.32, x: -60, y: 110, duration: 1.4, ease: "power3.inOut" }, VID + 8.6)
         .to("#stage", { scale: 1, x: 0, y: 0, duration: 1.2, ease: "power3.inOut" }, VID + 14.2)
-        .to("#stage", { y: 1250, duration: 0.8, ease: "power3.in" }, C3 - 0.5);
+        .to("#stage", { y: 1250, duration: 0.8, ease: "power3.in" }, TB - 0.9);
+      fadeIn("#d-k", TD + 0.6);
+      rise("#d-h", TD + 0.8);
+      fadeIn("#d-l", TD + 1.4);
+      fadeIn("#d-date", TD + 1.9);
+      fadeOut(["#d-k", "#d-l", "#d-date"], VID - 0.6);
+      sink("#d-h", VID - 0.6);
       fadeIn("#c-tap", VID + 0.6);
       tl.fromTo("#wave", { opacity: 0 }, { opacity: 1, duration: 0.4 }, VID + 1.8);
       rise("#quote", VID + 2.6, 0.25);
@@ -1493,28 +1697,18 @@
       rise("#c-ans", VID + 7.6);
       ["#pl1", "#pl2", "#pl3"].forEach((s, i) =>
         tl.fromTo(s, { opacity: 0, x: -40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.8, ease: "power3.out" }, VID + 9.4 + i * 1.6));
-      sink("#c-ans", C3 - 0.9);
-      fadeOut(["#pl1", "#pl2", "#pl3"], C3 - 0.9);
+      sink("#c-ans", TB - 1.0);
+      fadeOut(["#pl1", "#pl2", "#pl3"], TB - 1.0);
 
-      chapter("#ch3", C3);
-      rise("#s6-h", T6 + 0.5);
-      fadeIn("#s6-l", T6 + 1.0);
-      sink("#s6-h", T7 - 0.7);
-      fadeOut("#s6-l", T7 - 0.7);
+      rise("#s6-h", TB + 0.4);
+      fadeIn("#s6-l", TB + 0.9);
+      sink("#s6-h", TO - 0.8);
+      fadeOut("#s6-l", TO - 0.8);
 
-      fadeIn("#s7-k", T7 + 0.2);
-      rise("#s7-h", T7 + 0.3);
-      ["#p1", "#p2", "#p3"].forEach((s, i) =>
-        tl.fromTo(s, { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" }, T7 + 0.8 + i * 0.18));
-      fadeOut(["#s7-k", "#p1", "#p2", "#p3"], T8 - 0.6);
-      sink("#s7-h", T8 - 0.6);
-
-      tl.fromTo("#outroBg", { clipPath: "circle(0% at 50% 37%)" }, { clipPath: "circle(150% at 50% 37%)", duration: 1.2, ease: "power3.inOut" }, T8);
-      rise("#s8-w", T8 + 1.3);
-      fadeIn("#s8-l", T8 + 2.0);
-      fadeIn("#s8-f", T8 + 2.7);
-      tl.to("#word", { backgroundPosition: "0% 0", duration: 1.8, ease: "sine.inOut" }, T8 + 2.8);
-      tl.to("#floorwrap", { opacity: 0, duration: 0.6 }, T8);
+      rise("#s8-w", TO + 0.9);
+      rise("#s8-l", TO + 1.4);
+      fadeIn("#s8-f", TO + 2.2);
+      tl.to("#word", { backgroundPosition: "0% 0", duration: 1.8, ease: "sine.inOut" }, TO + 2.4);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;
